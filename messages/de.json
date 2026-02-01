@@ -1,0 +1,103 @@
+{
+  "nav": {
+    "home": "Startseite",
+    "offers": "Angebote",
+    "contact": "Kontakt"
+  },
+  "listing": {
+    "viewOffer": "Angebot ansehen",
+    "km": "km",
+    "hp": "PS",
+    "price": "Preis",
+    "year": "Jahr",
+    "mileage": "Kilometerstand",
+    "fuel": "Kraftstoff",
+    "transmission": "Getriebe",
+    "bodyType": "Karosserie",
+    "power": "Leistung",
+    "location": "Standort",
+    "colourType": "Lacktyp"
+  },
+  "detail": {
+    "askAbout": "Nach Angebot fragen",
+    "call": "Anrufen",
+    "sendInquiry": "Anfrage senden",
+    "keyParameters": "Schlüsselparameter",
+    "specifications": "Spezifikationen",
+    "equipment": "Ausstattung",
+    "description": "Beschreibung",
+    "dealerInfo": "Verkäuferinformationen",
+    "back": "Zurück zur Liste",
+    "notFound": "Angebot nicht gefunden",
+    "returnToSearch": "Zurück zur Suche"
+  },
+  "equipment": {
+    "safety": "Sicherheit",
+    "performance": "Leistung & Tuning",
+    "comfort": "Komfort & Extras",
+    "multimedia": "Audio & Multimedia",
+    "driverAssist": "Fahrerassistenzsysteme",
+    "other": "Sonstiges",
+    "noEquipment": "Keine Ausstattungsinformationen verfügbar"
+  },
+  "specs": {
+    "fuel": {
+      "petrol": "Benzin",
+      "diesel": "Diesel",
+      "electric": "Elektro",
+      "hybrid": "Hybrid",
+      "plugin_hybrid": "Plug-in Hybrid",
+      "lpg": "LPG",
+      "cng": "CNG",
+      "other": "Sonstiges"
+    },
+    "transmission": {
+      "automatic": "Automatik",
+      "manual": "Schaltgetriebe",
+      "semi_automatic": "Halbautomatik",
+      "cvt": "CVT"
+    },
+    "bodyType": {
+      "sedan": "Limousine",
+      "hatchback": "Kompakt",
+      "kombi": "Kombi",
+      "suv": "SUV",
+      "coupe": "Coupé",
+      "cabrio": "Cabrio",
+      "pickup": "Pickup",
+      "van": "Van",
+      "minivan": "Minivan",
+      "other": "Sonstiges"
+    },
+    "colourType": {
+      "metallic": "Metallic",
+      "matte": "Matt",
+      "pearl": "Perlmutt",
+      "solid": "Uni",
+      "other": "Sonstiges"
+    }
+  },
+  "common": {
+    "found": "Gefunden",
+    "offers": "Angebote",
+    "perPage": "Pro Seite",
+    "loading": "Laden...",
+    "error": "Ein Fehler ist aufgetreten",
+    "tryAgain": "Erneut versuchen"
+  },
+  "filters": {
+    "title": "Filter",
+    "clear": "Filter löschen",
+    "brand": "Marke",
+    "model": "Modell",
+    "yearFrom": "Jahr von",
+    "yearTo": "Jahr bis",
+    "priceFrom": "Preis von",
+    "priceTo": "Preis bis",
+    "mileageFrom": "Kilometerstand von",
+    "mileageTo": "Kilometerstand bis",
+    "fuelType": "Kraftstoffart",
+    "transmission": "Getriebe",
+    "bodyType": "Karosserie"
+  }
+}

@@ -1,0 +1,103 @@
+{
+  "nav": {
+    "home": "Strona główna",
+    "offers": "Oferty",
+    "contact": "Kontakt"
+  },
+  "listing": {
+    "viewOffer": "Zobacz ofertę",
+    "km": "km",
+    "hp": "KM",
+    "price": "Cena",
+    "year": "Rok",
+    "mileage": "Przebieg",
+    "fuel": "Paliwo",
+    "transmission": "Skrzynia biegów",
+    "bodyType": "Typ nadwozia",
+    "power": "Moc",
+    "location": "Lokalizacja",
+    "colourType": "Rodzaj lakieru"
+  },
+  "detail": {
+    "askAbout": "Zapytaj o ofertę",
+    "call": "Zadzwoń",
+    "sendInquiry": "Wyślij zapytanie",
+    "keyParameters": "Kluczowe parametry",
+    "specifications": "Specyfikacja",
+    "equipment": "Wyposażenie",
+    "description": "Opis",
+    "dealerInfo": "Informacje o sprzedającym",
+    "back": "Wróć do listy",
+    "notFound": "Oferta nie została znaleziona",
+    "returnToSearch": "Wróć do wyszukiwania"
+  },
+  "equipment": {
+    "safety": "Bezpieczeństwo",
+    "performance": "Osiągi i tuning",
+    "comfort": "Komfort i dodatki",
+    "multimedia": "Audio i multimedia",
+    "driverAssist": "Systemy wspomagania kierowcy",
+    "other": "Inne",
+    "noEquipment": "Brak informacji o wyposażeniu"
+  },
+  "specs": {
+    "fuel": {
+      "petrol": "Benzyna",
+      "diesel": "Diesel",
+      "electric": "Elektryczny",
+      "hybrid": "Hybryda",
+      "plugin_hybrid": "Hybryda plug-in",
+      "lpg": "LPG",
+      "cng": "CNG",
+      "other": "Inne"
+    },
+    "transmission": {
+      "automatic": "Automatyczna",
+      "manual": "Manualna",
+      "semi_automatic": "Półautomatyczna",
+      "cvt": "CVT"
+    },
+    "bodyType": {
+      "sedan": "Sedan",
+      "hatchback": "Hatchback",
+      "kombi": "Kombi",
+      "suv": "SUV",
+      "coupe": "Coupe",
+      "cabrio": "Kabriolet",
+      "pickup": "Pickup",
+      "van": "Van",
+      "minivan": "Minivan",
+      "other": "Inne"
+    },
+    "colourType": {
+      "metallic": "Metalik",
+      "matte": "Mat",
+      "pearl": "Perłowy",
+      "solid": "Solid",
+      "other": "Inny"
+    }
+  },
+  "common": {
+    "found": "Znaleziono",
+    "offers": "ofert",
+    "perPage": "Na stronę",
+    "loading": "Ładowanie...",
+    "error": "Wystąpił błąd",
+    "tryAgain": "Spróbuj ponownie"
+  },
+  "filters": {
+    "title": "Filtry",
+    "clear": "Wyczyść filtry",
+    "brand": "Marka",
+    "model": "Model",
+    "yearFrom": "Rok od",
+    "yearTo": "Rok do",
+    "priceFrom": "Cena od",
+    "priceTo": "Cena do",
+    "mileageFrom": "Przebieg od",
+    "mileageTo": "Przebieg do",
+    "fuelType": "Rodzaj paliwa",
+    "transmission": "Skrzynia biegów",
+    "bodyType": "Typ nadwozia"
+  }
+}

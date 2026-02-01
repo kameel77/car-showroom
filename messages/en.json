@@ -1,0 +1,103 @@
+{
+  "nav": {
+    "home": "Home",
+    "offers": "Offers",
+    "contact": "Contact"
+  },
+  "listing": {
+    "viewOffer": "View offer",
+    "km": "km",
+    "hp": "hp",
+    "price": "Price",
+    "year": "Year",
+    "mileage": "Mileage",
+    "fuel": "Fuel",
+    "transmission": "Transmission",
+    "bodyType": "Body type",
+    "power": "Power",
+    "location": "Location",
+    "colourType": "Paint type"
+  },
+  "detail": {
+    "askAbout": "Ask about offer",
+    "call": "Call",
+    "sendInquiry": "Send inquiry",
+    "keyParameters": "Key parameters",
+    "specifications": "Specifications",
+    "equipment": "Equipment",
+    "description": "Description",
+    "dealerInfo": "Seller information",
+    "back": "Back to list",
+    "notFound": "Offer not found",
+    "returnToSearch": "Return to search"
+  },
+  "equipment": {
+    "safety": "Safety",
+    "performance": "Performance & Tuning",
+    "comfort": "Comfort & Extras",
+    "multimedia": "Audio & Multimedia",
+    "driverAssist": "Driver Assistance Systems",
+    "other": "Other",
+    "noEquipment": "No equipment information available"
+  },
+  "specs": {
+    "fuel": {
+      "petrol": "Petrol",
+      "diesel": "Diesel",
+      "electric": "Electric",
+      "hybrid": "Hybrid",
+      "plugin_hybrid": "Plug-in Hybrid",
+      "lpg": "LPG",
+      "cng": "CNG",
+      "other": "Other"
+    },
+    "transmission": {
+      "automatic": "Automatic",
+      "manual": "Manual",
+      "semi_automatic": "Semi-automatic",
+      "cvt": "CVT"
+    },
+    "bodyType": {
+      "sedan": "Sedan",
+      "hatchback": "Hatchback",
+      "kombi": "Wagon",
+      "suv": "SUV",
+      "coupe": "Coupe",
+      "cabrio": "Convertible",
+      "pickup": "Pickup",
+      "van": "Van",
+      "minivan": "Minivan",
+      "other": "Other"
+    },
+    "colourType": {
+      "metallic": "Metallic",
+      "matte": "Matte",
+      "pearl": "Pearl",
+      "solid": "Solid",
+      "other": "Other"
+    }
+  },
+  "common": {
+    "found": "Found",
+    "offers": "offers",
+    "perPage": "Per page",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "tryAgain": "Try again"
+  },
+  "filters": {
+    "title": "Filters",
+    "clear": "Clear filters",
+    "brand": "Brand",
+    "model": "Model",
+    "yearFrom": "Year from",
+    "yearTo": "Year to",
+    "priceFrom": "Price from",
+    "priceTo": "Price to",
+    "mileageFrom": "Mileage from",
+    "mileageTo": "Mileage to",
+    "fuelType": "Fuel type",
+    "transmission": "Transmission",
+    "bodyType": "Body type"
+  }
+}

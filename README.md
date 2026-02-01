@@ -1,36 +1,76 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Car Showroom
 
-## Getting Started
+Prosta aplikacja Next.js do wyświetlania ofert pojazdów z Supabase.
 
-First, run the development server:
+## Funkcje
+
+- **Listing Page** - siatka ofert z filtrowaniem
+- **Offer Page** - szczegóły pojazdu ze zdjęciami
+- **Wielojęzyczność** - wsparcie dla PL, EN, DE
+- **Responsywny design** - działa na desktop i mobile
+- **Ładowanie danych** - Server Side Rendering z Next.js
+
+## Tech Stack
+
+- Next.js 15 (App Router)
+- TypeScript
+- Tailwind CSS
+- Supabase
+- next-intl (i18n)
+- Lucide React (ikony)
+
+## Konfiguracja
+
+1. Skopiuj `.env.example` do `.env.local` i uzupełnij dane Supabase:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=twoj_supabase_url_here
+NEXT_PUBLIC_SUPABASE_ANON_KEY=twoj_supabase_anon_key_here
+```
+
+2. Zainstaluj zależności:
+
+```bash
+npm install
+```
+
+3. Uruchom aplikację:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Aplikacja będzie dostępna pod `http://localhost:3000`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Struktura projektu
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/
+├── app/[locale]/          # Strony z i18n
+│   ├── page.tsx           # Listing ofert
+│   └── offer/[id]/        # Strona oferty
+├── components/            # Komponenty React
+├── i18n/                  # Konfiguracja i18n
+├── lib/                   # Konfiguracja Supabase
+├── types/                 # TypeScript types
+└── middleware.ts          # Middleware i18n
+```
 
-## Learn More
+## Baza danych
 
-To learn more about Next.js, take a look at the following resources:
+Aplikacja korzysta z tabeli `car_offers` w Supabase. Schemat znajdziesz w:
+`/Users/kamiltonkowicz/Documents/Coding/chrome-ext/chrome-ext-otomoto/supabase_schema.sql`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Dostępne języki
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Polski (PL) - domyślny
+- English (EN)
+- Deutsch (DE)
 
-## Deploy on Vercel
+## Deployment
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Aplikacja może być wdrożona na Vercel, Netlify lub inną platformę wspierającą Next.js.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run build
+```
