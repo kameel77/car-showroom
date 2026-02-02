@@ -66,6 +66,9 @@ export async function getPartnerBySlug(slug: string): Promise<Partner | null> {
     .single();
 
   if (error) {
+    if (error.code === 'PGRST116') {
+      return null;
+    }
     console.error('Error fetching partner by slug:', error);
     return null;
   }

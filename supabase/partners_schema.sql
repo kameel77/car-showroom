@@ -54,17 +54,12 @@ CREATE OR REPLACE FUNCTION calculate_partner_price(
     custom_price NUMERIC
 ) RETURNS NUMERIC AS $$
 BEGIN
-    -- If custom price is set, use it
     IF custom_price IS NOT NULL THEN
         RETURN custom_price;
     END IF;
-    
-    -- Otherwise calculate with margin
     IF margin_percent IS NOT NULL AND margin_percent > 0 THEN
-        RETURN ROUND(base_price * (1 + margin_percent / 100));
+        RETURN FLOOR(base_price * (1 + margin_percent / 100));
     END IF;
-    
-    -- Return base price if no margin
     RETURN base_price;
 END;
 $$ LANGUAGE plpgsql;
@@ -78,7 +73,7 @@ RETURNS TABLE (
     model TEXT,
     model_version TEXT,
     year INTEGER,
-    mileage INTEGER,
+    mileage BIGINT,
     price NUMERIC,
     display_price NUMERIC,
     fuel_type TEXT,
