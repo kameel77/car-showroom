@@ -19,7 +19,7 @@ interface PartnerOfferPageProps {
   }>;
 }
 
-async function getOffer(id: number) {
+async function getOffer(id: string) {
   const { data, error } = await supabase
     .from('car_offers')
     .select('*')
@@ -37,7 +37,7 @@ export async function generateMetadata({ params }: PartnerOfferPageProps): Promi
   const { partner: partnerSlug, id } = await params;
   const [partner, offerData] = await Promise.all([
     getPartnerBySlug(partnerSlug),
-    getOffer(Number(id)),
+    getOffer(id),
   ]);
   
   if (!partner || !offerData) {
@@ -67,8 +67,8 @@ export default async function PartnerOfferPage({ params }: PartnerOfferPageProps
   // Get partner and offer data
   const [partner, partnerOffer, offerData] = await Promise.all([
     getPartnerBySlug(partnerSlug),
-    getPartnerPublicOffer(partnerSlug, Number(id)),
-    getOffer(Number(id)),
+    getPartnerPublicOffer(partnerSlug, id),
+    getOffer(id),
   ]);
 
   if (!partner || !partnerOffer || !offerData) {
