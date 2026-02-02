@@ -504,24 +504,26 @@ export default function PartnerOffersPage() {
                   {/* Partner Price */}
                   <div className="col-span-2 text-right">
                     <div className="space-y-1">
-                      <p className="font-medium text-blue-600">
+                      <p className="font-bold text-gray-900">
                         {formatPrice(offer.calculated_price)}
                       </p>
                       <div className="flex items-center justify-end gap-2">
                         <input
                           type="number"
-                          value={offer.custom_price || ''}
-                          onChange={(e) => {
+                          defaultValue={offer.custom_price || ''}
+                          onBlur={(e) => {
                             const value = e.target.value === '' ? undefined : Number(e.target.value);
-                            handleUpdatePrice(offer.offer_id, value);
+                            if (value !== offer.custom_price) {
+                              handleUpdatePrice(offer.offer_id, value);
+                            }
                           }}
                           placeholder="Własna cena"
-                          className="w-24 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                          className="w-24 px-2 py-1 text-sm font-medium text-gray-900 border border-gray-400 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
                         />
                         {offer.custom_price && (
                           <button
                             onClick={() => handleUpdatePrice(offer.offer_id, undefined)}
-                            className="text-gray-400 hover:text-red-500"
+                            className="text-gray-500 hover:text-red-600"
                             title="Usuń własną cenę"
                           >
                             <X className="h-4 w-4" />
@@ -529,7 +531,7 @@ export default function PartnerOffersPage() {
                         )}
                       </div>
                       {!offer.custom_price && offer.margin_percent > 0 && (
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs font-medium text-gray-600">
                           +{calculateMarginPercent(offer.offer.price, offer.calculated_price)}%
                         </p>
                       )}
@@ -563,9 +565,10 @@ export default function PartnerOffersPage() {
                   {/* Actions */}
                   <div className="col-span-1 text-center">
                     <Link
-                      href={`/${locale}/offer/${offer.offer_id}`}
+                      href={`/${locale}/${partner.slug}/offer/${offer.offer_id}`}
                       target="_blank"
-                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      title="Pokaż ofertę"
                     >
                       <ExternalLink className="h-5 w-5" />
                     </Link>
