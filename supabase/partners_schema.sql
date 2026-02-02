@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS partner_offers (
 );
 
 -- Function to calculate display price for partner
+DROP FUNCTION IF EXISTS calculate_partner_price(NUMERIC, NUMERIC, NUMERIC);
 CREATE OR REPLACE FUNCTION calculate_partner_price(
     base_price NUMERIC,
     margin_percent NUMERIC,
@@ -69,6 +70,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Function to get partner offers with calculated prices
+DROP FUNCTION IF EXISTS get_partner_offers(TEXT);
 CREATE OR REPLACE FUNCTION get_partner_offers(partner_slug TEXT)
 RETURNS TABLE (
     offer_id UUID,
@@ -145,6 +147,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Function to auto-create partner_offers for new car_offers
+DROP FUNCTION IF EXISTS auto_create_partner_offers() CASCADE;
 CREATE OR REPLACE FUNCTION auto_create_partner_offers()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -194,6 +197,7 @@ CREATE TRIGGER tr_auto_create_partner_offers
     EXECUTE FUNCTION auto_create_partner_offers();
 
 -- Function to update partner_offers when filters change
+DROP FUNCTION IF EXISTS sync_partner_offers_on_filter_change() CASCADE;
 CREATE OR REPLACE FUNCTION sync_partner_offers_on_filter_change()
 RETURNS TRIGGER AS $$
 DECLARE

@@ -43,10 +43,6 @@ interface PartnerOffersPageProps {
   };
 }
 
-export default function PartnerOffersPage({ params }: PartnerOffersPageProps) {
-  const t = useTranslations();
-  const locale = useLocale();
-  const router = useRouter();
 const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export default function PartnerOffersPage({ params }: PartnerOffersPageProps) {
