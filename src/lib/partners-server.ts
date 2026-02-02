@@ -285,7 +285,7 @@ export async function getPartnerOffersWithDetails(
   }
 
   // Combine data
-  return filteredOffers.map(offer => {
+  const result: PartnerOfferWithDetails[] = filteredOffers.map(offer => {
     const partnerOffer = partnerOffersMap.get(offer.id);
     const calculatedPrice = calculateDisplayPrice({
       basePrice: offer.price,
@@ -317,8 +317,10 @@ export async function getPartnerOffersWithDetails(
       },
       calculated_price: calculatedPrice,
       margin_percent: partner.default_margin_percent,
-    });
+    };
   });
+
+  return result;
 }
 
 /**
