@@ -28,12 +28,7 @@ export default function LandingPage() {
               <Car className="h-8 w-8 text-blue-600" />
               <span className="text-xl font-bold text-gray-900">Car Showroom</span>
             </div>
-            <Link
-              href="/pl/admin/partners"
-              className="text-sm text-gray-600 hover:text-gray-900"
-            >
-              Panel admina
-            </Link>
+
           </div>
         </div>
       </nav>

@@ -168,7 +168,7 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
                   name="company_name"
                   value={formData.company_name}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                   placeholder="np. Firma XYZ Sp. z o.o."
                   required
                 />
@@ -221,7 +221,7 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
                   name="vat_number"
                   value={formData.vat_number}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                   placeholder="np. 1234567890"
                 />
               </div>
@@ -236,7 +236,7 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
                   name="contact_person"
                   value={formData.contact_person}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                   placeholder="np. Jan Kowalski"
                 />
               </div>
@@ -258,7 +258,7 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                   placeholder="kontakt@firma.pl"
                 />
               </div>
@@ -273,7 +273,7 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                   placeholder="+48 123 456 789"
                 />
               </div>
@@ -313,7 +313,7 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
                   min="0"
                   max="100"
                   step="0.01"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                   placeholder="0"
                 />
                 <p className="text-xs text-gray-500 mt-1">
