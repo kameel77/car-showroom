@@ -142,7 +142,7 @@ export default async function PartnerOfferPage({ params }: PartnerOfferPageProps
                 power={offerData.engine_power}
                 location={offerData.seller_city}
                 bodyType={offerData.body_type}
-                color={offerData.color}
+                colourType={offerData.colour_type}
               />
             </section>
 
