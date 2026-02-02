@@ -63,7 +63,7 @@ export default function PartnerOffersPage({ params }: PartnerOffersPageProps) {
   const [selectedModel, setSelectedModel] = useState('');
   
   // Bulk actions
-  const [selectedOffers, setSelectedOffers] = useState<Set<number>>(new Set());
+  const [selectedOffers, setSelectedOffers] = useState<Set<string>>(new Set());
   const [bulkMargin, setBulkMargin] = useState<number | ''>('');
   
   // Search
@@ -142,7 +142,7 @@ export default function PartnerOffersPage({ params }: PartnerOffersPageProps) {
     }
   };
 
-  const handleUpdatePrice = async (offerId: number, customPrice: number | undefined) => {
+  const handleUpdatePrice = async (offerId: string, customPrice: number | undefined) => {
     try {
       setSaving(true);
       await updatePartnerOffer(id, offerId, { custom_price: customPrice });
@@ -160,7 +160,7 @@ export default function PartnerOffersPage({ params }: PartnerOffersPageProps) {
     }
   };
 
-  const handleToggleVisibility = async (offerId: number, isVisible: boolean) => {
+  const handleToggleVisibility = async (offerId: string, isVisible: boolean) => {
     try {
       await updatePartnerOffer(id, offerId, { is_visible: !isVisible });
       
@@ -203,7 +203,7 @@ export default function PartnerOffersPage({ params }: PartnerOffersPageProps) {
     }
   };
 
-  const toggleOfferSelection = (offerId: number) => {
+  const toggleOfferSelection = (offerId: string) => {
     const newSelected = new Set(selectedOffers);
     if (newSelected.has(offerId)) {
       newSelected.delete(offerId);
