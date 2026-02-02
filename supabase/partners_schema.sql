@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS partner_filters (
 CREATE TABLE IF NOT EXISTS partner_offers (
     id BIGSERIAL PRIMARY KEY,
     partner_id UUID NOT NULL REFERENCES partners(id) ON DELETE CASCADE,
-    offer_id BIGINT NOT NULL REFERENCES car_offers(id) ON DELETE CASCADE,
+    offer_id UUID NOT NULL REFERENCES car_offers(id) ON DELETE CASCADE,
     custom_price INTEGER,
     is_visible BOOLEAN DEFAULT true,
     notes TEXT,
@@ -71,7 +71,7 @@ $$ LANGUAGE plpgsql;
 -- Function to get partner offers with calculated prices
 CREATE OR REPLACE FUNCTION get_partner_offers(partner_slug TEXT)
 RETURNS TABLE (
-    offer_id BIGINT,
+    offer_id UUID,
     brand TEXT,
     model TEXT,
     model_version TEXT,

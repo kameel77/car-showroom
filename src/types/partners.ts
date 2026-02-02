@@ -27,7 +27,7 @@ export interface PartnerFilter {
 export interface PartnerOffer {
   id: number;
   partner_id: string;
-  offer_id: number;
+  offer_id: string;
   custom_price?: number;
   is_visible: boolean;
   notes?: string;
@@ -37,7 +37,7 @@ export interface PartnerOffer {
 
 export interface PartnerOfferWithDetails extends PartnerOffer {
   offer: {
-    id: number;
+    id: string;
     brand: string;
     model: string;
     model_version?: string;
@@ -93,7 +93,7 @@ export interface UpdatePartnerOfferInput {
 }
 
 export interface PartnerPublicOffer {
-  offer_id: number;
+  offer_id: string;
   brand: string;
   model: string;
   model_version?: string;

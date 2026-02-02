@@ -1,5 +1,5 @@
 export interface CarOffer {
-  id: number;
+  id: string;
   created_at: string;
   advert_id: string;
   advert_url: string | null;

@@ -326,7 +326,7 @@ export async function getPartnerOffersWithDetails(
  */
 export async function updatePartnerOffer(
   partnerId: string,
-  offerId: number,
+  offerId: string,
   input: UpdatePartnerOfferInput
 ): Promise<PartnerOffer> {
   // Check if partner_offer exists
@@ -383,7 +383,7 @@ export async function updatePartnerOffer(
  */
 export async function bulkUpdatePartnerOffers(
   partnerId: string,
-  offerIds: number[],
+  offerIds: string[],
   input: UpdatePartnerOfferInput
 ): Promise<void> {
   for (const offerId of offerIds) {
@@ -413,7 +413,7 @@ export async function getPartnerPublicOffers(
  */
 export async function getPartnerPublicOffer(
   slug: string,
-  offerId: number
+  offerId: string
 ): Promise<PartnerPublicOffer | null> {
   const offers = await getPartnerPublicOffers(slug);
   return offers.find(o => o.offer_id === offerId) || null;
