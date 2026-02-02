@@ -17,6 +17,3 @@ cmd = 'npm start'
 NODE_ENV = 'production'
 NEXT_TELEMETRY_DISABLED = '1'
 # Port is set by Coolify, defaults to 3000
-# Supabase configuration - these will be overridden by Coolify env vars if set
-NEXT_PUBLIC_SUPABASE_URL = ''
-NEXT_PUBLIC_SUPABASE_ANON_KEY = ''

@@ -95,9 +95,9 @@ export function ListingCard({ listing, index = 0 }: ListingCardProps) {
 
           {/* Power & Location */}
           <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-            <div className="flex items-center gap-1.5 text-sm">
+            <div className="flex items-center gap-1.5 text-sm text-gray-600">
               <Zap className="h-3.5 w-3.5 text-blue-500" />
-              <span className="font-medium">{listing.engine_power || '-'}</span>
+              <span>{listing.engine_power || '-'}</span>
             </div>
             <div className="flex items-center gap-1 text-sm text-gray-500">
               <MapPin className="h-3.5 w-3.5" />

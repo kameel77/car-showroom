@@ -46,10 +46,10 @@ export function EquipmentDisplay({ equipment }: EquipmentDisplayProps) {
   const groups = Object.entries(groupedEquipment);
   
   const [expandedGroups, setExpandedGroups] = React.useState<Record<string, boolean>>(() => {
-    // By default, expand first 3 groups
+    // All groups collapsed by default
     const initial: Record<string, boolean> = {};
-    groups.slice(0, 3).forEach(([groupName]) => {
-      initial[groupName] = true;
+    groups.forEach(([groupName]) => {
+      initial[groupName] = false;
     });
     return initial;
   });
