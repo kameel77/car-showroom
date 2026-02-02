@@ -147,12 +147,12 @@ export default async function PartnerOfferPage({ params }: PartnerOfferPageProps
             </section>
 
             {/* Equipment */}
-            {offerData.features && offerData.features.length > 0 && (
+            {offerData.features && (
               <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">
                   {t('detail.equipment')}
                 </h2>
-                <EquipmentDisplay equipment={offerData.features} />
+                <EquipmentDisplay equipment={offerData.features as string[] | Record<string, string[]> | null | undefined} />
               </section>
             )}
           </div>

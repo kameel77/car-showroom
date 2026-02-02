@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import {
   ArrowLeft,
   Loader2,
@@ -36,20 +36,14 @@ import {
 import { getAllowedBrands } from '@/lib/filters-server';
 import { formatPrice, calculateMarginPercent } from '@/lib/price-calculator';
 
-interface PartnerOffersPageProps {
-  params: {
-    locale: string;
-    id: string;
-  };
-}
-
 const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export default function PartnerOffersPage({ params }: PartnerOffersPageProps) {
+export default function PartnerOffersPage() {
   const t = useTranslations();
   const locale = useLocale();
   const router = useRouter();
-  const { id } = params;
+  const params = useParams();
+  const partnerId = params.id as string;
 
   const [partner, setPartner] = useState<Partner | null>(null);
   const [offers, setOffers] = useState<PartnerOfferWithDetails[]>([]);
@@ -65,6 +59,8 @@ export default function PartnerOffersPage({ params }: PartnerOffersPageProps) {
   const [selectedOffers, setSelectedOffers] = useState<Set<string>>(new Set());
   const [bulkMargin, setBulkMargin] = useState<number | ''>('');
   const [searchQuery, setSearchQuery] = useState('');
+
+  const id = partnerId;
 
   // Prevent rendering if id is invalid
   if (!id || !uuidRegex.test(id)) {
