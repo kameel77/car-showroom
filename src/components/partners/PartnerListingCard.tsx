@@ -20,7 +20,7 @@ export function PartnerListingCard({ offer, partnerSlug, locale, index = 0 }: Pa
   const t = useTranslations('listing');
   const { settings } = useAppSettings();
 
-  const formatMileage = (mileage: number | null) => {
+  const formatMileage = (mileage: number | null | undefined) => {
     if (!mileage) return '-';
     return mileage.toLocaleString(locale);
   };
