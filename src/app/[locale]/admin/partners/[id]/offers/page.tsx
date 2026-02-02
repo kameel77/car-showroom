@@ -59,6 +59,13 @@ export default function PartnerOffersPage({ params }: PartnerOffersPageProps) {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  const [showFilters, setShowFilters] = useState(false);
+  const [selectedBrand, setSelectedBrand] = useState('');
+  const [selectedModel, setSelectedModel] = useState('');
+  const [selectedOffers, setSelectedOffers] = useState<Set<string>>(new Set());
+  const [bulkMargin, setBulkMargin] = useState<number | ''>('');
+  const [searchQuery, setSearchQuery] = useState('');
+
   // Prevent rendering if id is invalid
   if (!id || !uuidRegex.test(id)) {
     return (
