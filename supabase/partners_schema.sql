@@ -82,21 +82,21 @@ RETURNS TABLE (
     main_photo_url TEXT,
     is_visible BOOLEAN,
     custom_price NUMERIC,
-    margin_percent NUMERIC
+    margin_percent NUMERIC,
+    features JSONB,
+    technical_spec JSONB
 ) AS $$
 DECLARE
     partner_record RECORD;
 BEGIN
-    -- Get partner info
     SELECT id, default_margin_percent INTO partner_record
     FROM partners
     WHERE slug = partner_slug AND is_active = true;
     
-    IF partner_record IS NULL THEN
+    IF partner_record IS NULL OR partner_record.default_margin_percent IS NULL THEN
         RETURN;
     END IF;
     
-    -- Return offers with calculated prices
     RETURN QUERY
     SELECT 
         co.id as offer_id,
@@ -106,34 +106,38 @@ BEGIN
         co.year,
         co.mileage,
         co.price,
-        calculate_partner_price(co.price, partner_record.default_margin_percent, po.custom_price) as display_price,
+        COALESCE(
+            CASE 
+                WHEN po.custom_price IS NOT NULL THEN po.custom_price::NUMERIC
+                WHEN partner_record.default_margin_percent > 0 THEN FLOOR(co.price * (1 + partner_record.default_margin_percent / 100))
+                ELSE co.price
+            END,
+            co.price
+        ) as display_price,
         co.fuel_type,
         co.engine_power,
         co.transmission,
         co.main_photo_url,
         COALESCE(po.is_visible, true) as is_visible,
-        po.custom_price,
-        partner_record.default_margin_percent as margin_percent
+        COALESCE(po.custom_price, 0)::NUMERIC as custom_price,
+        partner_record.default_margin_percent as margin_percent,
+        co.features,
+        co.technical_spec
     FROM car_offers co
     LEFT JOIN partner_offers po ON po.offer_id = co.id AND po.partner_id = partner_record.id
     WHERE 
-        -- Check if partner has filters
         (
             NOT EXISTS (
                 SELECT 1 FROM partner_filters pf 
                 WHERE pf.partner_id = partner_record.id AND pf.is_active = true
             )
             OR
-            -- Or offer matches partner filters
             EXISTS (
                 SELECT 1 FROM partner_filters pf
                 WHERE pf.partner_id = partner_record.id 
                 AND pf.is_active = true
                 AND LOWER(pf.brand_name) = LOWER(co.brand)
-                AND (
-                    pf.model_name IS NULL 
-                    OR LOWER(pf.model_name) = LOWER(co.model)
-                )
+                AND (pf.model_name IS NULL OR LOWER(pf.model_name) = LOWER(co.model))
             )
         )
         AND COALESCE(po.is_visible, true) = true

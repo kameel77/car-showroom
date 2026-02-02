@@ -105,4 +105,6 @@ export interface PartnerPublicOffer {
   engine_power?: string;
   transmission?: string;
   main_photo_url?: string;
+  features?: Record<string, any>;
+  technical_spec?: Record<string, any>;
 }
