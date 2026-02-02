@@ -1,7 +1,6 @@
-import { redirect } from 'next/navigation';
+import LandingPage from '@/app/page';
 
 export default function LocaleRootPage() {
-  // In MVP, redirect to landing page
-  // Later this can be changed to show offers or partner selection
-  redirect('/');
+  // Show landing page for all locale routes
+  return <LandingPage />;
 }
