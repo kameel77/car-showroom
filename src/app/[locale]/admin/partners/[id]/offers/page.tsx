@@ -47,6 +47,12 @@ export default function PartnerOffersPage({ params }: PartnerOffersPageProps) {
   const t = useTranslations();
   const locale = useLocale();
   const router = useRouter();
+const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export default function PartnerOffersPage({ params }: PartnerOffersPageProps) {
+  const t = useTranslations();
+  const locale = useLocale();
+  const router = useRouter();
   const { id } = params;
 
   const [partner, setPartner] = useState<Partner | null>(null);
@@ -56,18 +62,24 @@ export default function PartnerOffersPage({ params }: PartnerOffersPageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  
-  // Filters state
-  const [showFilters, setShowFilters] = useState(false);
-  const [selectedBrand, setSelectedBrand] = useState('');
-  const [selectedModel, setSelectedModel] = useState('');
-  
-  // Bulk actions
-  const [selectedOffers, setSelectedOffers] = useState<Set<string>>(new Set());
-  const [bulkMargin, setBulkMargin] = useState<number | ''>('');
-  
-  // Search
-  const [searchQuery, setSearchQuery] = useState('');
+
+  // Prevent rendering if id is invalid
+  if (!id || !uuidRegex.test(id)) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <p className="text-red-600">Nieprawidłowy ID partnera</p>
+          <Link 
+            href={`/${locale}/admin/partners`}
+            className="mt-4 inline-block px-4 py-2 bg-blue-600 text-white rounded-lg"
+          >
+            Wróć do listy
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   useEffect(() => {
     loadData();

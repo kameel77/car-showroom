@@ -35,6 +35,11 @@ export async function getPartners(): Promise<Partner[]> {
  * Get partner by ID
  */
 export async function getPartnerById(id: string): Promise<Partner | null> {
+  if (!id || id === 'undefined' || id === 'null') {
+    console.error('Invalid partner ID:', id);
+    return null;
+  }
+  
   const { data, error } = await supabase
     .from('partners')
     .select('*')
@@ -144,6 +149,11 @@ export async function deletePartner(id: string): Promise<void> {
  * Get partner filters
  */
 export async function getPartnerFilters(partnerId: string): Promise<PartnerFilter[]> {
+  if (!partnerId || partnerId === 'undefined' || partnerId === 'null') {
+    console.error('Invalid partner ID for filters:', partnerId);
+    return [];
+  }
+  
   const { data, error } = await supabase
     .from('partner_filters')
     .select('*')
@@ -205,6 +215,11 @@ export async function deletePartnerFilter(filterId: number): Promise<void> {
 export async function getPartnerOffersWithDetails(
   partnerId: string
 ): Promise<PartnerOfferWithDetails[]> {
+  if (!partnerId || partnerId === 'undefined' || partnerId === 'null') {
+    console.error('Invalid partner ID for offers:', partnerId);
+    throw new Error('Invalid partner ID');
+  }
+
   // First get partner info
   const partner = await getPartnerById(partnerId);
   if (!partner) {

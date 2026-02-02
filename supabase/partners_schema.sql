@@ -48,10 +48,10 @@ CREATE TABLE IF NOT EXISTS partner_offers (
 
 -- Function to calculate display price for partner
 CREATE OR REPLACE FUNCTION calculate_partner_price(
-    base_price INTEGER,
-    margin_percent DECIMAL(5,2),
-    custom_price INTEGER
-) RETURNS INTEGER AS $$
+    base_price NUMERIC,
+    margin_percent NUMERIC,
+    custom_price NUMERIC
+) RETURNS NUMERIC AS $$
 BEGIN
     -- If custom price is set, use it
     IF custom_price IS NOT NULL THEN
@@ -77,15 +77,15 @@ RETURNS TABLE (
     model_version TEXT,
     year INTEGER,
     mileage INTEGER,
-    price INTEGER,
-    display_price INTEGER,
+    price NUMERIC,
+    display_price NUMERIC,
     fuel_type TEXT,
     engine_power TEXT,
     transmission TEXT,
     main_photo_url TEXT,
     is_visible BOOLEAN,
-    custom_price INTEGER,
-    margin_percent DECIMAL(5,2)
+    custom_price NUMERIC,
+    margin_percent NUMERIC
 ) AS $$
 DECLARE
     partner_record RECORD;
@@ -240,6 +240,11 @@ CREATE INDEX IF NOT EXISTS idx_partner_offers_visible ON partner_offers(is_visib
 ALTER TABLE partners ENABLE ROW LEVEL SECURITY;
 ALTER TABLE partner_filters ENABLE ROW LEVEL SECURITY;
 ALTER TABLE partner_offers ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policies if they exist (to avoid conflicts)
+DROP POLICY IF EXISTS "Allow all" ON partners;
+DROP POLICY IF EXISTS "Allow all" ON partner_filters;
+DROP POLICY IF EXISTS "Allow all" ON partner_offers;
 
 -- Create policies (allow all for now, will restrict later)
 CREATE POLICY "Allow all" ON partners FOR ALL USING (true);
