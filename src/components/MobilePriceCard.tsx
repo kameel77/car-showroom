@@ -19,7 +19,7 @@ export function MobilePriceCard({ offer }: MobilePriceCardProps) {
   return (
     <div className="lg:hidden bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <h1 className="text-2xl font-bold text-gray-900">
-        {offer.brand} {offer.model} {offer.model_version}
+        {offer.brand} {offer.model} {offer.model_version && offer.model_version !== 'Brak' ? offer.model_version : ''}
       </h1>
       <div className="mt-2 space-y-1">
         <span className="text-3xl font-bold text-blue-600">

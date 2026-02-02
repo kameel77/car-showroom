@@ -68,9 +68,11 @@ export function ListingCard({ listing, index = 0 }: ListingCardProps) {
             <h3 className="text-lg font-semibold text-gray-900 line-clamp-1 group-hover:text-blue-600 transition-colors">
               {listing.brand} {listing.model}
             </h3>
-            <p className="text-sm text-gray-500 line-clamp-1">
-              {listing.model_version}
-            </p>
+            {listing.model_version && listing.model_version !== 'Brak' && (
+              <p className="text-sm text-gray-500 line-clamp-1">
+                {listing.model_version}
+              </p>
+            )}
           </div>
 
           {/* Specs Grid */}

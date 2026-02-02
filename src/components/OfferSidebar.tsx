@@ -37,7 +37,7 @@ export function OfferSidebar({ offer }: OfferSidebarProps) {
       {/* Price Card */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
         <h1 className="text-xl font-bold text-gray-900">
-          {offer.brand} {offer.model} {offer.model_version}
+          {offer.brand} {offer.model} {offer.model_version && offer.model_version !== 'Brak' ? offer.model_version : ''}
         </h1>
         
         {/* Price Display */}
