@@ -12,7 +12,7 @@ import {
   CreatePartnerFilterInput,
   UpdatePartnerOfferInput,
 } from '@/types/partners';
-import { calculateDisplayPrice } from './price-calculator';
+import { calculateDisplayPrice, calculateNetPrice } from './price-calculator';
 
 /**
  * Get all partners
@@ -310,6 +310,9 @@ export async function getPartnerOffersWithDetails(
       marginPercent: partner.default_margin_percent,
       customPrice: partnerOffer?.custom_price,
     });
+    
+    // Calculate net price (remove 23% VAT)
+    const calculatedPriceNet = calculateNetPrice(calculatedPrice);
 
     return {
       id: partnerOffer?.id || 0,
@@ -334,7 +337,9 @@ export async function getPartnerOffersWithDetails(
         main_photo_url: offer.main_photo_url,
       },
       calculated_price: calculatedPrice,
+      calculated_price_net: calculatedPriceNet,
       margin_percent: partner.default_margin_percent,
+      show_net_prices: partner.show_net_prices ?? false,
     };
   });
 

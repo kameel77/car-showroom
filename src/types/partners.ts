@@ -51,7 +51,9 @@ export interface PartnerOfferWithDetails extends PartnerOffer {
     main_photo_url?: string;
   };
   calculated_price: number;
+  calculated_price_net: number;
   margin_percent: number;
+  show_net_prices: boolean;
 }
 
 export interface CreatePartnerInput {

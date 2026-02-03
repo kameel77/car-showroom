@@ -34,7 +34,7 @@ import {
   bulkUpdatePartnerOffers,
 } from '@/lib/partners-server';
 import { getAllBrandsFromOffers } from '@/lib/filters-server';
-import { formatPrice, calculateMarginPercent } from '@/lib/price-calculator';
+import { formatPrice, calculateMarginPercent, calculateNetPrice } from '@/lib/price-calculator';
 
 const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -158,7 +158,7 @@ export default function PartnerOffersPage() {
       setSaving(true);
       await updatePartnerOffer(id, offerId, { custom_price: customPrice });
       
-      // Update local state with recalculated price
+      // Update local state with recalculated prices
       setOffers(offers.map(o => {
         if (o.offer_id !== offerId) return o;
         
@@ -172,10 +172,14 @@ export default function PartnerOffersPage() {
           newCalculatedPrice = customPrice;
         }
         
+        // Recalculate net price
+        const newCalculatedPriceNet = calculateNetPrice(newCalculatedPrice);
+        
         return { 
           ...o, 
           custom_price: customPrice,
-          calculated_price: newCalculatedPrice
+          calculated_price: newCalculatedPrice,
+          calculated_price_net: newCalculatedPriceNet
         };
       }));
     } catch (err) {
@@ -299,6 +303,11 @@ export default function PartnerOffersPage() {
             </h1>
             <p className="text-gray-600 mt-1">
               Zarządzaj widocznością i cenami ofert • Domyślna marża: {partner.default_margin_percent}%
+              {partner.show_net_prices && (
+                <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                  Ceny netto (VAT 23%)
+                </span>
+              )}
             </p>
           </div>
           <Link
@@ -451,9 +460,10 @@ export default function PartnerOffersPage() {
                 className="h-4 w-4 text-blue-600 rounded"
               />
             </div>
-            <div className="col-span-4">Pojazd</div>
-            <div className="col-span-2 text-right">Cena oryginalna</div>
-            <div className="col-span-2 text-right">Cena partnera</div>
+            <div className="col-span-3">Pojazd</div>
+            <div className="col-span-1.5 text-right">Cena oryginalna</div>
+            <div className="col-span-1.5 text-right">Cena netto</div>
+            <div className="col-span-1.5 text-right">Cena partnera</div>
             <div className="col-span-2 text-center">Widoczność</div>
             <div className="col-span-1 text-center">Akcje</div>
           </div>
@@ -487,7 +497,7 @@ export default function PartnerOffersPage() {
                   </div>
 
                   {/* Vehicle Info */}
-                  <div className="col-span-4 flex items-center gap-3">
+                  <div className="col-span-3 flex items-center gap-3">
                     {offer.offer.main_photo_url && (
                       <div className="relative w-16 h-12 rounded-lg overflow-hidden flex-shrink-0">
                         <Image
@@ -508,18 +518,27 @@ export default function PartnerOffersPage() {
                     </div>
                   </div>
 
-                  {/* Original Price */}
-                  <div className="col-span-2 text-right">
+                  {/* Original Price (Gross) */}
+                  <div className="col-span-1.5 text-right">
                     <p className="font-medium text-gray-900">
                       {formatPrice(offer.offer.price)}
                     </p>
                   </div>
 
-                  {/* Partner Price */}
-                  <div className="col-span-2 text-right">
+                  {/* Net Price */}
+                  <div className="col-span-1.5 text-right">
+                    <p className="font-medium text-gray-700">
+                      {formatPrice(offer.calculated_price_net)}
+                    </p>
+                  </div>
+
+                  {/* Partner Price (Net if show_net_prices=true, else Gross) */}
+                  <div className="col-span-1.5 text-right">
                     <div className="space-y-1">
                       <p className="font-bold text-gray-900">
-                        {formatPrice(offer.calculated_price)}
+                        {offer.show_net_prices 
+                          ? formatPrice(offer.calculated_price_net)
+                          : formatPrice(offer.calculated_price)}
                       </p>
                       <div className="flex items-center justify-end gap-2">
                         <input
@@ -531,7 +550,7 @@ export default function PartnerOffersPage() {
                               handleUpdatePrice(offer.offer_id, value);
                             }
                           }}
-                          placeholder="Własna cena"
+                          placeholder={offer.show_net_prices ? "Cena netto" : "Własna cena"}
                           className="w-24 px-2 py-1 text-sm font-medium text-gray-900 border border-gray-400 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
                         />
                         {offer.custom_price && (
