@@ -35,6 +35,7 @@ async function getOffer(id: string) {
 
 export async function generateMetadata({ params }: PartnerOfferPageProps): Promise<Metadata> {
   const { partner: partnerSlug, id } = await params;
+  const t = await getTranslations();
   const [partner, offerData] = await Promise.all([
     getPartnerBySlug(partnerSlug),
     getOffer(id),
