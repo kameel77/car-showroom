@@ -115,7 +115,9 @@ export default async function PartnerPage({ params }: PartnerPageProps) {
             {t('partner.footerOffersPreparedFor')} {partner.company_name}
           </p>
           <p className="mt-1">
-            {t('partner.footerAllPricesGross')}
+            {partner.show_net_prices 
+              ? t('partner.footerAllPricesNet') 
+              : t('partner.footerAllPricesGross')}
           </p>
         </div>
       </main>

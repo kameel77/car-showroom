@@ -93,6 +93,7 @@
   "partner": {
     "footerOffersPreparedFor": "Angebote speziell vorbereitet für",
     "footerAllPricesGross": "Alle Preise sind Bruttopreise",
+    "footerAllPricesNet": "Alle Preise sind Nettopreise",
     "specialOffers": "Ausgewählte Sonderangebote",
     "availableOffers": "Verfügbare Angebote",
     "noOffersAvailable": "Keine Angebote verfügbar",

@@ -98,7 +98,7 @@ DECLARE
     v_default_margin_percent NUMERIC;
     v_show_net_prices BOOLEAN;
 BEGIN
-    SELECT id, default_margin_percent, show_net_prices 
+    SELECT partners.id, partners.default_margin_percent, partners.show_net_prices 
     INTO v_partner_id, v_default_margin_percent, v_show_net_prices
     FROM partners
     WHERE partners.slug = get_partner_offers.partner_slug AND partners.is_active = true;

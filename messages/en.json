@@ -93,6 +93,7 @@
   "partner": {
     "footerOffersPreparedFor": "Offers prepared specially for",
     "footerAllPricesGross": "All prices are gross",
+    "footerAllPricesNet": "All prices are net",
     "specialOffers": "Selected special offers",
     "availableOffers": "Available offers",
     "noOffersAvailable": "No offers available",
