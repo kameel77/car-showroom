@@ -72,12 +72,12 @@ export function PartnerListingCard({ offer, partnerSlug, locale, index = 0 }: Pa
           <div>
             <h3 className="text-lg font-semibold text-gray-900 line-clamp-1 group-hover:text-blue-600 transition-colors">
               {offer.brand} {offer.model}
+              {offer.model_version && offer.model_version !== 'Brak' && (
+                <span className="ml-1.5 text-gray-500 font-normal">
+                  {offer.model_version}
+                </span>
+              )}
             </h3>
-            {offer.model_version && offer.model_version !== 'Brak' && (
-              <p className="text-sm text-gray-500 line-clamp-1">
-                {offer.model_version}
-              </p>
-            )}
           </div>
 
           {/* Specs Grid */}

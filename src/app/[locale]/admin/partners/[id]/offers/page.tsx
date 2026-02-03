@@ -71,7 +71,7 @@ export default function PartnerOffersPage() {
         <div className="text-center">
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
           <p className="text-red-600">Nieprawidłowy ID partnera</p>
-          <Link 
+          <Link
             href={`/${locale}/admin/partners`}
             className="mt-4 inline-block px-4 py-2 bg-blue-600 text-white rounded-lg"
           >
@@ -122,13 +122,13 @@ export default function PartnerOffersPage() {
         brand_name: selectedBrand,
         model_name: selectedModel || undefined,
       });
-      
+
       // Reload filters and offers
       const [filtersData, offersData] = await Promise.all([
         getPartnerFilters(id),
         getPartnerOffersWithDetails(id),
       ]);
-      
+
       setFilters(filtersData);
       setOffers(offersData);
       setSelectedBrand('');
@@ -141,13 +141,13 @@ export default function PartnerOffersPage() {
   const handleDeleteFilter = async (filterId: number) => {
     try {
       await deletePartnerFilter(filterId);
-      
+
       // Reload filters and offers
       const [filtersData, offersData] = await Promise.all([
         getPartnerFilters(id),
         getPartnerOffersWithDetails(id),
       ]);
-      
+
       setFilters(filtersData);
       setOffers(offersData);
     } catch (err) {
@@ -159,11 +159,11 @@ export default function PartnerOffersPage() {
     try {
       setSaving(true);
       await updatePartnerOffer(id, offerId, { custom_price: customPrice });
-      
+
       // Update local state with recalculated prices
       setOffers(offers.map(o => {
         if (o.offer_id !== offerId) return o;
-        
+
         // Recalculate price when custom price is cleared
         let newCalculatedPrice = o.calculated_price;
         if (customPrice === undefined || customPrice === null) {
@@ -173,12 +173,12 @@ export default function PartnerOffersPage() {
           // Use custom price
           newCalculatedPrice = customPrice;
         }
-        
+
         // Recalculate net price
         const newCalculatedPriceNet = calculateNetPrice(newCalculatedPrice);
-        
-        return { 
-          ...o, 
+
+        return {
+          ...o,
           custom_price: customPrice,
           calculated_price: newCalculatedPrice,
           calculated_price_net: newCalculatedPriceNet
@@ -194,10 +194,10 @@ export default function PartnerOffersPage() {
   const handleToggleVisibility = async (offerId: string, isVisible: boolean) => {
     try {
       await updatePartnerOffer(id, offerId, { is_visible: !isVisible });
-      
+
       // Update local state
-      setOffers(offers.map(o => 
-        o.offer_id === offerId 
+      setOffers(offers.map(o =>
+        o.offer_id === offerId
           ? { ...o, is_visible: !isVisible }
           : o
       ));
@@ -212,7 +212,7 @@ export default function PartnerOffersPage() {
     try {
       setSaving(true);
       const marginPercent = Number(bulkMargin);
-      
+
       // Update each selected offer
       for (const offerId of selectedOffers) {
         const offer = offers.find(o => o.offer_id === offerId);
@@ -221,7 +221,7 @@ export default function PartnerOffersPage() {
           await updatePartnerOffer(id, offerId, { custom_price: newPrice });
         }
       }
-      
+
       // Reload offers
       const offersData = await getPartnerOffersWithDetails(id);
       setOffers(offersData);
@@ -277,7 +277,7 @@ export default function PartnerOffersPage() {
         <div className="text-center">
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
           <p className="text-red-600">{error || 'Partner not found'}</p>
-          <Link 
+          <Link
             href={`/${locale}/admin/partners`}
             className="mt-4 inline-block px-4 py-2 bg-blue-600 text-white rounded-lg"
           >
@@ -423,7 +423,7 @@ export default function PartnerOffersPage() {
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               />
             </div>
-            
+
             {selectedOffers.size > 0 && (
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600">
@@ -462,13 +462,14 @@ export default function PartnerOffersPage() {
                 className="h-4 w-4 text-blue-600 rounded"
               />
             </div>
-            <div className="col-span-3 flex items-center">Pojazd</div>
+            <div className={`${settings?.show_eur_prices && settings?.exchange_rate_eur ? 'col-span-3' : 'col-span-4'} flex items-center`}>Pojazd</div>
             <div className="col-span-1 flex items-center justify-end text-right">Cena oryg.</div>
             <div className="col-span-1 flex items-center justify-end text-right">Netto PLN</div>
             {settings?.show_eur_prices && settings?.exchange_rate_eur && (
               <div className="col-span-1 flex items-center justify-end text-right">Netto EUR</div>
             )}
-            <div className="col-span-2 flex items-center justify-end text-right">Cena partnera</div>
+            <div className="col-span-2 flex items-center justify-end text-right">Własna cena</div>
+            <div className="col-span-1 flex items-center justify-end text-right">Cena partnera</div>
             <div className="col-span-1 flex items-center justify-center text-center">Widoczność</div>
             <div className="col-span-1 flex items-center justify-center text-center">Akcje</div>
           </div>
@@ -487,9 +488,8 @@ export default function PartnerOffersPage() {
               filteredOffers.map((offer) => (
                 <div
                   key={offer.offer_id}
-                  className={`grid grid-cols-12 gap-4 p-4 items-center hover:bg-gray-50 ${
-                    !offer.is_visible ? 'opacity-60' : ''
-                  }`}
+                  className={`grid grid-cols-12 gap-4 p-4 items-center hover:bg-gray-50 ${!offer.is_visible ? 'opacity-60' : ''
+                    }`}
                 >
                   {/* Checkbox */}
                   <div className="col-span-1 flex items-center">
@@ -502,7 +502,7 @@ export default function PartnerOffersPage() {
                   </div>
 
                   {/* Vehicle Info */}
-                  <div className="col-span-3 flex items-center gap-3">
+                  <div className={`${settings?.show_eur_prices && settings?.exchange_rate_eur ? 'col-span-3' : 'col-span-4'} flex items-center gap-3`}>
                     {offer.offer.main_photo_url && (
                       <div className="relative w-16 h-12 rounded-lg overflow-hidden flex-shrink-0">
                         <Image
@@ -516,6 +516,11 @@ export default function PartnerOffersPage() {
                     <div>
                       <p className="font-medium text-gray-900">
                         {offer.offer.brand} {offer.offer.model}
+                        {offer.offer.model_version && offer.offer.model_version !== 'Brak' && (
+                          <span className="ml-1 text-gray-500 font-normal">
+                            {offer.offer.model_version}
+                          </span>
+                        )}
                       </p>
                       <p className="text-sm text-gray-500">
                         {offer.offer.year} • {offer.offer.mileage?.toLocaleString()} km
@@ -546,42 +551,45 @@ export default function PartnerOffersPage() {
                     </div>
                   )}
 
-                  {/* Partner Price (Net if show_net_prices=true, else Gross) */}
+                  {/* Custom Price Input */}
                   <div className="col-span-2 text-right">
-                    <div className="space-y-1">
-                      <p className="font-bold text-gray-900">
-                        {offer.show_net_prices 
+                    <div className="flex items-center justify-end gap-2">
+                      <input
+                        key={offer.custom_price || 'empty'}
+                        type="number"
+                        defaultValue={offer.custom_price || ''}
+                        onBlur={(e) => {
+                          const value = e.target.value === '' ? undefined : Number(e.target.value);
+                          if (value !== offer.custom_price) {
+                            handleUpdatePrice(offer.offer_id, value);
+                          }
+                        }}
+                        placeholder={offer.show_net_prices ? "Cena netto" : "Własna cena"}
+                        className="w-full px-2 py-1 text-sm font-medium text-gray-900 border border-gray-400 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white placeholder:font-normal placeholder:text-gray-400"
+                      />
+                      {offer.custom_price && (
+                        <button
+                          onClick={() => handleUpdatePrice(offer.offer_id, undefined)}
+                          className="text-gray-500 hover:text-red-600 flex-shrink-0"
+                          title="Usuń własną cenę"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Partner Price & Margin */}
+                  <div className="col-span-1 text-right">
+                    <div className="space-y-0.5">
+                      <p className="font-bold text-gray-900 leading-tight">
+                        {offer.show_net_prices
                           ? formatPrice(offer.calculated_price_net)
                           : formatPrice(offer.calculated_price)}
                       </p>
-                      <div className="flex items-center justify-end gap-2">
-                        <input
-                          type="number"
-                          defaultValue={offer.custom_price || ''}
-                          onBlur={(e) => {
-                            const value = e.target.value === '' ? undefined : Number(e.target.value);
-                            if (value !== offer.custom_price) {
-                              handleUpdatePrice(offer.offer_id, value);
-                            }
-                          }}
-                          placeholder={offer.show_net_prices ? "Cena netto" : "Własna cena"}
-                          className="w-24 px-2 py-1 text-sm font-medium text-gray-900 border border-gray-400 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                        />
-                        {offer.custom_price && (
-                          <button
-                            onClick={() => handleUpdatePrice(offer.offer_id, undefined)}
-                            className="text-gray-500 hover:text-red-600"
-                            title="Usuń własną cenę"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        )}
-                      </div>
-                      {!offer.custom_price && offer.margin_percent > 0 && (
-                        <p className="text-xs font-medium text-gray-600">
-                          +{calculateMarginPercent(offer.offer.price, offer.calculated_price)}%
-                        </p>
-                      )}
+                      <p className={`text-xs font-semibold ${offer.custom_price ? 'text-blue-600' : 'text-gray-500'}`}>
+                        {calculateMarginPercent(offer.offer.price, offer.calculated_price)}% marży
+                      </p>
                     </div>
                   </div>
 
@@ -589,21 +597,20 @@ export default function PartnerOffersPage() {
                   <div className="col-span-1 flex items-center justify-center">
                     <button
                       onClick={() => handleToggleVisibility(offer.offer_id, offer.is_visible)}
-                      className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                        offer.is_visible
-                          ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
+                      className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-colors ${offer.is_visible
+                        ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
                     >
                       {offer.is_visible ? (
                         <>
-                          <Eye className="h-4 w-4" />
-                          Widoczna
+                          <Eye className="h-3.5 w-3.5" />
+                          <span className="hidden sm:inline">Widoczna</span>
                         </>
                       ) : (
                         <>
-                          <EyeOff className="h-4 w-4" />
-                          Ukryta
+                          <EyeOff className="h-3.5 w-3.5" />
+                          <span className="hidden sm:inline">Ukryta</span>
                         </>
                       )}
                     </button>

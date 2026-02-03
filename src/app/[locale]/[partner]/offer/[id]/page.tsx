@@ -121,6 +121,9 @@ export default async function PartnerOfferPage({ params }: PartnerOfferPageProps
             <div className="lg:hidden bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h1 className="text-2xl font-bold text-gray-900">
                 {offerData.brand} {offerData.model}
+                {offerData.model_version && offerData.model_version !== 'Brak' && (
+                  <span className="ml-2 text-gray-500 font-normal">{offerData.model_version}</span>
+                )}
               </h1>
               <div className="mt-4">
                 <p className="text-sm text-gray-500 mb-1">
@@ -169,6 +172,9 @@ export default async function PartnerOfferPage({ params }: PartnerOfferPageProps
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
                 <h1 className="text-xl font-bold text-gray-900">
                   {offerData.brand} {offerData.model}
+                  {offerData.model_version && offerData.model_version !== 'Brak' && (
+                    <span className="ml-2 text-gray-500 font-normal">{offerData.model_version}</span>
+                  )}
                 </h1>
 
                 <div className="space-y-1">
