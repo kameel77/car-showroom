@@ -173,7 +173,7 @@ export default async function PartnerOfferPage({ params }: PartnerOfferPageProps
 
                 <div className="space-y-1">
                   <p className="text-sm text-gray-500">
-                    Cena dla {partner.company_name} {partner.show_net_prices && '(netto)'}
+                    {t('partner.priceFor')} {partner.company_name} {partner.show_net_prices && `(${t('listing.net')})`}
                   </p>
                   <p className="text-3xl font-bold text-blue-600">
                     {partner.show_net_prices && partnerOffer.display_price_net
