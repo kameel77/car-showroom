@@ -452,7 +452,7 @@ export default function PartnerOffersPage() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           {/* Table Header */}
           <div className="grid grid-cols-12 gap-4 p-4 bg-gray-50 border-b border-gray-200 text-sm font-medium text-gray-700">
-            <div className="col-span-1">
+            <div className="col-span-1 flex items-center">
               <input
                 type="checkbox"
                 checked={selectedOffers.size === filteredOffers.length && filteredOffers.length > 0}
@@ -460,12 +460,12 @@ export default function PartnerOffersPage() {
                 className="h-4 w-4 text-blue-600 rounded"
               />
             </div>
-            <div className="col-span-3">Pojazd</div>
-            <div className="col-span-1.5 text-right">Cena oryginalna</div>
-            <div className="col-span-1.5 text-right">Cena netto</div>
-            <div className="col-span-1.5 text-right">Cena partnera</div>
-            <div className="col-span-2 text-center">Widoczność</div>
-            <div className="col-span-1 text-center">Akcje</div>
+            <div className="col-span-3 flex items-center">Pojazd</div>
+            <div className="col-span-2 flex items-center justify-end text-right">Cena oryginalna</div>
+            <div className="col-span-2 flex items-center justify-end text-right">Cena netto</div>
+            <div className="col-span-2 flex items-center justify-end text-right">Cena partnera</div>
+            <div className="col-span-1 flex items-center justify-center text-center">Widoczność</div>
+            <div className="col-span-1 flex items-center justify-center text-center">Akcje</div>
           </div>
 
           {/* Offers List */}
@@ -487,7 +487,7 @@ export default function PartnerOffersPage() {
                   }`}
                 >
                   {/* Checkbox */}
-                  <div className="col-span-1">
+                  <div className="col-span-1 flex items-center">
                     <input
                       type="checkbox"
                       checked={selectedOffers.has(offer.offer_id)}
@@ -519,21 +519,21 @@ export default function PartnerOffersPage() {
                   </div>
 
                   {/* Original Price (Gross) */}
-                  <div className="col-span-1.5 text-right">
+                  <div className="col-span-2 text-right">
                     <p className="font-medium text-gray-900">
                       {formatPrice(offer.offer.price)}
                     </p>
                   </div>
 
                   {/* Net Price */}
-                  <div className="col-span-1.5 text-right">
+                  <div className="col-span-2 text-right">
                     <p className="font-medium text-gray-700">
                       {formatPrice(offer.calculated_price_net)}
                     </p>
                   </div>
 
                   {/* Partner Price (Net if show_net_prices=true, else Gross) */}
-                  <div className="col-span-1.5 text-right">
+                  <div className="col-span-2 text-right">
                     <div className="space-y-1">
                       <p className="font-bold text-gray-900">
                         {offer.show_net_prices 
@@ -572,7 +572,7 @@ export default function PartnerOffersPage() {
                   </div>
 
                   {/* Visibility Toggle */}
-                  <div className="col-span-2 text-center">
+                  <div className="col-span-1 flex items-center justify-center">
                     <button
                       onClick={() => handleToggleVisibility(offer.offer_id, offer.is_visible)}
                       className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium transition-colors ${
@@ -596,7 +596,7 @@ export default function PartnerOffersPage() {
                   </div>
 
                   {/* Actions */}
-                  <div className="col-span-1 text-center">
+                  <div className="col-span-1 flex items-center justify-center">
                     <Link
                       href={`/${locale}/${partner.slug}/offer/${offer.offer_id}`}
                       target="_blank"
