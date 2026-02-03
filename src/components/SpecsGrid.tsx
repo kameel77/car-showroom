@@ -1,10 +1,10 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { 
-  Calendar, 
-  Gauge, 
-  Fuel, 
+import {
+  Calendar,
+  Gauge,
+  Fuel,
   Settings2,
   Zap,
   MapPin,
@@ -23,15 +23,15 @@ interface SpecsGridProps {
   colourType: string | null;
 }
 
-export function SpecsGrid({ 
-  year, 
-  mileage, 
-  fuelType, 
-  transmission, 
-  power, 
+export function SpecsGrid({
+  year,
+  mileage,
+  fuelType,
+  transmission,
+  power,
   location,
   bodyType,
-  colourType 
+  colourType
 }: SpecsGridProps) {
   const t = useTranslations();
   const tSpecs = useTranslations('specs');
@@ -43,32 +43,47 @@ export function SpecsGrid({
 
   const translateFuel = (fuel: string | null): string => {
     if (!fuel) return '-';
+    const normalizedFuel = fuel.toLowerCase();
+
+    // Direct mapping keys
     const fuelMap: Record<string, string> = {
       'petrol': tSpecs('fuel.petrol'),
+      'benzyna': tSpecs('fuel.petrol'),
       'diesel': tSpecs('fuel.diesel'),
       'electric': tSpecs('fuel.electric'),
+      'elektryczny': tSpecs('fuel.electric'),
       'hybrid': tSpecs('fuel.hybrid'),
+      'hybryda': tSpecs('fuel.hybrid'),
       'plugin_hybrid': tSpecs('fuel.plugin_hybrid'),
+      'hybryda plug-in': tSpecs('fuel.plugin_hybrid'),
       'lpg': tSpecs('fuel.lpg'),
       'cng': tSpecs('fuel.cng'),
       'other': tSpecs('fuel.other'),
+      'inne': tSpecs('fuel.other'),
     };
-    return fuelMap[fuel.toLowerCase()] || fuel;
+    return fuelMap[normalizedFuel] || fuel;
   };
 
   const translateTransmission = (trans: string | null): string => {
     if (!trans) return '-';
+    const normalizedTrans = trans.toLowerCase();
+
     const transMap: Record<string, string> = {
       'automatic': tSpecs('transmission.automatic'),
+      'automatyczna': tSpecs('transmission.automatic'),
       'manual': tSpecs('transmission.manual'),
+      'manualna': tSpecs('transmission.manual'),
       'semi_automatic': tSpecs('transmission.semi_automatic'),
+      'półautomatyczna': tSpecs('transmission.semi_automatic'),
       'cvt': tSpecs('transmission.cvt'),
     };
-    return transMap[trans.toLowerCase()] || trans;
+    return transMap[normalizedTrans] || trans;
   };
 
   const translateBodyType = (body: string | null): string => {
     if (!body) return '-';
+    const normalizedBody = body.toLowerCase();
+
     const bodyMap: Record<string, string> = {
       'sedan': tSpecs('bodyType.sedan'),
       'hatchback': tSpecs('bodyType.hatchback'),
@@ -76,24 +91,34 @@ export function SpecsGrid({
       'suv': tSpecs('bodyType.suv'),
       'coupe': tSpecs('bodyType.coupe'),
       'cabrio': tSpecs('bodyType.cabrio'),
+      'kabriolet': tSpecs('bodyType.cabrio'),
       'pickup': tSpecs('bodyType.pickup'),
       'van': tSpecs('bodyType.van'),
       'minivan': tSpecs('bodyType.minivan'),
       'other': tSpecs('bodyType.other'),
+      'inne': tSpecs('bodyType.other'),
     };
-    return bodyMap[body.toLowerCase()] || body;
+    return bodyMap[normalizedBody] || body;
   };
 
   const translateColourType = (colour: string | null): string => {
     if (!colour) return '-';
+    const normalizedColour = colour.toLowerCase();
+
     const colourMap: Record<string, string> = {
       'metallic': tSpecs('colourType.metallic'),
+      'metalik': tSpecs('colourType.metallic'),
       'matte': tSpecs('colourType.matte'),
+      'matowy': tSpecs('colourType.matte'),
       'pearl': tSpecs('colourType.pearl'),
+      'perłowy': tSpecs('colourType.pearl'),
       'solid': tSpecs('colourType.solid'),
+      'niemetalizowany': tSpecs('colourType.solid'),
+      'akrylowy': tSpecs('colourType.solid'),
       'other': tSpecs('colourType.other'),
+      'inny': tSpecs('colourType.other'),
     };
-    return colourMap[colour.toLowerCase()] || colour;
+    return colourMap[normalizedColour] || colour;
   };
 
   return (
@@ -132,7 +157,9 @@ export function SpecsGrid({
         <Zap className="h-5 w-5 text-blue-600" />
         <div>
           <p className="text-xs text-gray-500">{t('listing.power')}</p>
-          <p className="font-semibold text-gray-900">{power || '-'}</p>
+          <p className="font-semibold text-gray-900">
+            {power ? `${power.replace(/[^\d]/g, '')} ${t('listing.hp')}` : '-'}
+          </p>
         </div>
       </div>
       <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
