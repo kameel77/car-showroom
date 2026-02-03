@@ -39,10 +39,10 @@ export async function generateMetadata({ params }: PartnerOfferPageProps): Promi
     getPartnerBySlug(partnerSlug),
     getOffer(id),
   ]);
-  
+
   if (!partner || !offerData) {
     return {
-      title: 'Oferta nieznaleziona',
+      title: t('detail.notFound'),
       robots: {
         index: false,
         follow: false,
@@ -52,7 +52,7 @@ export async function generateMetadata({ params }: PartnerOfferPageProps): Promi
 
   return {
     title: `${offerData.brand} ${offerData.model} - ${partner.company_name}`,
-    description: `Szczegóły oferty ${offerData.brand} ${offerData.model} dla ${partner.company_name}`,
+    description: `${t('detail.specifications')} ${offerData.brand} ${offerData.model} - ${partner.company_name}`,
     robots: {
       index: false,
       follow: false,
@@ -63,7 +63,7 @@ export async function generateMetadata({ params }: PartnerOfferPageProps): Promi
 export default async function PartnerOfferPage({ params }: PartnerOfferPageProps) {
   const { locale, partner: partnerSlug, id } = await params;
   const t = await getTranslations();
-  
+
   // Get partner and offer data
   const [partner, partnerOffer, offerData] = await Promise.all([
     getPartnerBySlug(partnerSlug),
@@ -92,7 +92,7 @@ export default async function PartnerOfferPage({ params }: PartnerOfferPageProps
             className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
           >
             <ArrowLeft className="h-4 w-4" />
-            Wróć do ofert {partner.company_name}
+            {t('partner.backToOffers')} {partner.company_name}
           </Link>
         </div>
 
@@ -111,8 +111,8 @@ export default async function PartnerOfferPage({ params }: PartnerOfferPageProps
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Image Gallery */}
-            <ImageGallery 
-              images={allPhotos} 
+            <ImageGallery
+              images={allPhotos}
               title={`${offerData.brand} ${offerData.model}`}
             />
 
@@ -123,7 +123,7 @@ export default async function PartnerOfferPage({ params }: PartnerOfferPageProps
               </h1>
               <div className="mt-4">
                 <p className="text-sm text-gray-500 mb-1">
-                  Cena dla {partner.company_name} {partner.show_net_prices && '(netto)'}
+                  {t('partner.priceFor')} {partner.company_name} {partner.show_net_prices && `(${t('listing.net')})`}
                 </p>
                 <p className="text-3xl font-bold text-blue-600">
                   {partner.show_net_prices && partnerOffer.display_price_net
@@ -138,7 +138,7 @@ export default async function PartnerOfferPage({ params }: PartnerOfferPageProps
               <h2 className="text-xl font-semibold text-gray-900 mb-4">
                 {t('detail.keyParameters')}
               </h2>
-              <SpecsGrid 
+              <SpecsGrid
                 year={offerData.year}
                 mileage={offerData.mileage}
                 fuelType={offerData.fuel_type}
@@ -169,7 +169,7 @@ export default async function PartnerOfferPage({ params }: PartnerOfferPageProps
                 <h1 className="text-xl font-bold text-gray-900">
                   {offerData.brand} {offerData.model}
                 </h1>
-                
+
                 <div className="space-y-1">
                   <p className="text-sm text-gray-500">
                     Cena dla {partner.company_name} {partner.show_net_prices && '(netto)'}
@@ -181,14 +181,13 @@ export default async function PartnerOfferPage({ params }: PartnerOfferPageProps
                   </p>
                 </div>
 
-                {/* Contact Info */}
                 <div className="pt-4 border-t border-gray-100 space-y-2">
-                  <p className="font-medium text-gray-900">Kontakt</p>
+                  <p className="font-medium text-gray-900">{t('partner.contactPerson')}</p>
                   {partner.contact_person && (
                     <p className="text-sm text-gray-600">{partner.contact_person}</p>
                   )}
                   {partner.phone && (
-                    <a 
+                    <a
                       href={`tel:${partner.phone.replace(/\s/g, '')}`}
                       className="block text-sm text-blue-600 hover:text-blue-700"
                     >
@@ -196,7 +195,7 @@ export default async function PartnerOfferPage({ params }: PartnerOfferPageProps
                     </a>
                   )}
                   {partner.email && (
-                    <a 
+                    <a
                       href={`mailto:${partner.email}`}
                       className="block text-sm text-blue-600 hover:text-blue-700"
                     >

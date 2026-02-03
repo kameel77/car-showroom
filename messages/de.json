@@ -21,7 +21,9 @@
     "bodyType": "Karosserie",
     "power": "Leistung",
     "location": "Standort",
-    "colourType": "Lacktyp"
+    "colourType": "Lacktyp",
+    "noImage": "Kein Bild",
+    "more": "mehr"
   },
   "detail": {
     "askAbout": "Nach Angebot fragen",
@@ -98,7 +100,9 @@
     "availableOffers": "Verfügbare Angebote",
     "noOffersAvailable": "Keine Angebote verfügbar",
     "checkLaterOrContact": "Überprüfen Sie später oder kontaktieren Sie uns",
-    "contactPerson": "Kontaktperson"
+    "contactPerson": "Kontaktperson",
+    "backToOffers": "Zurück zu den Angeboten",
+    "priceFor": "Preis für"
   },
   "filters": {
     "title": "Filter",

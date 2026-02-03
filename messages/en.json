@@ -21,7 +21,9 @@
     "bodyType": "Body type",
     "power": "Power",
     "location": "Location",
-    "colourType": "Paint type"
+    "colourType": "Paint type",
+    "noImage": "No image",
+    "more": "more"
   },
   "detail": {
     "askAbout": "Ask about offer",
@@ -98,7 +100,9 @@
     "availableOffers": "Available offers",
     "noOffersAvailable": "No offers available",
     "checkLaterOrContact": "Check later or contact us",
-    "contactPerson": "Contact person"
+    "contactPerson": "Contact person",
+    "backToOffers": "Back to offers",
+    "priceFor": "Price for"
   },
   "filters": {
     "title": "Filters",

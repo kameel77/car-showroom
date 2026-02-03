@@ -21,7 +21,9 @@
     "bodyType": "Typ nadwozia",
     "power": "Moc",
     "location": "Lokalizacja",
-    "colourType": "Rodzaj lakieru"
+    "colourType": "Rodzaj lakieru",
+    "noImage": "Brak zdjęcia",
+    "more": "więcej"
   },
   "detail": {
     "askAbout": "Zapytaj o ofertę",
@@ -98,7 +100,9 @@
     "availableOffers": "Dostępne oferty",
     "noOffersAvailable": "Brak dostępnych ofert",
     "checkLaterOrContact": "Sprawdź później lub skontaktuj się z nami",
-    "contactPerson": "Kontakt"
+    "contactPerson": "Kontakt",
+    "backToOffers": "Wróć do ofert",
+    "priceFor": "Cena dla"
   },
   "filters": {
     "title": "Filtry",

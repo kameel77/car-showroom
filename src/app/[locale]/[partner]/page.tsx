@@ -16,10 +16,11 @@ interface PartnerPageProps {
 export async function generateMetadata({ params }: PartnerPageProps): Promise<Metadata> {
   const { partner: partnerSlug } = await params;
   const partner = await getPartnerBySlug(partnerSlug);
-  
+
   if (!partner) {
+    const t = await getTranslations();
     return {
-      title: 'Partner nieznaleziony',
+      title: t('detail.notFound'),
       robots: {
         index: false,
         follow: false,
@@ -40,10 +41,10 @@ export async function generateMetadata({ params }: PartnerPageProps): Promise<Me
 export default async function PartnerPage({ params }: PartnerPageProps) {
   const { locale, partner: partnerSlug } = await params;
   const t = await getTranslations();
-  
+
   // Get partner data
   const partner = await getPartnerBySlug(partnerSlug);
-  
+
   if (!partner) {
     notFound();
   }
@@ -67,7 +68,7 @@ export default async function PartnerPage({ params }: PartnerPageProps) {
                 {t('partner.specialOffers')}
               </p>
             </div>
-            
+
             {partner.contact_person && (
               <div className="text-sm text-gray-600">
                 <p className="font-medium">{partner.contact_person}</p>
@@ -89,12 +90,12 @@ export default async function PartnerPage({ params }: PartnerPageProps) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {offers.length > 0 ? (
             offers.map((offer, index) => (
-              <PartnerListingCard 
-                key={offer.offer_id} 
-                offer={offer} 
+              <PartnerListingCard
+                key={offer.offer_id}
+                offer={offer}
                 partnerSlug={partnerSlug}
                 locale={locale}
-                index={index} 
+                index={index}
               />
             ))
           ) : (
@@ -115,8 +116,8 @@ export default async function PartnerPage({ params }: PartnerPageProps) {
             {t('partner.footerOffersPreparedFor')} {partner.company_name}
           </p>
           <p className="mt-1">
-            {partner.show_net_prices 
-              ? t('partner.footerAllPricesNet') 
+            {partner.show_net_prices
+              ? t('partner.footerAllPricesNet')
               : t('partner.footerAllPricesGross')}
           </p>
         </div>

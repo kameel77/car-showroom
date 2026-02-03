@@ -2,14 +2,14 @@
 
 import React from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import { 
-  Check, 
-  ChevronDown, 
-  ChevronUp, 
-  ShieldCheck, 
-  Zap, 
-  Armchair, 
-  Monitor, 
+import {
+  Check,
+  ChevronDown,
+  ChevronUp,
+  ShieldCheck,
+  Zap,
+  Armchair,
+  Monitor,
   Settings2,
   CircleDot
 } from 'lucide-react';
@@ -44,7 +44,7 @@ export function EquipmentDisplay({ equipment }: EquipmentDisplayProps) {
   const locale = useLocale();
   const groupedEquipment = mapEquipmentToGroups(equipment);
   const groups = Object.entries(groupedEquipment);
-  
+
   const [expandedGroups, setExpandedGroups] = React.useState<Record<string, boolean>>(() => {
     // All groups collapsed by default
     const initial: Record<string, boolean> = {};
@@ -80,7 +80,7 @@ export function EquipmentDisplay({ equipment }: EquipmentDisplayProps) {
   return (
     <div className="space-y-3">
       {groups.map(([groupName, items]) => (
-        <div 
+        <div
           key={groupName}
           className="border border-gray-200 rounded-lg overflow-hidden bg-white"
         >
@@ -101,11 +101,11 @@ export function EquipmentDisplay({ equipment }: EquipmentDisplayProps) {
               <ChevronDown className="h-5 w-5 text-gray-400" />
             )}
           </button>
-          
+
           {expandedGroups[groupName] && (
             <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-2">
               {items.map((item, index) => (
-                <div 
+                <div
                   key={index}
                   className="flex items-start gap-2 text-sm"
                 >
@@ -123,11 +123,12 @@ export function EquipmentDisplay({ equipment }: EquipmentDisplayProps) {
 
 export function EquipmentBadge({ items }: { items: string[] }) {
   const locale = useLocale();
-  
+  const t = useTranslations('listing');
+
   return (
     <div className="flex flex-wrap gap-2">
       {items.slice(0, 5).map((item, index) => (
-        <span 
+        <span
           key={index}
           className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
         >
@@ -137,7 +138,7 @@ export function EquipmentBadge({ items }: { items: string[] }) {
       ))}
       {items.length > 5 && (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-          +{items.length - 5} {locale === 'pl' ? 'więcej' : locale === 'de' ? 'mehr' : 'more'}
+          +{items.length - 5} {t('more')}
         </span>
       )}
     </div>

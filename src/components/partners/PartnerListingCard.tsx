@@ -43,7 +43,7 @@ export function PartnerListingCard({ offer, partnerSlug, locale, index = 0 }: Pa
             />
           ) : (
             <div className="h-full w-full flex items-center justify-center bg-gray-200">
-              <span className="text-gray-400">No image</span>
+              <span className="text-gray-400">{t('noImage')}</span>
             </div>
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -51,12 +51,12 @@ export function PartnerListingCard({ offer, partnerSlug, locale, index = 0 }: Pa
           {/* Price Badge - Shows partner price (net or gross based on setting) */}
           <div className="absolute top-3 right-3 px-3 py-1.5 bg-white/95 backdrop-blur-sm rounded-lg shadow-md">
             <span className="text-lg font-bold text-blue-600">
-              {offer.show_net_prices && offer.display_price_net 
+              {offer.show_net_prices && offer.display_price_net
                 ? formatPrice(offer.display_price_net)
                 : formatPrice(offer.display_price)}
             </span>
             {offer.show_net_prices && (
-              <div className="text-xs text-gray-500">netto</div>
+              <div className="text-xs text-gray-500">{t('net')}</div>
             )}
             {settings?.show_eur_prices && settings?.exchange_rate_eur && (
               <div className="text-xs text-gray-500">
