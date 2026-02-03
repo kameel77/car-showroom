@@ -35,6 +35,7 @@ import {
 } from '@/lib/partners-server';
 import { getAllBrandsFromOffers } from '@/lib/filters-server';
 import { formatPrice, calculateMarginPercent, calculateNetPrice } from '@/lib/price-calculator';
+import { useAppSettings } from '@/hooks/useAppSettings';
 
 const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -44,6 +45,7 @@ export default function PartnerOffersPage() {
   const router = useRouter();
   const params = useParams();
   const partnerId = params.id as string;
+  const { settings } = useAppSettings();
 
   const [partner, setPartner] = useState<Partner | null>(null);
   const [offers, setOffers] = useState<PartnerOfferWithDetails[]>([]);
@@ -461,8 +463,11 @@ export default function PartnerOffersPage() {
               />
             </div>
             <div className="col-span-3 flex items-center">Pojazd</div>
-            <div className="col-span-2 flex items-center justify-end text-right">Cena oryginalna</div>
-            <div className="col-span-2 flex items-center justify-end text-right">Cena netto</div>
+            <div className="col-span-1 flex items-center justify-end text-right">Cena oryg.</div>
+            <div className="col-span-1 flex items-center justify-end text-right">Netto PLN</div>
+            {settings?.show_eur_prices && settings?.exchange_rate_eur && (
+              <div className="col-span-1 flex items-center justify-end text-right">Netto EUR</div>
+            )}
             <div className="col-span-2 flex items-center justify-end text-right">Cena partnera</div>
             <div className="col-span-1 flex items-center justify-center text-center">Widoczność</div>
             <div className="col-span-1 flex items-center justify-center text-center">Akcje</div>
@@ -519,18 +524,27 @@ export default function PartnerOffersPage() {
                   </div>
 
                   {/* Original Price (Gross) */}
-                  <div className="col-span-2 text-right">
+                  <div className="col-span-1 text-right">
                     <p className="font-medium text-gray-900">
                       {formatPrice(offer.offer.price)}
                     </p>
                   </div>
 
-                  {/* Net Price */}
-                  <div className="col-span-2 text-right">
+                  {/* Net Price PLN */}
+                  <div className="col-span-1 text-right">
                     <p className="font-medium text-gray-700">
                       {formatPrice(offer.calculated_price_net)}
                     </p>
                   </div>
+
+                  {/* Net Price EUR */}
+                  {settings?.show_eur_prices && settings?.exchange_rate_eur && (
+                    <div className="col-span-1 text-right">
+                      <p className="font-medium text-gray-700">
+                        ≈ {Math.round(offer.calculated_price_net / settings.exchange_rate_eur).toLocaleString()} €
+                      </p>
+                    </div>
+                  )}
 
                   {/* Partner Price (Net if show_net_prices=true, else Gross) */}
                   <div className="col-span-2 text-right">

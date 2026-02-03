@@ -71,7 +71,7 @@ $$ LANGUAGE plpgsql;
 
 -- Function to get partner offers with calculated prices
 DROP FUNCTION IF EXISTS get_partner_offers(TEXT);
-CREATE OR REPLACE FUNCTION get_partner_offers(partner_slug TEXT)
+CREATE OR REPLACE FUNCTION get_partner_offers(p_slug TEXT)
 RETURNS TABLE (
     offer_id UUID,
     brand TEXT,
@@ -94,14 +94,16 @@ RETURNS TABLE (
     technical_spec JSONB
 ) AS $$
 DECLARE
-    partner_record RECORD;
-    v_display_price NUMERIC;
+    v_partner_id UUID;
+    v_default_margin_percent NUMERIC;
+    v_show_net_prices BOOLEAN;
 BEGIN
-    SELECT id, default_margin_percent, show_net_prices INTO partner_record
+    SELECT id, default_margin_percent, show_net_prices 
+    INTO v_partner_id, v_default_margin_percent, v_show_net_prices
     FROM partners
-    WHERE slug = partner_slug AND is_active = true;
+    WHERE slug = p_slug AND is_active = true;
     
-    IF partner_record IS NULL OR partner_record.default_margin_percent IS NULL THEN
+    IF v_partner_id IS NULL OR v_default_margin_percent IS NULL THEN
         RETURN;
     END IF;
     
@@ -117,7 +119,7 @@ BEGIN
         COALESCE(
             CASE 
                 WHEN po.custom_price IS NOT NULL THEN po.custom_price::NUMERIC
-                WHEN partner_record.default_margin_percent > 0 THEN FLOOR(co.price * (1 + partner_record.default_margin_percent / 100))
+                WHEN v_default_margin_percent > 0 THEN FLOOR(co.price * (1 + v_default_margin_percent / 100))
                 ELSE co.price
             END,
             co.price
@@ -127,7 +129,7 @@ BEGIN
             COALESCE(
                 CASE 
                     WHEN po.custom_price IS NOT NULL THEN po.custom_price::NUMERIC
-                    WHEN partner_record.default_margin_percent > 0 THEN FLOOR(co.price * (1 + partner_record.default_margin_percent / 100))
+                    WHEN v_default_margin_percent > 0 THEN FLOOR(co.price * (1 + v_default_margin_percent / 100))
                     ELSE co.price
                 END,
                 co.price
@@ -139,22 +141,22 @@ BEGIN
         co.main_photo_url,
         COALESCE(po.is_visible, true) as is_visible,
         COALESCE(po.custom_price, 0)::NUMERIC as custom_price,
-        partner_record.default_margin_percent as margin_percent,
-        partner_record.show_net_prices as show_net_prices,
+        v_default_margin_percent as margin_percent,
+        v_show_net_prices as show_net_prices,
         co.features,
         co.technical_spec
     FROM car_offers co
-    LEFT JOIN partner_offers po ON po.offer_id = co.id AND po.partner_id = partner_record.id
+    LEFT JOIN partner_offers po ON po.offer_id = co.id AND po.partner_id = v_partner_id
     WHERE 
         (
             NOT EXISTS (
                 SELECT 1 FROM partner_filters pf 
-                WHERE pf.partner_id = partner_record.id AND pf.is_active = true
+                WHERE pf.partner_id = v_partner_id AND pf.is_active = true
             )
             OR
             EXISTS (
                 SELECT 1 FROM partner_filters pf
-                WHERE pf.partner_id = partner_record.id 
+                WHERE pf.partner_id = v_partner_id 
                 AND pf.is_active = true
                 AND LOWER(pf.brand_name) = LOWER(co.brand)
                 AND (pf.model_name IS NULL OR LOWER(pf.model_name) = LOWER(co.model))
