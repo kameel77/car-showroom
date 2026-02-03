@@ -4,6 +4,10 @@
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- Migration: Add show_net_prices column to existing partners table
+ALTER TABLE partners 
+ADD COLUMN IF NOT EXISTS show_net_prices BOOLEAN DEFAULT false;
+
 -- Partners table - stores partner company information
 CREATE TABLE IF NOT EXISTS partners (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
