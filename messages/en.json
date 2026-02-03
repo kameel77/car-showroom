@@ -85,6 +85,15 @@
     "error": "An error occurred",
     "tryAgain": "Try again"
   },
+  "partner": {
+    "footerOffersPreparedFor": "Offers prepared specially for",
+    "footerAllPricesGross": "All prices are gross",
+    "specialOffers": "Selected special offers",
+    "availableOffers": "Available offers",
+    "noOffersAvailable": "No offers available",
+    "checkLaterOrContact": "Check later or contact us",
+    "contactPerson": "Contact person"
+  },
   "filters": {
     "title": "Filters",
     "clear": "Clear filters",

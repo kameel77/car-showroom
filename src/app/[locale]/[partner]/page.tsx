@@ -64,7 +64,7 @@ export default async function PartnerPage({ params }: PartnerPageProps) {
                 {partner.company_name}
               </h1>
               <p className="text-gray-600 mt-1">
-                Wyselekcjonowane oferty specjalne
+                {t('partner.specialOffers')}
               </p>
             </div>
             
@@ -81,7 +81,7 @@ export default async function PartnerPage({ params }: PartnerPageProps) {
         {/* Offers Count */}
         <div className="mb-6">
           <p className="text-gray-600">
-            Dostępne oferty: <span className="font-semibold text-gray-900">{offers.length}</span>
+            {t('partner.availableOffers')}: <span className="font-semibold text-gray-900">{offers.length}</span>
           </p>
         </div>
 
@@ -100,10 +100,10 @@ export default async function PartnerPage({ params }: PartnerPageProps) {
           ) : (
             <div className="col-span-full py-16 text-center">
               <p className="text-lg font-medium text-gray-900">
-                Brak dostępnych ofert
+                {t('partner.noOffersAvailable')}
               </p>
               <p className="text-gray-500 mt-1">
-                Sprawdź później lub skontaktuj się z nami
+                {t('partner.checkLaterOrContact')}
               </p>
             </div>
           )}
@@ -112,10 +112,10 @@ export default async function PartnerPage({ params }: PartnerPageProps) {
         {/* Footer Info */}
         <div className="mt-12 pt-8 border-t border-gray-200 text-center text-sm text-gray-500">
           <p>
-            Oferty przygotowane specjalnie dla {partner.company_name}
+            {t('partner.footerOffersPreparedFor')} {partner.company_name}
           </p>
           <p className="mt-1">
-            Wszystkie ceny brutto
+            {t('partner.footerAllPricesGross')}
           </p>
         </div>
       </main>

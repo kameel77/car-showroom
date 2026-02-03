@@ -1,5 +1,30 @@
 import { supabase } from '@/lib/supabase';
 
+/**
+ * Get all unique brands from car_offers table dynamically
+ * This returns all brands that have at least one active offer
+ */
+export async function getAllBrandsFromOffers(): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('car_offers')
+    .select('brand')
+    .not('brand', 'is', null)
+    .order('brand', { ascending: true });
+
+  if (error || !data) {
+    console.error('Error fetching brands from offers:', error);
+    return [];
+  }
+
+  // Get unique brands
+  const uniqueBrands = [...new Set(data.map(item => item.brand).filter(Boolean))];
+  return uniqueBrands.map(b => b.toLowerCase());
+}
+
+/**
+ * Get allowed brands from brand_filters (whitelist approach)
+ * @deprecated Use getAllBrandsFromOffers for dynamic brand list
+ */
 export async function getAllowedBrands(): Promise<string[]> {
   const { data, error } = await supabase
     .from('brand_filters')

@@ -33,7 +33,7 @@ import {
   updatePartnerOffer,
   bulkUpdatePartnerOffers,
 } from '@/lib/partners-server';
-import { getAllowedBrands } from '@/lib/filters-server';
+import { getAllBrandsFromOffers } from '@/lib/filters-server';
 import { formatPrice, calculateMarginPercent } from '@/lib/price-calculator';
 
 const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -91,7 +91,7 @@ export default function PartnerOffersPage() {
         getPartnerById(id),
         getPartnerOffersWithDetails(id),
         getPartnerFilters(id),
-        getAllowedBrands(),
+        getAllBrandsFromOffers(),
       ]);
 
       if (!partnerData) {
@@ -158,12 +158,26 @@ export default function PartnerOffersPage() {
       setSaving(true);
       await updatePartnerOffer(id, offerId, { custom_price: customPrice });
       
-      // Update local state
-      setOffers(offers.map(o => 
-        o.offer_id === offerId 
-          ? { ...o, custom_price: customPrice }
-          : o
-      ));
+      // Update local state with recalculated price
+      setOffers(offers.map(o => {
+        if (o.offer_id !== offerId) return o;
+        
+        // Recalculate price when custom price is cleared
+        let newCalculatedPrice = o.calculated_price;
+        if (customPrice === undefined || customPrice === null) {
+          // Reset to standard price with partner's default margin
+          newCalculatedPrice = Math.round(o.offer.price * (1 + o.margin_percent / 100));
+        } else {
+          // Use custom price
+          newCalculatedPrice = customPrice;
+        }
+        
+        return { 
+          ...o, 
+          custom_price: customPrice,
+          calculated_price: newCalculatedPrice
+        };
+      }));
     } catch (err) {
       alert('Failed to update price: ' + (err instanceof Error ? err.message : 'Unknown error'));
     } finally {

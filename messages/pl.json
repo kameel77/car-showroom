@@ -85,6 +85,15 @@
     "error": "Wystąpił błąd",
     "tryAgain": "Spróbuj ponownie"
   },
+  "partner": {
+    "footerOffersPreparedFor": "Oferty przygotowane specjalnie dla",
+    "footerAllPricesGross": "Wszystkie ceny brutto",
+    "specialOffers": "Wyselekcjonowane oferty specjalne",
+    "availableOffers": "Dostępne oferty",
+    "noOffersAvailable": "Brak dostępnych ofert",
+    "checkLaterOrContact": "Sprawdź później lub skontaktuj się z nami",
+    "contactPerson": "Kontakt"
+  },
   "filters": {
     "title": "Filtry",
     "clear": "Wyczyść filtry",
