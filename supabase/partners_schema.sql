@@ -71,7 +71,7 @@ $$ LANGUAGE plpgsql;
 
 -- Function to get partner offers with calculated prices
 DROP FUNCTION IF EXISTS get_partner_offers(TEXT);
-CREATE OR REPLACE FUNCTION get_partner_offers(p_slug TEXT)
+CREATE OR REPLACE FUNCTION get_partner_offers(partner_slug TEXT)
 RETURNS TABLE (
     offer_id UUID,
     brand TEXT,
@@ -101,7 +101,7 @@ BEGIN
     SELECT id, default_margin_percent, show_net_prices 
     INTO v_partner_id, v_default_margin_percent, v_show_net_prices
     FROM partners
-    WHERE slug = p_slug AND is_active = true;
+    WHERE partners.slug = get_partner_offers.partner_slug AND partners.is_active = true;
     
     IF v_partner_id IS NULL OR v_default_margin_percent IS NULL THEN
         RETURN;
