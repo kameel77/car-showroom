@@ -8,7 +8,7 @@ import { EquipmentDisplay } from '@/components/EquipmentDisplay';
 import { SpecsGrid } from '@/components/SpecsGrid';
 import { ChevronRight, ArrowLeft } from 'lucide-react';
 import { getPartnerBySlug, getPartnerPublicOffer } from '@/lib/partners-server';
-import { formatPrice } from '@/lib/price-calculator';
+import { formatPrice, calculateNetPrice } from '@/lib/price-calculator';
 import { supabase } from '@/lib/supabase';
 
 interface PartnerOfferPageProps {
@@ -122,9 +122,13 @@ export default async function PartnerOfferPage({ params }: PartnerOfferPageProps
                 {offerData.brand} {offerData.model}
               </h1>
               <div className="mt-4">
-                <p className="text-sm text-gray-500 mb-1">Cena dla {partner.company_name}</p>
+                <p className="text-sm text-gray-500 mb-1">
+                  Cena dla {partner.company_name} {partner.show_net_prices && '(netto)'}
+                </p>
                 <p className="text-3xl font-bold text-blue-600">
-                  {formatPrice(partnerOffer.display_price)}
+                  {partner.show_net_prices && partnerOffer.display_price_net
+                    ? formatPrice(partnerOffer.display_price_net)
+                    : formatPrice(partnerOffer.display_price)}
                 </p>
               </div>
             </div>
@@ -167,9 +171,13 @@ export default async function PartnerOfferPage({ params }: PartnerOfferPageProps
                 </h1>
                 
                 <div className="space-y-1">
-                  <p className="text-sm text-gray-500">Cena dla {partner.company_name}</p>
+                  <p className="text-sm text-gray-500">
+                    Cena dla {partner.company_name} {partner.show_net_prices && '(netto)'}
+                  </p>
                   <p className="text-3xl font-bold text-blue-600">
-                    {formatPrice(partnerOffer.display_price)}
+                    {partner.show_net_prices && partnerOffer.display_price_net
+                      ? formatPrice(partnerOffer.display_price_net)
+                      : formatPrice(partnerOffer.display_price)}
                   </p>
                 </div>
 

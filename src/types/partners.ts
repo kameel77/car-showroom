@@ -9,6 +9,7 @@ export interface Partner {
   email?: string;
   website?: string;
   default_margin_percent: number;
+  show_net_prices: boolean;
   is_active: boolean;
   notes?: string;
   created_at: string;
@@ -63,6 +64,7 @@ export interface CreatePartnerInput {
   email?: string;
   website?: string;
   default_margin_percent?: number;
+  show_net_prices?: boolean;
   is_active?: boolean;
   notes?: string;
 }
@@ -76,6 +78,7 @@ export interface UpdatePartnerInput {
   email?: string;
   website?: string;
   default_margin_percent?: number;
+  show_net_prices?: boolean;
   is_active?: boolean;
   notes?: string;
 }
@@ -101,6 +104,8 @@ export interface PartnerPublicOffer {
   mileage?: number;
   price: number;
   display_price: number;
+  display_price_net?: number;
+  show_net_prices?: boolean;
   fuel_type?: string;
   engine_power?: string;
   transmission?: string;

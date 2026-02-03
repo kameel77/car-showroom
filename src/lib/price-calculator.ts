@@ -62,3 +62,39 @@ export function calculateMarginPercent(
   if (basePrice === 0) return 0;
   return parseFloat(((displayPrice - basePrice) / basePrice * 100).toFixed(2));
 }
+
+/**
+ * VAT rate (23% for Poland)
+ */
+export const VAT_RATE = 23;
+
+/**
+ * Calculate net price from gross price (removes VAT)
+ */
+export function calculateNetPrice(grossPrice: number): number {
+  return Math.round(grossPrice / (1 + VAT_RATE / 100));
+}
+
+/**
+ * Calculate gross price from net price (adds VAT)
+ */
+export function calculateGrossPrice(netPrice: number): number {
+  return Math.round(netPrice * (1 + VAT_RATE / 100));
+}
+
+/**
+ * Format price with currency and VAT info
+ */
+export function formatPriceWithVat(
+  price: number, 
+  isNet: boolean = false, 
+  currency: string = 'PLN'
+): string {
+  const formatted = new Intl.NumberFormat('pl-PL', {
+    style: 'currency',
+    currency: currency,
+    maximumFractionDigits: 0,
+  }).format(price);
+  
+  return isNet ? `${formatted} netto` : formatted;
+}

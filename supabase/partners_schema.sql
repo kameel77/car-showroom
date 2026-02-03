@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS partners (
     email TEXT,
     website TEXT,
     default_margin_percent DECIMAL(5,2) DEFAULT 0,
+    show_net_prices BOOLEAN DEFAULT false,
     is_active BOOLEAN DEFAULT true,
     notes TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -76,6 +77,7 @@ RETURNS TABLE (
     mileage BIGINT,
     price NUMERIC,
     display_price NUMERIC,
+    display_price_net NUMERIC,
     fuel_type TEXT,
     engine_power TEXT,
     transmission TEXT,
@@ -83,13 +85,15 @@ RETURNS TABLE (
     is_visible BOOLEAN,
     custom_price NUMERIC,
     margin_percent NUMERIC,
+    show_net_prices BOOLEAN,
     features JSONB,
     technical_spec JSONB
 ) AS $$
 DECLARE
     partner_record RECORD;
+    v_display_price NUMERIC;
 BEGIN
-    SELECT id, default_margin_percent INTO partner_record
+    SELECT id, default_margin_percent, show_net_prices INTO partner_record
     FROM partners
     WHERE slug = partner_slug AND is_active = true;
     
@@ -114,6 +118,17 @@ BEGIN
             END,
             co.price
         ) as display_price,
+        -- Calculate net price (remove 23% VAT)
+        FLOOR(
+            COALESCE(
+                CASE 
+                    WHEN po.custom_price IS NOT NULL THEN po.custom_price::NUMERIC
+                    WHEN partner_record.default_margin_percent > 0 THEN FLOOR(co.price * (1 + partner_record.default_margin_percent / 100))
+                    ELSE co.price
+                END,
+                co.price
+            ) / 1.23
+        ) as display_price_net,
         co.fuel_type,
         co.engine_power,
         co.transmission,
@@ -121,6 +136,7 @@ BEGIN
         COALESCE(po.is_visible, true) as is_visible,
         COALESCE(po.custom_price, 0)::NUMERIC as custom_price,
         partner_record.default_margin_percent as margin_percent,
+        partner_record.show_net_prices as show_net_prices,
         co.features,
         co.technical_spec
     FROM car_offers co
