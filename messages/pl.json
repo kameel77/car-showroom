@@ -104,6 +104,63 @@
     "backToOffers": "Wróć do ofert",
     "priceFor": "Cena dla"
   },
+  "pro": {
+    "metadata": {
+      "title": "Car Showroom - Profesjonalny showroom samochodowy dla Twojej firmy",
+      "description": "Otrzymaj dostęp do wyselekcjonowanych ofert samochodowych z możliwością ustawienia własnych cen i marż. Skontaktuj się z nami już dziś!"
+    },
+    "nav": {
+      "backToMain": "← Wróć do strony głównej"
+    },
+    "hero": {
+      "title": "Profesjonalny showroom samochodowy dla Twojej firmy",
+      "subtitle": "Otrzymaj dostęp do wyselekcjonowanych ofert samochodowych i prezentuj je swoim klientom z własnymi cenami",
+      "cta": "Skontaktuj się z nami"
+    },
+    "howItWorks": {
+      "title": "Jak to działa?",
+      "subtitle": "Trzy proste kroki do własnego showroomu samochodowego",
+      "step1": {
+        "title": "1. Wybieramy najlepsze oferty",
+        "description": "Przygotowujemy wyselekcjonowaną listę pojazdów dostosowaną do profilu Twojej firmy"
+      },
+      "step2": {
+        "title": "2. Ustawiasz własne ceny",
+        "description": "Definiujesz marżę procentową lub ustalasz indywidualne ceny dla każdego pojazdu"
+      },
+      "step3": {
+        "title": "3. Otrzymujesz dedykowany link",
+        "description": "Twoi klienci widzą profesjonalny showroom z Twoimi ofertami i cenami"
+      }
+    },
+    "benefits": {
+      "title": "Dlaczego warto?",
+      "subtitle": "Benefity współpracy z naszym showroomem",
+      "item1": {
+        "title": "Wyselekcjonowane oferty",
+        "description": "Dostęp do sprawdzonych, wysokiej jakości pojazdów"
+      },
+      "item2": {
+        "title": "Własne ceny i marże",
+        "description": "Pełna kontrola nad cenami - marża procentowa lub ceny indywidualne"
+      },
+      "item3": {
+        "title": "Prosta prezentacja",
+        "description": "Profesjonalny wygląd i łatwa nawigacja dla Twoich klientów"
+      },
+      "item4": {
+        "title": "Prywatny dostęp",
+        "description": "Dedykowany link tylko dla Ciebie - bez indeksowania w Google"
+      }
+    },
+    "cta": {
+      "title": "Chcesz własny showroom?",
+      "description": "Skontaktuj się z nami, aby dowiedzieć się więcej o możliwościach współpracy i otrzymać dostęp do showroomu dla Twojej firmy."
+    },
+    "footer": {
+      "allRightsReserved": "Wszystkie prawa zastrzeżone."
+    }
+  },
   "filters": {
     "title": "Filtry",
     "clear": "Wyczyść filtry",

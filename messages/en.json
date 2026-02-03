@@ -104,6 +104,63 @@
     "backToOffers": "Back to offers",
     "priceFor": "Price for"
   },
+  "pro": {
+    "metadata": {
+      "title": "Car Showroom - Professional car showroom for your company",
+      "description": "Get access to curated car offers with the ability to set your own prices and margins. Contact us today!"
+    },
+    "nav": {
+      "backToMain": "← Back to main page"
+    },
+    "hero": {
+      "title": "Professional car showroom for your company",
+      "subtitle": "Get access to curated car offers and present them to your clients with your own prices",
+      "cta": "Contact us"
+    },
+    "howItWorks": {
+      "title": "How it works?",
+      "subtitle": "Three simple steps to your own car showroom",
+      "step1": {
+        "title": "1. We choose the best offers",
+        "description": "We prepare a curated list of vehicles tailored to your company's profile"
+      },
+      "step2": {
+        "title": "2. You set your own prices",
+        "description": "You define a percentage margin or set individual prices for each vehicle"
+      },
+      "step3": {
+        "title": "3. You receive a dedicated link",
+        "description": "Your clients see a professional showroom with your offers and prices"
+      }
+    },
+    "benefits": {
+      "title": "Why is it worth it?",
+      "subtitle": "Benefits of cooperating with our showroom",
+      "item1": {
+        "title": "Curated offers",
+        "description": "Access to proven, high-quality vehicles"
+      },
+      "item2": {
+        "title": "Own prices and margins",
+        "description": "Full control over prices - percentage margin or individual prices"
+      },
+      "item3": {
+        "title": "Simple presentation",
+        "description": "Professional look and easy navigation for your clients"
+      },
+      "item4": {
+        "title": "Private access",
+        "description": "Dedicated link just for you - no Google indexing"
+      }
+    },
+    "cta": {
+      "title": "Want your own showroom?",
+      "description": "Contact us to learn more about cooperation opportunities and receive access to the showroom for your company."
+    },
+    "footer": {
+      "allRightsReserved": "All rights reserved."
+    }
+  },
   "filters": {
     "title": "Filters",
     "clear": "Clear filters",

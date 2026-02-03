@@ -104,6 +104,63 @@
     "backToOffers": "Zurück zu den Angeboten",
     "priceFor": "Preis für"
   },
+  "pro": {
+    "metadata": {
+      "title": "Car Showroom - Professioneller Auto-Showroom für Ihr Unternehmen",
+      "description": "Erhalten Sie Zugriff auf kuratierte Autoangebote mit der Möglichkeit, Ihre eigenen Preise und Margen festzulegen. Kontaktieren Sie uns noch heute!"
+    },
+    "nav": {
+      "backToMain": "← Zurück zur Hauptseite"
+    },
+    "hero": {
+      "title": "Professioneller Auto-Showroom für Ihr Unternehmen",
+      "subtitle": "Erhalten Sie Zugriff auf kuratierte Autoangebote und präsentieren Sie diese Ihren Kunden mit Ihren eigenen Preisen",
+      "cta": "Kontaktieren Sie uns"
+    },
+    "howItWorks": {
+      "title": "Wie es funktioniert?",
+      "subtitle": "Drei einfache Schritte zu Ihrem eigenen Auto-Showroom",
+      "step1": {
+        "title": "1. Wir wählen die besten Angebote aus",
+        "description": "Wir bereiten eine kuratierte Liste von Fahrzeugen vor, die auf das Profil Ihres Unternehmens zugeschnitten sind"
+      },
+      "step2": {
+        "title": "2. Sie legen Ihre eigenen Preise fest",
+        "description": "Sie definieren eine prozentuale Marge oder legen individuelle Preise für jedes Fahrzeug fest"
+      },
+      "step3": {
+        "title": "3. Sie erhalten einen speziellen Link",
+        "description": "Ihre Kunden sehen einen professionellen Showroom mit Ihren Angeboten und Preisen"
+      }
+    },
+    "benefits": {
+      "title": "Warum lohnt es sich?",
+      "subtitle": "Vorteile der Zusammenarbeit mit unserem Showroom",
+      "item1": {
+        "title": "Kuratierte Angebote",
+        "description": "Zugang zu bewährten, hochwertigen Fahrzeugen"
+      },
+      "item2": {
+        "title": "Eigene Preise und Margen",
+        "description": "Volle Kontrolle über die Preise - prozentuale Marge oder individuelle Preise"
+      },
+      "item3": {
+        "title": "Einfache Präsentation",
+        "description": "Professionelles Aussehen und einfache Navigation für Ihre Kunden"
+      },
+      "item4": {
+        "title": "Privater Zugang",
+        "description": "Eigener Link nur für Sie - keine Google-Indizierung"
+      }
+    },
+    "cta": {
+      "title": "Möchten Sie Ihren eigenen Showroom?",
+      "description": "Kontaktieren Sie uns, um mehr über Kooperationsmöglichkeiten zu erfahren und Zugang zum Showroom für Ihr Unternehmen zu erhalten."
+    },
+    "footer": {
+      "allRightsReserved": "Alle Rechte vorbehalten."
+    }
+  },
   "filters": {
     "title": "Filter",
     "clear": "Filter löschen",
