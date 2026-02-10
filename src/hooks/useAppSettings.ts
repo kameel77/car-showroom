@@ -18,7 +18,7 @@ export function useAppSettings() {
           .single();
 
         if (error) throw error;
-        
+
         setSettings(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load settings');
@@ -43,6 +43,7 @@ export function useAppSettings() {
           enable_financing_calculator: false,
           enable_contact_form: true,
           enable_whatsapp_button: false,
+          show_secondary_currency: false,
           meta_title: null,
           meta_description: null,
           og_image_url: null,
@@ -57,9 +58,9 @@ export function useAppSettings() {
 
   const formatPrice = (pricePln: number | null, currency?: string): string => {
     if (!pricePln || !settings) return '-';
-    
+
     const targetCurrency = currency || settings.default_currency;
-    
+
     if (targetCurrency === 'EUR' && settings.show_eur_prices) {
       const eurPrice = pricePln / settings.exchange_rate_eur;
       return new Intl.NumberFormat('pl-PL', {
@@ -68,7 +69,7 @@ export function useAppSettings() {
         maximumFractionDigits: 0,
       }).format(eurPrice);
     }
-    
+
     return new Intl.NumberFormat('pl-PL', {
       style: 'currency',
       currency: 'PLN',
@@ -80,13 +81,13 @@ export function useAppSettings() {
     if (!pricePln || !settings) {
       return { pln: '-', eur: null };
     }
-    
+
     const pln = new Intl.NumberFormat('pl-PL', {
       style: 'currency',
       currency: 'PLN',
       maximumFractionDigits: 0,
     }).format(pricePln);
-    
+
     let eur = null;
     if (settings.show_eur_prices) {
       const eurPrice = pricePln / settings.exchange_rate_eur;
@@ -96,7 +97,7 @@ export function useAppSettings() {
         maximumFractionDigits: 0,
       }).format(eurPrice);
     }
-    
+
     return { pln, eur };
   };
 
