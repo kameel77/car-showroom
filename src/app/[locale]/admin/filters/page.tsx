@@ -93,7 +93,7 @@ export default function FilterAdminPage() {
               value={newBrand}
               onChange={(e) => setNewBrand(e.target.value)}
               placeholder="Enter brand name (e.g., BMW)"
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder:text-gray-400"
             />
             <button
               type="submit"
@@ -184,7 +184,7 @@ export default function FilterAdminPage() {
                             setNewModel(e.target.value);
                           }}
                           placeholder="Enter model name"
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder:text-gray-400"
                         />
                         <button
                           type="submit"

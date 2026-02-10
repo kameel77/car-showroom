@@ -153,25 +153,37 @@ export async function deleteWidget(id: string): Promise<void> {
 /**
  * Get widgets for a specific partner and global widgets
  */
-export async function getWidgetsByPartner(partnerId: string): Promise<Widget[]> {
+export async function getWidgetsByPartner(partnerId: string, locale?: string): Promise<Widget[]> {
     // Fetch global active widgets
-    const { data: globalWidgets, error: globalError } = await supabase
+    let globalQuery = supabase
         .from('widgets')
         .select('*')
         .eq('is_global', true)
         .eq('is_active', true);
+
+    if (locale) {
+        globalQuery = globalQuery.or(`language.eq.${locale},language.is.null`);
+    }
+
+    const { data: globalWidgets, error: globalError } = await globalQuery;
 
     if (globalError) {
         console.error('Error fetching global widgets:', globalError);
     }
 
     // Fetch partner-specific active widgets
-    const { data: partnerWidgets, error: partnerError } = await supabase
+    let partnerQuery = supabase
         .from('widgets')
         .select('*, widget_partners!inner(partner_id)')
         .eq('is_global', false)
         .eq('is_active', true)
         .eq('widget_partners.partner_id', partnerId);
+
+    if (locale) {
+        partnerQuery = partnerQuery.or(`language.eq.${locale},language.is.null`);
+    }
+
+    const { data: partnerWidgets, error: partnerError } = await partnerQuery;
 
     if (partnerError && partnerError.code !== 'PGRST116') {
         console.error('Error fetching partner widgets:', partnerError);
@@ -179,19 +191,24 @@ export async function getWidgetsByPartner(partnerId: string): Promise<Widget[]> 
 
     const allWidgets = [...(globalWidgets || []), ...(partnerWidgets || [])];
 
-    // Sort or filter duplicates if any (though shouldn't be based on logic)
     return allWidgets;
 }
 
 /**
  * Get only global widgets
  */
-export async function getGlobalWidgets(): Promise<Widget[]> {
-    const { data, error } = await supabase
+export async function getGlobalWidgets(locale?: string): Promise<Widget[]> {
+    let query = supabase
         .from('widgets')
         .select('*')
         .eq('is_global', true)
         .eq('is_active', true);
+
+    if (locale) {
+        query = query.or(`language.eq.${locale},language.is.null`);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
         console.error('Error fetching global widgets:', error);

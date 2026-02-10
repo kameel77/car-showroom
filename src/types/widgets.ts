@@ -9,6 +9,7 @@ export interface Widget {
     content: string;
     is_global: boolean;
     is_active: boolean;
+    language?: string;
     created_at: string;
     updated_at: string;
     partners?: string[]; // Array of partner IDs if it's not global
@@ -21,6 +22,7 @@ export interface CreateWidgetInput {
     content: string;
     is_global?: boolean;
     is_active?: boolean;
+    language?: string;
     partner_ids?: string[];
 }
 
@@ -31,5 +33,6 @@ export interface UpdateWidgetInput {
     content?: string;
     is_global?: boolean;
     is_active?: boolean;
+    language?: string;
     partner_ids?: string[];
 }

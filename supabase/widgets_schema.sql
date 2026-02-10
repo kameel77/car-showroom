@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS widgets (
     content TEXT NOT NULL,
     is_global BOOLEAN DEFAULT false,
     is_active BOOLEAN DEFAULT true,
+    language TEXT, -- NULL means all languages, otherwise 'pl', 'en', 'de'
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

@@ -17,6 +17,7 @@ import {
 import { CreateWidgetInput, UpdateWidgetInput, Widget } from '@/types/widgets';
 import { Partner } from '@/types/partners';
 import { getPartners } from '@/lib/partners-server';
+import { locales, localeNames } from '@/i18n/config';
 
 interface WidgetFormProps {
     initialData?: Widget;
@@ -38,6 +39,7 @@ export function WidgetForm({ initialData, onSubmit, title }: WidgetFormProps) {
         content: initialData?.content || '',
         is_global: initialData?.is_global ?? true,
         is_active: initialData?.is_active ?? true,
+        language: initialData?.language || '',
         partner_ids: initialData?.partners || [],
     });
 
@@ -106,10 +108,29 @@ export function WidgetForm({ initialData, onSubmit, title }: WidgetFormProps) {
                                     value={formData.name}
                                     onChange={e => setFormData({ ...formData, name: e.target.value })}
                                     placeholder="np. Baner Letni, Kontakt Sidebar"
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder:text-gray-400"
                                 />
                             </div>
 
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-700">Wybierz język</label>
+                                <select
+                                    value={formData.language}
+                                    onChange={e => setFormData({ ...formData, language: e.target.value })}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                                >
+                                    <option value="">Wszystkie języki</option>
+                                    {locales.map(loc => (
+                                        <option key={loc} value={loc}>
+                                            {localeNames[loc]}
+                                        </option>
+                                    ))}
+                                </select>
+                                <p className="text-xs text-gray-500">Jeśli wybierzesz język, widget pojawi się tylko w tej wersji językowej.</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-gray-700">Status</label>
                                 <div className="flex items-center gap-4 py-2">
@@ -199,7 +220,7 @@ export function WidgetForm({ initialData, onSubmit, title }: WidgetFormProps) {
                                     value={formData.content}
                                     onChange={e => setFormData({ ...formData, content: e.target.value })}
                                     placeholder="https://example.com/image.jpg"
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder:text-gray-400"
                                 />
                             ) : (
                                 <textarea
@@ -208,7 +229,7 @@ export function WidgetForm({ initialData, onSubmit, title }: WidgetFormProps) {
                                     value={formData.content}
                                     onChange={e => setFormData({ ...formData, content: e.target.value })}
                                     placeholder="<div>...</div>"
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm text-gray-900 placeholder:text-gray-400"
                                 />
                             )}
                         </div>

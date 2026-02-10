@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 :root {
   --background: #ffffff;
@@ -23,4 +24,36 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Global input fixes for contrast */
+input,
+textarea,
+select {
+  color: #111827;
+  /* gray-900 */
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #6b7280;
+  /* gray-500 */
+}
+
+/* Ensure contrast in dark mode ONLY if the background is also dark. 
+   If components use bg-white (like in admin), they must override this. */
+@media (prefers-color-scheme: dark) {
+
+  :root:not(.light) input:not(.text-gray-900),
+  :root:not(.light) textarea:not(.text-gray-900),
+  :root:not(.light) select:not(.text-gray-900) {
+    color: #f9fafb;
+    /* gray-50 */
+  }
+
+  :root:not(.light) input::placeholder,
+  :root:not(.light) textarea::placeholder {
+    color: #9ca3af;
+    /* gray-400 */
+  }
 }

@@ -20,6 +20,7 @@ import {
 import { Widget } from '@/types/widgets';
 import { getWidgets, deleteWidget } from '@/lib/widgets-server';
 import { AdminHeader } from '@/components/admin/AdminHeader';
+import { localeNames } from '@/i18n/config';
 
 export default function WidgetsAdminPage() {
     const t = useTranslations();
@@ -164,6 +165,11 @@ export default function WidgetsAdminPage() {
                                                         <Code className="h-4 w-4 text-purple-500" />
                                                     )}
                                                     Typ: {widget.content_type === 'image' ? 'Obraz' : 'Kod HTML'}
+                                                </span>
+
+                                                <span className="flex items-center gap-1.5">
+                                                    <Globe className="h-4 w-4 text-gray-400" />
+                                                    Język: {widget.language ? (localeNames[widget.language as keyof typeof localeNames] || widget.language) : 'Wszystkie'}
                                                 </span>
 
                                                 <span className="flex items-center gap-1.5">

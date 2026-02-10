@@ -54,7 +54,7 @@ export default async function OfferPage({ params }: OfferPageProps) {
   }
 
   // Fetch global widgets
-  const widgets = await getGlobalWidgets();
+  const widgets = await getGlobalWidgets(locale);
   const sidebarWidgets = widgets.filter(w => w.type === 'sidebar');
   const contentWidgets = widgets.filter(w => w.type === 'content');
 
@@ -126,7 +126,7 @@ export default async function OfferPage({ params }: OfferPageProps) {
                     {widget.content_type === 'image' ? (
                       <img src={widget.content} alt={widget.name} className="w-full h-auto" />
                     ) : (
-                      <div className="p-6 prose max-w-none" dangerouslySetInnerHTML={{ __html: widget.content }} />
+                      <div className="p-6 prose prose-gray max-w-none text-gray-900" dangerouslySetInnerHTML={{ __html: widget.content }} />
                     )}
                   </div>
                 ))}
@@ -153,7 +153,7 @@ export default async function OfferPage({ params }: OfferPageProps) {
                 {widget.content_type === 'image' ? (
                   <img src={widget.content} alt={widget.name} className="w-full h-auto" />
                 ) : (
-                  <div className="p-6 prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: widget.content }} />
+                  <div className="p-6 prose prose-sm prose-gray max-w-none text-gray-900" dangerouslySetInnerHTML={{ __html: widget.content }} />
                 )}
               </div>
             ))}

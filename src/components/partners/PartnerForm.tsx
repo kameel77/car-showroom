@@ -17,10 +17,10 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
   const t = useTranslations();
   const locale = useLocale();
   const router = useRouter();
-  
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const [formData, setFormData] = useState({
     slug: partner?.slug || '',
     company_name: partner?.company_name || '',
@@ -38,7 +38,7 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
-    
+
     if (type === 'checkbox') {
       const checked = (e.target as HTMLInputElement).checked;
       setFormData(prev => ({ ...prev, [name]: checked }));
@@ -93,7 +93,7 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
           is_active: formData.is_active,
           notes: formData.notes || undefined,
         };
-        
+
         await createPartner(input);
         router.push(`/${locale}/admin/partners`);
       } else if (mode === 'edit' && partner) {
@@ -110,7 +110,7 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
           is_active: formData.is_active,
           notes: formData.notes || undefined,
         };
-        
+
         await updatePartner(partner.id, input);
         router.push(`/${locale}/admin/partners`);
       }
@@ -136,8 +136,8 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
               {mode === 'create' ? 'Nowy partner' : 'Edytuj partnera'}
             </h1>
             <p className="text-gray-600 mt-1">
-              {mode === 'create' 
-                ? 'Dodaj nowego partnera do systemu' 
+              {mode === 'create'
+                ? 'Dodaj nowego partnera do systemu'
                 : 'Zaktualizuj dane partnera'}
             </p>
           </div>
@@ -159,7 +159,7 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
               <Building2 className="h-5 w-5" />
               Podstawowe informacje
             </h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="company_name" className="block text-sm font-medium text-gray-700 mb-1">
@@ -208,7 +208,7 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
                 value={formData.company_address}
                 onChange={handleChange}
                 rows={2}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder:text-gray-400"
                 placeholder="ul. Przykładowa 123, 00-001 Warszawa"
               />
             </div>
@@ -224,7 +224,7 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
                   name="vat_number"
                   value={formData.vat_number}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder:text-gray-400"
                   placeholder="np. 1234567890"
                 />
               </div>
@@ -249,7 +249,7 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
           {/* Contact Info */}
           <div className="space-y-4 pt-6 border-t border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900">Dane kontaktowe</h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
@@ -261,7 +261,7 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder:text-gray-400"
                   placeholder="kontakt@firma.pl"
                 />
               </div>
@@ -276,7 +276,7 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder:text-gray-400"
                   placeholder="+48 123 456 789"
                 />
               </div>
@@ -292,7 +292,7 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
                 name="website"
                 value={formData.website}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder:text-gray-400"
                 placeholder="https://www.firma.pl"
               />
             </div>
@@ -301,7 +301,7 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
           {/* Settings */}
           <div className="space-y-4 pt-6 border-t border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900">Ustawienia</h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="default_margin_percent" className="block text-sm font-medium text-gray-700 mb-1">
@@ -316,7 +316,7 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
                   min="0"
                   max="100"
                   step="0.01"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder:text-gray-400"
                   placeholder="0"
                 />
                 <p className="text-xs text-gray-500 mt-1">
@@ -367,7 +367,7 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
                 value={formData.notes}
                 onChange={handleChange}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder:text-gray-400"
                 placeholder="Wewnętrzne notatki o partnerze..."
               />
             </div>
