@@ -50,18 +50,46 @@ export function PartnerListingCard({ offer, partnerSlug, locale, index = 0 }: Pa
 
           {/* Price Badge - Shows partner price (net or gross based on setting) */}
           <div className="absolute top-3 right-3 px-3 py-1.5 bg-white/95 backdrop-blur-sm rounded-lg shadow-md">
-            <span className="text-lg font-bold text-blue-600">
-              {offer.show_net_prices && offer.display_price_net
-                ? formatPrice(offer.display_price_net)
-                : formatPrice(offer.display_price)}
-            </span>
-            {offer.show_net_prices && (
-              <div className="text-xs text-gray-500">{t('net')}</div>
-            )}
-            {settings?.show_eur_prices && settings?.exchange_rate_eur && (
-              <div className="text-xs text-gray-500">
-                ≈ {Math.round((offer.show_net_prices && offer.display_price_net ? offer.display_price_net : offer.display_price) / settings.exchange_rate_eur).toLocaleString()} €
-              </div>
+            {locale === 'pl' ? (
+              <>
+                <span className="text-lg font-bold text-blue-600">
+                  {offer.show_net_prices && offer.display_price_net
+                    ? formatPrice(offer.display_price_net)
+                    : formatPrice(offer.display_price)}
+                </span>
+                {offer.show_net_prices && (
+                  <div className="text-xs text-gray-500">{t('net')}</div>
+                )}
+                {settings?.show_eur_prices && settings?.exchange_rate_eur && offer.show_secondary_currency && (
+                  <div className="text-xs text-gray-500">
+                    ≈ {Math.round((offer.show_net_prices && offer.display_price_net ? offer.display_price_net : offer.display_price) / settings.exchange_rate_eur).toLocaleString()} €
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                {settings?.show_eur_prices && settings?.exchange_rate_eur ? (
+                  <>
+                    <span className="text-lg font-bold text-blue-600">
+                      {Math.round((offer.show_net_prices && offer.display_price_net ? offer.display_price_net : offer.display_price) / settings.exchange_rate_eur).toLocaleString()}
+                      <span className="text-sm ml-0.5">€</span>
+                    </span>
+                    {offer.show_secondary_currency && (
+                      <div className="text-xs text-gray-500">
+                        ≈ {offer.show_net_prices && offer.display_price_net
+                          ? formatPrice(offer.display_price_net)
+                          : formatPrice(offer.display_price)}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <span className="text-lg font-bold text-blue-600">
+                    {offer.show_net_prices && offer.display_price_net
+                      ? formatPrice(offer.display_price_net)
+                      : formatPrice(offer.display_price)}
+                  </span>
+                )}
+              </>
             )}
           </div>
         </div>

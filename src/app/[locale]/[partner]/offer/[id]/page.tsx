@@ -148,7 +148,7 @@ export default async function PartnerOfferPage({ params }: PartnerOfferPageProps
                           ? formatPrice(partnerOffer.display_price_net)
                           : formatPrice(partnerOffer.display_price)}
                       </p>
-                      {settings?.show_eur_prices && settings?.exchange_rate_eur && (
+                      {settings?.show_eur_prices && settings?.exchange_rate_eur && partner.show_secondary_currency && (
                         <p className="text-lg text-gray-500">
                           ≈ {Math.round((partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price) / settings.exchange_rate_eur).toLocaleString()}
                           <span className="text-sm ml-0.5">€</span>
@@ -163,11 +163,13 @@ export default async function PartnerOfferPage({ params }: PartnerOfferPageProps
                             {Math.round((partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price) / settings.exchange_rate_eur).toLocaleString()}
                             <span className="text-xl ml-1">€</span>
                           </p>
-                          <p className="text-lg text-gray-500">
-                            ≈ {partner.show_net_prices && partnerOffer.display_price_net
-                              ? formatPrice(partnerOffer.display_price_net)
-                              : formatPrice(partnerOffer.display_price)}
-                          </p>
+                          {partner.show_secondary_currency && (
+                            <p className="text-lg text-gray-500">
+                              ≈ {partner.show_net_prices && partnerOffer.display_price_net
+                                ? formatPrice(partnerOffer.display_price_net)
+                                : formatPrice(partnerOffer.display_price)}
+                            </p>
+                          )}
                         </>
                       ) : (
                         <p className="text-3xl font-bold text-blue-600">
@@ -288,7 +290,7 @@ export default async function PartnerOfferPage({ params }: PartnerOfferPageProps
                           ? formatPrice(partnerOffer.display_price_net)
                           : formatPrice(partnerOffer.display_price)}
                       </p>
-                      {settings?.show_eur_prices && settings?.exchange_rate_eur && (
+                      {settings?.show_eur_prices && settings?.exchange_rate_eur && partner.show_secondary_currency && (
                         <p className="text-lg text-gray-500">
                           ≈ {Math.round((partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price) / settings.exchange_rate_eur).toLocaleString()}
                           <span className="text-sm ml-0.5">€</span>
@@ -303,11 +305,13 @@ export default async function PartnerOfferPage({ params }: PartnerOfferPageProps
                             {Math.round((partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price) / settings.exchange_rate_eur).toLocaleString()}
                             <span className="text-xl ml-1">€</span>
                           </p>
-                          <p className="text-lg text-gray-500">
-                            ≈ {partner.show_net_prices && partnerOffer.display_price_net
-                              ? formatPrice(partnerOffer.display_price_net)
-                              : formatPrice(partnerOffer.display_price)}
-                          </p>
+                          {partner.show_secondary_currency && (
+                            <p className="text-lg text-gray-500">
+                              ≈ {partner.show_net_prices && partnerOffer.display_price_net
+                                ? formatPrice(partnerOffer.display_price_net)
+                                : formatPrice(partnerOffer.display_price)}
+                            </p>
+                          )}
                         </>
                       ) : (
                         <p className="text-3xl font-bold text-blue-600">

@@ -50,13 +50,37 @@ export function ListingCard({ listing, index = 0 }: ListingCardProps) {
 
           {/* Price Badge */}
           <div className="absolute top-3 right-3 px-3 py-1.5 bg-white/95 backdrop-blur-sm rounded-lg shadow-md">
-            <span className="text-lg font-bold text-gray-900">
-              {prices.pln}
-            </span>
-            {prices.eur && settings?.show_eur_prices && (
-              <div className="text-xs text-gray-500">
-                ≈ {prices.eur}
-              </div>
+            {locale === 'pl' ? (
+              <>
+                <span className="text-lg font-bold text-gray-900">
+                  {prices.pln}
+                </span>
+                {prices.eur && settings?.show_eur_prices && settings?.show_secondary_currency && (
+                  <div className="text-xs text-gray-500">
+                    ≈ {prices.eur}
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                {prices.eur && settings?.show_eur_prices ? (
+                  <>
+                    <span className="text-lg font-bold text-gray-900">
+                      {prices.eur.replace('€', '').trim()}
+                      <span className="text-sm ml-0.5">€</span>
+                    </span>
+                    {settings?.show_secondary_currency && (
+                      <div className="text-xs text-gray-500">
+                        ≈ {prices.pln}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <span className="text-lg font-bold text-gray-900">
+                    {prices.pln}
+                  </span>
+                )}
+              </>
             )}
           </div>
         </div>

@@ -32,6 +32,7 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
     website: partner?.website || '',
     default_margin_percent: partner?.default_margin_percent || 0,
     show_net_prices: partner?.show_net_prices ?? false,
+    show_secondary_currency: partner?.show_secondary_currency ?? false,
     is_active: partner?.is_active ?? true,
     notes: partner?.notes || '',
   });
@@ -90,6 +91,7 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
           website: formData.website || undefined,
           default_margin_percent: formData.default_margin_percent,
           show_net_prices: formData.show_net_prices,
+          show_secondary_currency: formData.show_secondary_currency,
           is_active: formData.is_active,
           notes: formData.notes || undefined,
         };
@@ -107,6 +109,7 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
           website: formData.website || undefined,
           default_margin_percent: formData.default_margin_percent,
           show_net_prices: formData.show_net_prices,
+          show_secondary_currency: formData.show_secondary_currency,
           is_active: formData.is_active,
           notes: formData.notes || undefined,
         };
@@ -336,6 +339,22 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
                   <div>
                     <span className="block text-sm font-medium text-gray-700">Ceny netto</span>
                     <span className="block text-xs text-gray-500">Pokazuj ceny netto (VAT 23%)</span>
+                  </div>
+                </label>
+              </div>
+
+              <div className="flex items-center">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="show_secondary_currency"
+                    checked={formData.show_secondary_currency}
+                    onChange={handleChange}
+                    className="h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <div>
+                    <span className="block text-sm font-medium text-gray-700">Druga waluta</span>
+                    <span className="block text-xs text-gray-500">Pokazuj drugą walutę (np. PLN przy EUR jako głównym)</span>
                   </div>
                 </label>
               </div>

@@ -8,6 +8,7 @@ export interface AppSettings {
   default_currency: string;
   exchange_rate_eur: number;
   show_eur_prices: boolean;
+  show_secondary_currency: boolean;
   contact_phone: string | null;
   contact_email: string | null;
   show_contact_buttons: boolean;
