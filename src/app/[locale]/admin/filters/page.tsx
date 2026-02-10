@@ -4,21 +4,22 @@ import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useFilters } from '@/hooks/useFilters';
 import { Plus, Trash2, ToggleLeft, ToggleRight, ChevronDown, ChevronUp } from 'lucide-react';
+import { AdminHeader } from '@/components/admin/AdminHeader';
 
 export default function FilterAdminPage() {
   const t = useTranslations();
-  const { 
-    brands, 
-    models, 
-    loading, 
-    error, 
-    addBrand, 
-    removeBrand, 
-    toggleBrand, 
-    addModel, 
-    removeModel 
+  const {
+    brands,
+    models,
+    loading,
+    error,
+    addBrand,
+    removeBrand,
+    toggleBrand,
+    addModel,
+    removeModel
   } = useFilters();
-  
+
   const [newBrand, setNewBrand] = useState('');
   const [newModel, setNewModel] = useState('');
   const [selectedBrand, setSelectedBrand] = useState<number | null>(null);
@@ -27,7 +28,7 @@ export default function FilterAdminPage() {
   const handleAddBrand = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newBrand.trim()) return;
-    
+
     try {
       await addBrand(newBrand.trim());
       setNewBrand('');
@@ -39,7 +40,7 @@ export default function FilterAdminPage() {
   const handleAddModel = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newModel.trim() || !selectedBrand) return;
-    
+
     try {
       await addModel(selectedBrand, newModel.trim());
       setNewModel('');
@@ -62,17 +63,21 @@ export default function FilterAdminPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <AdminHeader />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-lg">Loading...</div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gray-50 pb-8">
+      <AdminHeader />
+      <div className="max-w-4xl mx-auto px-4">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Filter Management</h1>
-        
+
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
             {error}
@@ -108,7 +113,7 @@ export default function FilterAdminPage() {
           <h2 className="text-xl font-semibold text-gray-900 mb-4">
             Allowed Brands ({brands.length})
           </h2>
-          
+
           {brands.length === 0 ? (
             <p className="text-gray-500">No brands added yet. All offers will be hidden.</p>
           ) : (
@@ -168,7 +173,7 @@ export default function FilterAdminPage() {
                       <p className="text-sm text-gray-500 mb-3">
                         Leave empty to allow all models from {brand.brand_name}
                       </p>
-                      
+
                       {/* Add Model */}
                       <form onSubmit={handleAddModel} className="flex gap-2 mb-4">
                         <input

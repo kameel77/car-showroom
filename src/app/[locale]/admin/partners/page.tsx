@@ -4,11 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { 
-  Plus, 
-  Trash2, 
-  Edit, 
-  ExternalLink, 
+import {
+  Plus,
+  Trash2,
+  Edit,
+  ExternalLink,
   Car,
   Percent,
   Building2,
@@ -18,12 +18,13 @@ import {
 } from 'lucide-react';
 import { Partner } from '@/types/partners';
 import { getPartners, deletePartner } from '@/lib/partners-server';
+import { AdminHeader } from '@/components/admin/AdminHeader';
 
 export default function PartnersAdminPage() {
   const t = useTranslations();
   const locale = useLocale();
   const router = useRouter();
-  
+
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -63,31 +64,38 @@ export default function PartnersAdminPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <AdminHeader />
+        <div className="flex-1 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <p className="text-red-600">{error}</p>
-          <button 
-            onClick={loadPartners}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            Retry
-          </button>
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <AdminHeader />
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="text-center">
+            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <p className="text-red-600 mb-4">{error}</p>
+            <button
+              onClick={loadPartners}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Spróbuj ponownie
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 pb-8">
+      <AdminHeader />
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -128,7 +136,7 @@ export default function PartnersAdminPage() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div className="divide-y divide-gray-200">
               {partners.map((partner) => (
-                <div 
+                <div
                   key={partner.id}
                   className="p-6 hover:bg-gray-50 transition-colors"
                 >
@@ -144,7 +152,7 @@ export default function PartnersAdminPage() {
                           </span>
                         )}
                       </div>
-                      
+
                       <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-3">
                         <span className="flex items-center gap-1">
                           <Building2 className="h-4 w-4" />
@@ -164,7 +172,7 @@ export default function PartnersAdminPage() {
                           {partner.contact_person}
                         </p>
                       )}
-                      
+
                       {(partner.email || partner.phone) && (
                         <p className="text-sm text-gray-500">
                           {partner.email} {partner.phone && `• ${partner.phone}`}
@@ -181,7 +189,7 @@ export default function PartnersAdminPage() {
                       >
                         <ExternalLink className="h-5 w-5" />
                       </Link>
-                      
+
                       <Link
                         href={`/${locale}/admin/partners/${partner.id}/offers`}
                         className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -189,7 +197,7 @@ export default function PartnersAdminPage() {
                       >
                         <Car className="h-5 w-5" />
                       </Link>
-                      
+
                       <Link
                         href={`/${locale}/admin/partners/${partner.id}/edit`}
                         className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -197,14 +205,13 @@ export default function PartnersAdminPage() {
                       >
                         <Edit className="h-5 w-5" />
                       </Link>
-                      
+
                       <button
                         onClick={() => handleDelete(partner.id)}
-                        className={`p-2 rounded-lg transition-colors ${
-                          deleteConfirm === partner.id
-                            ? 'text-red-600 bg-red-50 hover:bg-red-100'
-                            : 'text-gray-400 hover:text-red-600 hover:bg-red-50'
-                        }`}
+                        className={`p-2 rounded-lg transition-colors ${deleteConfirm === partner.id
+                          ? 'text-red-600 bg-red-50 hover:bg-red-100'
+                          : 'text-gray-400 hover:text-red-600 hover:bg-red-50'
+                          }`}
                         title={deleteConfirm === partner.id ? 'Potwierdź usunięcie' : 'Usuń'}
                       >
                         <Trash2 className="h-5 w-5" />

@@ -10,9 +10,10 @@ import { MobileStickyCTA } from '@/components/MobileStickyCTA';
 import { MobilePriceCard } from '@/components/MobilePriceCard';
 import { supabase } from '@/lib/supabase';
 import { isOfferAllowed } from '@/lib/filters-server';
+import { getGlobalWidgets } from '@/lib/widgets-server';
 import { CarOffer } from '@/types/car';
-import { 
-  ChevronRight, 
+import {
+  ChevronRight,
   ArrowLeft
 } from 'lucide-react';
 
@@ -52,6 +53,11 @@ export default async function OfferPage({ params }: OfferPageProps) {
     notFound();
   }
 
+  // Fetch global widgets
+  const widgets = await getGlobalWidgets();
+  const sidebarWidgets = widgets.filter(w => w.type === 'sidebar');
+  const contentWidgets = widgets.filter(w => w.type === 'content');
+
   const allPhotos = [
     offer.main_photo_url,
     ...(offer.additional_photos || [])
@@ -77,8 +83,8 @@ export default async function OfferPage({ params }: OfferPageProps) {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Image Gallery */}
-            <ImageGallery 
-              images={allPhotos} 
+            <ImageGallery
+              images={allPhotos}
               title={`${offer.brand} ${offer.model}`}
             />
 
@@ -90,7 +96,7 @@ export default async function OfferPage({ params }: OfferPageProps) {
               <h2 className="text-xl font-semibold text-gray-900 mb-4">
                 {t('detail.keyParameters')}
               </h2>
-              <SpecsGrid 
+              <SpecsGrid
                 year={offer.year}
                 mileage={offer.mileage}
                 fuelType={offer.fuel_type}
@@ -112,6 +118,21 @@ export default async function OfferPage({ params }: OfferPageProps) {
               </section>
             )}
 
+            {/* Content Widgets */}
+            {contentWidgets.length > 0 && (
+              <div className="space-y-6">
+                {contentWidgets.map(widget => (
+                  <div key={widget.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    {widget.content_type === 'image' ? (
+                      <img src={widget.content} alt={widget.name} className="w-full h-auto" />
+                    ) : (
+                      <div className="p-6 prose max-w-none" dangerouslySetInnerHTML={{ __html: widget.content }} />
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* Back Button */}
             <Link
               href={`/${locale}`}
@@ -123,8 +144,19 @@ export default async function OfferPage({ params }: OfferPageProps) {
           </div>
 
           {/* Sidebar */}
-          <div className="hidden lg:block">
+          <div className="hidden lg:block space-y-6">
             <OfferSidebar offer={offer} />
+
+            {/* Sidebar Widgets */}
+            {sidebarWidgets.map(widget => (
+              <div key={widget.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                {widget.content_type === 'image' ? (
+                  <img src={widget.content} alt={widget.name} className="w-full h-auto" />
+                ) : (
+                  <div className="p-6 prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: widget.content }} />
+                )}
+              </div>
+            ))}
           </div>
         </div>
       </main>

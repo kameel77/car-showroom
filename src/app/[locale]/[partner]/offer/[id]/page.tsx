@@ -8,6 +8,7 @@ import { EquipmentDisplay } from '@/components/EquipmentDisplay';
 import { SpecsGrid } from '@/components/SpecsGrid';
 import { ChevronRight, ArrowLeft } from 'lucide-react';
 import { getPartnerBySlug, getPartnerPublicOffer } from '@/lib/partners-server';
+import { getWidgetsByPartner } from '@/lib/widgets-server';
 import { formatPrice, calculateNetPrice } from '@/lib/price-calculator';
 import { supabase } from '@/lib/supabase';
 
@@ -75,6 +76,11 @@ export default async function PartnerOfferPage({ params }: PartnerOfferPageProps
   if (!partner || !partnerOffer || !offerData) {
     notFound();
   }
+
+  // Fetch widgets
+  const widgets = await getWidgetsByPartner(partner.id);
+  const sidebarWidgets = widgets.filter(w => w.type === 'sidebar');
+  const contentWidgets = widgets.filter(w => w.type === 'content');
 
   const allPhotos = [
     offerData.main_photo_url,
@@ -163,6 +169,21 @@ export default async function PartnerOfferPage({ params }: PartnerOfferPageProps
                 <EquipmentDisplay equipment={offerData.features as string[] | Record<string, string[]> | null | undefined} />
               </section>
             )}
+
+            {/* Content Widgets */}
+            {contentWidgets.length > 0 && (
+              <div className="space-y-6">
+                {contentWidgets.map(widget => (
+                  <div key={widget.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    {widget.content_type === 'image' ? (
+                      <img src={widget.content} alt={widget.name} className="w-full h-auto" />
+                    ) : (
+                      <div className="p-6 prose max-w-none" dangerouslySetInnerHTML={{ __html: widget.content }} />
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Sidebar */}
@@ -221,6 +242,17 @@ export default async function PartnerOfferPage({ params }: PartnerOfferPageProps
                   <p className="text-sm text-gray-600">{partner.company_address}</p>
                 )}
               </div>
+
+              {/* Sidebar Widgets */}
+              {sidebarWidgets.map(widget => (
+                <div key={widget.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                  {widget.content_type === 'image' ? (
+                    <img src={widget.content} alt={widget.name} className="w-full h-auto" />
+                  ) : (
+                    <div className="p-6 prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: widget.content }} />
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         </div>
