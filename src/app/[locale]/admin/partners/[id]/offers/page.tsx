@@ -370,7 +370,7 @@ export default function PartnerOffersPage() {
                   <select
                     value={selectedBrand}
                     onChange={(e) => setSelectedBrand(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
                   >
                     <option value="">Wybierz markę</option>
                     {availableBrands.map((brand) => (
@@ -389,7 +389,7 @@ export default function PartnerOffersPage() {
                     value={selectedModel}
                     onChange={(e) => setSelectedModel(e.target.value)}
                     placeholder="np. X5"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
                   />
                 </div>
                 <button
@@ -420,7 +420,7 @@ export default function PartnerOffersPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Szukaj po marce, modelu..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
               />
             </div>
 
@@ -434,7 +434,7 @@ export default function PartnerOffersPage() {
                   value={bulkMargin}
                   onChange={(e) => setBulkMargin(e.target.value === '' ? '' : Number(e.target.value))}
                   placeholder="Marża %"
-                  className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
                 />
                 <button
                   onClick={handleBulkSetMargin}

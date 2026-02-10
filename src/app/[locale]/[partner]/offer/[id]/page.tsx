@@ -1,3 +1,4 @@
+import React from 'react';
 import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
@@ -123,23 +124,67 @@ export default async function PartnerOfferPage({ params }: PartnerOfferPageProps
               title={`${offerData.brand} ${offerData.model}`}
             />
 
-            {/* Price Card - Mobile */}
-            <div className="lg:hidden bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h1 className="text-2xl font-bold text-gray-900">
-                {offerData.brand} {offerData.model}
-                {offerData.model_version && offerData.model_version !== 'Brak' && (
-                  <span className="ml-2 text-gray-500 font-normal">{offerData.model_version}</span>
+            {/* Contact & Price Info - Mobile */}
+            <div className="lg:hidden space-y-6">
+              {/* Price Card */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
+                <h1 className="text-xl font-bold text-gray-900">
+                  {offerData.brand} {offerData.model}
+                  {offerData.model_version && offerData.model_version !== 'Brak' && (
+                    <span className="ml-2 text-gray-500 font-normal">{offerData.model_version}</span>
+                  )}
+                </h1>
+
+                <div className="space-y-1">
+                  <p className="text-sm text-gray-500">
+                    {t('partner.priceFor')} {partner.company_name} {partner.show_net_prices && `(${t('listing.net')})`}
+                  </p>
+                  <p className="text-3xl font-bold text-blue-600">
+                    {partner.show_net_prices && partnerOffer.display_price_net
+                      ? formatPrice(partnerOffer.display_price_net)
+                      : formatPrice(partnerOffer.display_price)}
+                  </p>
+                </div>
+
+                <div className="pt-4 border-t border-gray-100 space-y-2">
+                  <p className="font-medium text-gray-900">{t('partner.contactPerson')}</p>
+                  {partner.contact_person && (
+                    <p className="text-sm text-gray-600">{partner.contact_person}</p>
+                  )}
+                  {partner.phone && (
+                    <a
+                      href={`tel:${partner.phone.replace(/\s/g, '')}`}
+                      className="block text-sm text-blue-600 hover:text-blue-700"
+                    >
+                      {partner.phone}
+                    </a>
+                  )}
+                  {partner.email && (
+                    <a
+                      href={`mailto:${partner.email}`}
+                      className="block text-sm text-blue-600 hover:text-blue-700"
+                    >
+                      {partner.email}
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              {/* Partner Info Card */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 className="font-semibold text-gray-900 mb-2">
+                  {partner.company_name}
+                </h3>
+                {partner.company_address && (
+                  <p className="text-sm text-gray-600">
+                    {partner.company_address.split('<br>').map((line: string, i: number, arr: string[]) => (
+                      <React.Fragment key={i}>
+                        {line}
+                        {i < arr.length - 1 && <br />}
+                      </React.Fragment>
+                    ))}
+                  </p>
                 )}
-              </h1>
-              <div className="mt-4">
-                <p className="text-sm text-gray-500 mb-1">
-                  {t('partner.priceFor')} {partner.company_name} {partner.show_net_prices && `(${t('listing.net')})`}
-                </p>
-                <p className="text-3xl font-bold text-blue-600">
-                  {partner.show_net_prices && partnerOffer.display_price_net
-                    ? formatPrice(partnerOffer.display_price_net)
-                    : formatPrice(partnerOffer.display_price)}
-                </p>
               </div>
             </div>
 
@@ -189,8 +234,8 @@ export default async function PartnerOfferPage({ params }: PartnerOfferPageProps
           {/* Sidebar */}
           <div className="lg:col-span-1">
             <div className="sticky top-24 space-y-6">
-              {/* Price Card */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
+              {/* Price Card - Desktop only in sidebar */}
+              <div className="hidden lg:block bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
                 <h1 className="text-xl font-bold text-gray-900">
                   {offerData.brand} {offerData.model}
                   {offerData.model_version && offerData.model_version !== 'Brak' && (
@@ -233,13 +278,20 @@ export default async function PartnerOfferPage({ params }: PartnerOfferPageProps
                 </div>
               </div>
 
-              {/* Partner Info */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              {/* Partner Info - Desktop only in sidebar */}
+              <div className="hidden lg:block bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <h3 className="font-semibold text-gray-900 mb-2">
                   {partner.company_name}
                 </h3>
                 {partner.company_address && (
-                  <p className="text-sm text-gray-600">{partner.company_address}</p>
+                  <p className="text-sm text-gray-600">
+                    {partner.company_address.split('<br>').map((line: string, i: number, arr: string[]) => (
+                      <React.Fragment key={i}>
+                        {line}
+                        {i < arr.length - 1 && <br />}
+                      </React.Fragment>
+                    ))}
+                  </p>
                 )}
               </div>
 

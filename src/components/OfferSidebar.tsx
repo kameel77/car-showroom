@@ -1,4 +1,5 @@
 'use client';
+import React from 'react';
 
 import { useTranslations, useLocale } from 'next-intl';
 import { useAppSettings } from '@/hooks/useAppSettings';
@@ -7,9 +8,10 @@ import { CarOffer } from '@/types/car';
 
 interface OfferSidebarProps {
   offer: CarOffer;
+  className?: string;
 }
 
-export function OfferSidebar({ offer }: OfferSidebarProps) {
+export function OfferSidebar({ offer, className }: OfferSidebarProps) {
   const t = useTranslations();
   const locale = useLocale();
   const { settings, formatPrice, getDualPrice } = useAppSettings();
@@ -33,13 +35,13 @@ export function OfferSidebar({ offer }: OfferSidebarProps) {
   const showDealerInfo = settings.show_dealer_info && (offer.seller_name || offer.seller_city);
 
   return (
-    <div className="sticky top-24 space-y-6">
+    <div className={className || "sticky top-24 space-y-6"}>
       {/* Price Card */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
         <h1 className="text-xl font-bold text-gray-900">
           {offer.brand} {offer.model} {offer.model_version && offer.model_version !== 'Brak' ? offer.model_version : ''}
         </h1>
-        
+
         {/* Price Display */}
         <div className="space-y-1">
           <div className="text-3xl font-bold text-blue-600">
@@ -56,7 +58,7 @@ export function OfferSidebar({ offer }: OfferSidebarProps) {
         {settings.show_contact_buttons && (
           <div className="space-y-3 pt-4 border-t border-gray-100">
             {settings.enable_contact_form && (
-              <a 
+              <a
                 href={`mailto:${contactEmail}?subject=Zapytanie o ${offer.brand} ${offer.model}`}
                 className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
               >
@@ -64,7 +66,7 @@ export function OfferSidebar({ offer }: OfferSidebarProps) {
                 {t('detail.askAbout')}
               </a>
             )}
-            
+
             <a
               href={`tel:${contactPhone.replace(/\s/g, '')}`}
               className="w-full flex items-center justify-center gap-2 py-3 px-4 border-2 border-gray-300 text-gray-700 rounded-lg font-medium hover:border-gray-400 hover:bg-gray-50 transition-colors"
@@ -90,7 +92,17 @@ export function OfferSidebar({ offer }: OfferSidebarProps) {
               <div className="flex items-center gap-1 text-sm text-gray-500 mt-1">
                 <MapPin className="h-4 w-4" />
                 <span>
-                  {offer.seller_address && `${offer.seller_address}, `}
+                  {offer.seller_address && (
+                    <>
+                      {offer.seller_address.split('<br>').map((line, i, arr) => (
+                        <React.Fragment key={i}>
+                          {line}
+                          {i < arr.length - 1 && <br />}
+                        </React.Fragment>
+                      ))}
+                      {', '}
+                    </>
+                  )}
                   {offer.seller_city}
                   {offer.seller_postal_code && ` ${offer.seller_postal_code}`}
                 </span>

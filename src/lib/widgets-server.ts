@@ -54,6 +54,7 @@ export async function createWidget(input: CreateWidgetInput): Promise<Widget> {
         .from('widgets')
         .insert({
             ...widgetData,
+            language: input.language || null,
             is_global: input.is_global ?? false,
             is_active: input.is_active ?? true,
         })
@@ -98,6 +99,7 @@ export async function updateWidget(
         .from('widgets')
         .update({
             ...widgetData,
+            language: input.language !== undefined ? (input.language || null) : undefined,
             updated_at: new Date().toISOString(),
         })
         .eq('id', id)

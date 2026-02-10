@@ -7,7 +7,6 @@ import { EquipmentDisplay } from '@/components/EquipmentDisplay';
 import { SpecsGrid } from '@/components/SpecsGrid';
 import { OfferSidebar } from '@/components/OfferSidebar';
 import { MobileStickyCTA } from '@/components/MobileStickyCTA';
-import { MobilePriceCard } from '@/components/MobilePriceCard';
 import { supabase } from '@/lib/supabase';
 import { isOfferAllowed } from '@/lib/filters-server';
 import { getGlobalWidgets } from '@/lib/widgets-server';
@@ -89,7 +88,7 @@ export default async function OfferPage({ params }: OfferPageProps) {
             />
 
             {/* Title & Price - Mobile */}
-            <MobilePriceCard offer={offer} />
+            <OfferSidebar offer={offer} className="lg:hidden space-y-6" />
 
             {/* Key Parameters */}
             <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
