@@ -12,6 +12,7 @@ import { getPartnerBySlug, getPartnerPublicOffer } from '@/lib/partners-server';
 import { getWidgetsByPartner } from '@/lib/widgets-server';
 import { formatPrice, calculateNetPrice } from '@/lib/price-calculator';
 import { supabase } from '@/lib/supabase';
+import { getAppSettings } from '@/lib/settings-server';
 
 interface PartnerOfferPageProps {
   params: Promise<{
@@ -68,10 +69,11 @@ export default async function PartnerOfferPage({ params }: PartnerOfferPageProps
   const t = await getTranslations();
 
   // Get partner and offer data
-  const [partner, partnerOffer, offerData] = await Promise.all([
+  const [partner, partnerOffer, offerData, settings] = await Promise.all([
     getPartnerBySlug(partnerSlug),
     getPartnerPublicOffer(partnerSlug, id),
     getOffer(id),
+    getAppSettings(),
   ]);
 
   if (!partner || !partnerOffer || !offerData) {
@@ -139,11 +141,43 @@ export default async function PartnerOfferPage({ params }: PartnerOfferPageProps
                   <p className="text-sm text-gray-500">
                     {t('partner.priceFor')} {partner.company_name} {partner.show_net_prices && `(${t('listing.net')})`}
                   </p>
-                  <p className="text-3xl font-bold text-blue-600">
-                    {partner.show_net_prices && partnerOffer.display_price_net
-                      ? formatPrice(partnerOffer.display_price_net)
-                      : formatPrice(partnerOffer.display_price)}
-                  </p>
+                  {locale === 'pl' ? (
+                    <>
+                      <p className="text-3xl font-bold text-blue-600">
+                        {partner.show_net_prices && partnerOffer.display_price_net
+                          ? formatPrice(partnerOffer.display_price_net)
+                          : formatPrice(partnerOffer.display_price)}
+                      </p>
+                      {settings?.show_eur_prices && settings?.exchange_rate_eur && (
+                        <p className="text-lg text-gray-500">
+                          ≈ {Math.round((partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price) / settings.exchange_rate_eur).toLocaleString()}
+                          <span className="text-sm ml-0.5">€</span>
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      {settings?.show_eur_prices && settings?.exchange_rate_eur ? (
+                        <>
+                          <p className="text-3xl font-bold text-blue-600">
+                            {Math.round((partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price) / settings.exchange_rate_eur).toLocaleString()}
+                            <span className="text-xl ml-1">€</span>
+                          </p>
+                          <p className="text-lg text-gray-500">
+                            ≈ {partner.show_net_prices && partnerOffer.display_price_net
+                              ? formatPrice(partnerOffer.display_price_net)
+                              : formatPrice(partnerOffer.display_price)}
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-3xl font-bold text-blue-600">
+                          {partner.show_net_prices && partnerOffer.display_price_net
+                            ? formatPrice(partnerOffer.display_price_net)
+                            : formatPrice(partnerOffer.display_price)}
+                        </p>
+                      )}
+                    </>
+                  )}
                 </div>
 
                 <div className="pt-4 border-t border-gray-100 space-y-2">
@@ -247,11 +281,43 @@ export default async function PartnerOfferPage({ params }: PartnerOfferPageProps
                   <p className="text-sm text-gray-500">
                     {t('partner.priceFor')} {partner.company_name} {partner.show_net_prices && `(${t('listing.net')})`}
                   </p>
-                  <p className="text-3xl font-bold text-blue-600">
-                    {partner.show_net_prices && partnerOffer.display_price_net
-                      ? formatPrice(partnerOffer.display_price_net)
-                      : formatPrice(partnerOffer.display_price)}
-                  </p>
+                  {locale === 'pl' ? (
+                    <>
+                      <p className="text-3xl font-bold text-blue-600">
+                        {partner.show_net_prices && partnerOffer.display_price_net
+                          ? formatPrice(partnerOffer.display_price_net)
+                          : formatPrice(partnerOffer.display_price)}
+                      </p>
+                      {settings?.show_eur_prices && settings?.exchange_rate_eur && (
+                        <p className="text-lg text-gray-500">
+                          ≈ {Math.round((partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price) / settings.exchange_rate_eur).toLocaleString()}
+                          <span className="text-sm ml-0.5">€</span>
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      {settings?.show_eur_prices && settings?.exchange_rate_eur ? (
+                        <>
+                          <p className="text-3xl font-bold text-blue-600">
+                            {Math.round((partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price) / settings.exchange_rate_eur).toLocaleString()}
+                            <span className="text-xl ml-1">€</span>
+                          </p>
+                          <p className="text-lg text-gray-500">
+                            ≈ {partner.show_net_prices && partnerOffer.display_price_net
+                              ? formatPrice(partnerOffer.display_price_net)
+                              : formatPrice(partnerOffer.display_price)}
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-3xl font-bold text-blue-600">
+                          {partner.show_net_prices && partnerOffer.display_price_net
+                            ? formatPrice(partnerOffer.display_price_net)
+                            : formatPrice(partnerOffer.display_price)}
+                        </p>
+                      )}
+                    </>
+                  )}
                 </div>
 
                 <div className="pt-4 border-t border-gray-100 space-y-2">

@@ -44,13 +44,36 @@ export function OfferSidebar({ offer, className }: OfferSidebarProps) {
 
         {/* Price Display */}
         <div className="space-y-1">
-          <div className="text-3xl font-bold text-blue-600">
-            {prices.pln}
-          </div>
-          {prices.eur && settings.show_eur_prices && (
-            <div className="text-lg text-gray-500">
-              ≈ {prices.eur}
-            </div>
+          {locale === 'pl' ? (
+            <>
+              <div className="text-3xl font-bold text-blue-600">
+                {prices.pln}
+              </div>
+              {prices.eur && settings.show_eur_prices && (
+                <div className="text-lg text-gray-500">
+                  ≈ {prices.eur.replace('€', '')}
+                  <span className="text-sm ml-0.5">€</span>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              {prices.eur && settings.show_eur_prices ? (
+                <>
+                  <div className="text-3xl font-bold text-blue-600">
+                    {prices.eur.replace('€', '').trim()}
+                    <span className="text-xl ml-1">€</span>
+                  </div>
+                  <div className="text-lg text-gray-500">
+                    ≈ {prices.pln}
+                  </div>
+                </>
+              ) : (
+                <div className="text-3xl font-bold text-blue-600">
+                  {prices.pln}
+                </div>
+              )}
+            </>
           )}
         </div>
 
