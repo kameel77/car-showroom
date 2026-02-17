@@ -12,9 +12,56 @@ import {
   CreatePartnerFilterInput,
   UpdatePartnerOfferInput,
 } from '@/types/partners';
-import { calculateDisplayPrice, calculateNetPrice } from './price-calculator';
+import {
+  calculateDisplayPrice,
+  calculateNetPrice,
+  normalizeTransportTiers,
+} from './price-calculator';
 
 import { revalidatePath } from 'next/cache';
+
+const BACKWARD_COMPAT_OPTIONAL_COLUMNS = [
+  'show_secondary_currency',
+  'financing_cost_percent',
+  'additional_cost_items',
+  'transport_cost_tiers_eur',
+] as const;
+
+type PartnerCostsShape = {
+  financing_cost_percent?: number;
+  additional_cost_items?: Array<{ description: string; valueEurNet: number }>;
+  transport_cost_tiers_eur?: ReturnType<typeof normalizeTransportTiers>;
+};
+
+function sanitizePartnerCosts<T extends Record<string, unknown>>(input: T): T & PartnerCostsShape {
+  const rawAdditionalCosts = (input.additional_cost_items as Array<{ description?: string; valueEurNet?: number }> | undefined) || [];
+
+  return {
+    ...input,
+    financing_cost_percent: Math.max(0, Number(input.financing_cost_percent ?? 0)),
+    additional_cost_items: rawAdditionalCosts
+      .map((item) => ({
+        description: String(item.description || '').trim(),
+        valueEurNet: Math.max(0, Number(item.valueEurNet || 0)),
+      }))
+      .filter((item) => item.description.length > 0),
+    transport_cost_tiers_eur: normalizeTransportTiers(
+      input.transport_cost_tiers_eur as Record<number, number> | undefined
+    ),
+  };
+}
+
+function stripMissingColumns<T extends Record<string, unknown>>(payload: T, errorMessage: string): T {
+  const result = { ...payload };
+
+  for (const column of BACKWARD_COMPAT_OPTIONAL_COLUMNS) {
+    if (errorMessage.includes(`column "${column}" does not exist`)) {
+      delete result[column];
+    }
+  }
+
+  return result;
+}
 
 /**
  * Get all partners
@@ -89,44 +136,37 @@ export async function createPartner(input: CreatePartnerInput): Promise<Partner>
     throw new Error('Slug can only contain lowercase letters, numbers, and hyphens');
   }
 
-  // Try to create with all fields
-  const { data, error } = await supabase
+  const payload = sanitizePartnerCosts({
+    ...input,
+    slug: input.slug.toLowerCase(),
+    default_margin_percent: input.default_margin_percent || 0,
+    is_active: input.is_active ?? true,
+  });
+
+  let { data, error } = await supabase
     .from('partners')
-    .insert({
-      ...input,
-      slug: input.slug.toLowerCase(),
-      default_margin_percent: input.default_margin_percent || 0,
-      is_active: input.is_active ?? true,
-    })
+    .insert(payload)
     .select()
     .single();
 
   if (error) {
-    // If column doesn't exist, try again without it
-    if (error.message.includes('column "show_secondary_currency" does not exist')) {
-      console.warn('Column "show_secondary_currency" missing in DB, retrying create without it...');
-      const { show_secondary_currency, ...safeInput } = input as any;
+    const safePayload = stripMissingColumns(payload, error.message);
 
-      const { data: retryData, error: retryError } = await supabase
+    if (Object.keys(safePayload).length !== Object.keys(payload).length) {
+      console.warn('Some partner columns missing in DB, retrying create with backward-compatible payload...');
+
+      const retry = await supabase
         .from('partners')
-        .insert({
-          ...safeInput,
-          slug: input.slug.toLowerCase(),
-          default_margin_percent: input.default_margin_percent || 0,
-          is_active: input.is_active ?? true,
-        })
+        .insert(safePayload)
         .select()
         .single();
 
-      if (retryError) {
-        console.error('Error creating partner (retry):', retryError);
-        throw new Error(`Failed to create partner: ${retryError.message}`);
-      }
-
-      revalidatePath('/admin/partners');
-      return retryData;
+      data = retry.data;
+      error = retry.error;
     }
+  }
 
+  if (error) {
     console.error('Error creating partner:', error);
     if (error.code === '23505') {
       throw new Error('Partner with this slug already exists');
@@ -147,43 +187,37 @@ export async function updatePartner(
 ): Promise<Partner> {
   console.log('Updating partner:', id, input);
 
-  // Try to update with all fields
-  const { data, error } = await supabase
+  const payload = sanitizePartnerCosts({
+    ...input,
+    updated_at: new Date().toISOString(),
+  });
+
+  let { data, error } = await supabase
     .from('partners')
-    .update({
-      ...input,
-      updated_at: new Date().toISOString(),
-    })
+    .update(payload)
     .eq('id', id)
     .select()
     .single();
 
   if (error) {
-    // If column doesn't exist, try again without it
-    if (error.message.includes('column "show_secondary_currency" does not exist')) {
-      console.warn('Column "show_secondary_currency" missing in DB, retrying without it...');
-      const { show_secondary_currency, ...safeInput } = input as any;
+    const safePayload = stripMissingColumns(payload, error.message);
 
-      const { data: retryData, error: retryError } = await supabase
+    if (Object.keys(safePayload).length !== Object.keys(payload).length) {
+      console.warn('Some partner columns missing in DB, retrying update with backward-compatible payload...');
+
+      const retry = await supabase
         .from('partners')
-        .update({
-          ...safeInput,
-          updated_at: new Date().toISOString(),
-        })
+        .update(safePayload)
         .eq('id', id)
         .select()
         .single();
 
-      if (retryError) {
-        console.error('Error updating partner (retry):', retryError);
-        throw new Error(`Failed to update partner: ${retryError.message}`);
-      }
-
-      revalidatePath('/admin/partners');
-      revalidatePath(`/admin/partners/${id}/edit`);
-      return retryData;
+      data = retry.data;
+      error = retry.error;
     }
+  }
 
+  if (error) {
     console.error('Error updating partner:', error);
     throw new Error(`Failed to update partner: ${error.message}`);
   }

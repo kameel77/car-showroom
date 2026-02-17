@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useTranslations, useLocale } from 'next-intl';
+import { useLocale } from 'next-intl';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useParams } from 'next/navigation';
@@ -12,11 +12,9 @@ import {
   ExternalLink,
   Eye,
   EyeOff,
-  Save,
   Filter,
   Percent,
   Car,
-  Check,
   X,
   ChevronDown,
   ChevronUp,
@@ -31,16 +29,24 @@ import {
   createPartnerFilter,
   deletePartnerFilter,
   updatePartnerOffer,
-  bulkUpdatePartnerOffers,
 } from '@/lib/partners-server';
 import { getAllBrandsFromOffers } from '@/lib/filters-server';
-import { formatPrice, calculateMarginPercent, calculateNetPrice } from '@/lib/price-calculator';
+import {
+  formatPrice,
+  formatPricePrecise,
+  calculateMarginPercent,
+  calculateNetPrice,
+  calculateAdditionalCostsTotalEur,
+  calculateTransportCostPerCarEur,
+  calculateTransportCostTotalEur,
+  calculateVehicleMarginBreakdown,
+  decomposeTransportBundles,
+} from '@/lib/price-calculator';
 import { useAppSettings } from '@/hooks/useAppSettings';
 
 const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export default function PartnerOffersPage() {
-  const t = useTranslations();
   const locale = useLocale();
   const router = useRouter();
   const params = useParams();
@@ -61,6 +67,7 @@ export default function PartnerOffersPage() {
   const [selectedOffers, setSelectedOffers] = useState<Set<string>>(new Set());
   const [bulkMargin, setBulkMargin] = useState<number | ''>('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [saleValuesEur, setSaleValuesEur] = useState<Record<string, number>>({});
 
   const id = partnerId;
 
@@ -263,6 +270,14 @@ export default function PartnerOffersPage() {
     );
   });
 
+  const selectedOfferRows = offers.filter((offer) => selectedOffers.has(offer.offer_id));
+  const selectedCarsCount = selectedOfferRows.length;
+  const exchangeRate = settings?.exchange_rate_eur || 0;
+  const additionalCostsEurTotal = calculateAdditionalCostsTotalEur(partner?.additional_cost_items);
+  const transportCostPerCarEur = calculateTransportCostPerCarEur(selectedCarsCount, partner?.transport_cost_tiers_eur);
+  const transportCostTotalEur = calculateTransportCostTotalEur(selectedCarsCount, partner?.transport_cost_tiers_eur);
+  const transportBundles = decomposeTransportBundles(selectedCarsCount, partner?.transport_cost_tiers_eur);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -449,6 +464,85 @@ export default function PartnerOffersPage() {
             )}
           </div>
         </div>
+
+        {selectedCarsCount > 0 && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-1">Kalkulator marży (zaznaczone auta: {selectedCarsCount})</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Transport: {formatPricePrecise(transportCostTotalEur, 'EUR')} łącznie ({transportBundles.join(' + ') || '-'}),
+              {' '}na auto: {formatPricePrecise(transportCostPerCarEur, 'EUR')}.
+              {' '}Koszty inne (na auto): {formatPricePrecise(additionalCostsEurTotal, 'EUR')}.
+            </p>
+
+            {exchangeRate <= 0 ? (
+              <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                Brak kursu EUR w ustawieniach — kalkulator wymaga dodatniej wartości exchange_rate_eur.
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="text-left border-b border-gray-200 text-gray-600">
+                      <th className="py-2 pr-4">Pojazd</th>
+                      <th className="py-2 pr-4">Koszt zakupu netto PLN</th>
+                      <th className="py-2 pr-4">VAT PLN (23%)</th>
+                      <th className="py-2 pr-4">Koszt netto EUR</th>
+                      <th className="py-2 pr-4">Koszt finansowania EUR</th>
+                      <th className="py-2 pr-4">Koszty inne EUR</th>
+                      <th className="py-2 pr-4">Koszt transportu EUR</th>
+                      <th className="py-2 pr-4">Koszt total EUR</th>
+                      <th className="py-2 pr-4">Wartość sprzedaży EUR</th>
+                      <th className="py-2 pr-4">Marża EUR</th>
+                      <th className="py-2 pr-0">Marża %</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedOfferRows.map((offer) => {
+                      const saleValueEur = saleValuesEur[offer.offer_id] ?? 0;
+                      const margin = calculateVehicleMarginBreakdown({
+                        purchaseGrossPln: offer.offer.price,
+                        exchangeRatePlnPerEur: exchangeRate,
+                        financingCostPercent: partner.financing_cost_percent || 0,
+                        additionalCostsEur: additionalCostsEurTotal,
+                        transportCostEur: transportCostPerCarEur,
+                        saleValueEur,
+                      });
+
+                      return (
+                        <tr key={`calc-${offer.offer_id}`} className="border-b border-gray-100 last:border-b-0">
+                          <td className="py-2 pr-4 font-medium text-gray-800">{offer.offer.brand} {offer.offer.model}</td>
+                          <td className="py-2 pr-4">{formatPricePrecise(margin.purchaseNetPln, 'PLN')}</td>
+                          <td className="py-2 pr-4">{formatPricePrecise(margin.vatPln, 'PLN')}</td>
+                          <td className="py-2 pr-4">{formatPricePrecise(margin.purchaseNetEur, 'EUR')}</td>
+                          <td className="py-2 pr-4">{formatPricePrecise(margin.financingCostEur, 'EUR')}</td>
+                          <td className="py-2 pr-4">{formatPricePrecise(margin.additionalCostsEur, 'EUR')}</td>
+                          <td className="py-2 pr-4">{formatPricePrecise(margin.transportCostEur, 'EUR')}</td>
+                          <td className="py-2 pr-4 font-semibold">{formatPricePrecise(margin.totalCostEur, 'EUR')}</td>
+                          <td className="py-2 pr-4">
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={saleValueEur}
+                              onChange={(e) => setSaleValuesEur((prev) => ({ ...prev, [offer.offer_id]: Math.max(0, Number(e.target.value || 0)) }))}
+                              className="w-28 px-2 py-1 border border-gray-300 rounded"
+                            />
+                          </td>
+                          <td className={`py-2 pr-4 font-semibold ${margin.marginEur >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                            {formatPricePrecise(margin.marginEur, 'EUR')}
+                          </td>
+                          <td className={`py-2 pr-0 font-semibold ${margin.marginPercent >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                            {margin.marginPercent.toFixed(2)}%
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Offers Grid */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">

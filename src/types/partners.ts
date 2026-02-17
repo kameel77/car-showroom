@@ -1,3 +1,5 @@
+import type { AdditionalCostItem, TransportCostTiers } from '@/lib/price-calculator';
+
 export interface Partner {
   id: string;
   slug: string;
@@ -11,6 +13,9 @@ export interface Partner {
   default_margin_percent: number;
   show_net_prices: boolean;
   show_secondary_currency: boolean;
+  financing_cost_percent?: number;
+  additional_cost_items?: AdditionalCostItem[];
+  transport_cost_tiers_eur?: TransportCostTiers;
   is_active: boolean;
   notes?: string;
   created_at: string;
@@ -69,6 +74,9 @@ export interface CreatePartnerInput {
   default_margin_percent?: number;
   show_net_prices?: boolean;
   show_secondary_currency?: boolean;
+  financing_cost_percent?: number;
+  additional_cost_items?: AdditionalCostItem[];
+  transport_cost_tiers_eur?: TransportCostTiers;
   is_active?: boolean;
   notes?: string;
 }
@@ -84,6 +92,9 @@ export interface UpdatePartnerInput {
   default_margin_percent?: number;
   show_net_prices?: boolean;
   show_secondary_currency?: boolean;
+  financing_cost_percent?: number;
+  additional_cost_items?: AdditionalCostItem[];
+  transport_cost_tiers_eur?: TransportCostTiers;
   is_active?: boolean;
   notes?: string;
 }
