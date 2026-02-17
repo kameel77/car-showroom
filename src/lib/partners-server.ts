@@ -14,6 +14,8 @@ import {
 } from '@/types/partners';
 import { calculateDisplayPrice, calculateNetPrice } from './price-calculator';
 
+import { revalidatePath } from 'next/cache';
+
 /**
  * Get all partners
  */
@@ -25,7 +27,7 @@ export async function getPartners(): Promise<Partner[]> {
 
   if (error) {
     console.error('Error fetching partners:', error);
-    throw new Error('Failed to fetch partners');
+    throw new Error(`Failed to fetch partners: ${error.message}`);
   }
 
   return data || [];
@@ -39,7 +41,7 @@ export async function getPartnerById(id: string): Promise<Partner | null> {
     console.error('Invalid partner ID:', id);
     return null;
   }
-  
+
   const { data, error } = await supabase
     .from('partners')
     .select('*')
@@ -47,6 +49,7 @@ export async function getPartnerById(id: string): Promise<Partner | null> {
     .single();
 
   if (error) {
+    if (error.code === 'PGRST116') return null;
     console.error('Error fetching partner:', error);
     return null;
   }
@@ -86,6 +89,7 @@ export async function createPartner(input: CreatePartnerInput): Promise<Partner>
     throw new Error('Slug can only contain lowercase letters, numbers, and hyphens');
   }
 
+  // Try to create with all fields
   const { data, error } = await supabase
     .from('partners')
     .insert({
@@ -98,13 +102,39 @@ export async function createPartner(input: CreatePartnerInput): Promise<Partner>
     .single();
 
   if (error) {
+    // If column doesn't exist, try again without it
+    if (error.message.includes('column "show_secondary_currency" does not exist')) {
+      console.warn('Column "show_secondary_currency" missing in DB, retrying create without it...');
+      const { show_secondary_currency, ...safeInput } = input as any;
+
+      const { data: retryData, error: retryError } = await supabase
+        .from('partners')
+        .insert({
+          ...safeInput,
+          slug: input.slug.toLowerCase(),
+          default_margin_percent: input.default_margin_percent || 0,
+          is_active: input.is_active ?? true,
+        })
+        .select()
+        .single();
+
+      if (retryError) {
+        console.error('Error creating partner (retry):', retryError);
+        throw new Error(`Failed to create partner: ${retryError.message}`);
+      }
+
+      revalidatePath('/admin/partners');
+      return retryData;
+    }
+
     console.error('Error creating partner:', error);
     if (error.code === '23505') {
       throw new Error('Partner with this slug already exists');
     }
-    throw new Error('Failed to create partner');
+    throw new Error(`Failed to create partner: ${error.message}`);
   }
 
+  revalidatePath('/admin/partners');
   return data;
 }
 
@@ -115,6 +145,9 @@ export async function updatePartner(
   id: string,
   input: UpdatePartnerInput
 ): Promise<Partner> {
+  console.log('Updating partner:', id, input);
+
+  // Try to update with all fields
   const { data, error } = await supabase
     .from('partners')
     .update({
@@ -126,10 +159,37 @@ export async function updatePartner(
     .single();
 
   if (error) {
+    // If column doesn't exist, try again without it
+    if (error.message.includes('column "show_secondary_currency" does not exist')) {
+      console.warn('Column "show_secondary_currency" missing in DB, retrying without it...');
+      const { show_secondary_currency, ...safeInput } = input as any;
+
+      const { data: retryData, error: retryError } = await supabase
+        .from('partners')
+        .update({
+          ...safeInput,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (retryError) {
+        console.error('Error updating partner (retry):', retryError);
+        throw new Error(`Failed to update partner: ${retryError.message}`);
+      }
+
+      revalidatePath('/admin/partners');
+      revalidatePath(`/admin/partners/${id}/edit`);
+      return retryData;
+    }
+
     console.error('Error updating partner:', error);
-    throw new Error('Failed to update partner');
+    throw new Error(`Failed to update partner: ${error.message}`);
   }
 
+  revalidatePath('/admin/partners');
+  revalidatePath(`/admin/partners/${id}/edit`);
   return data;
 }
 
@@ -144,8 +204,10 @@ export async function deletePartner(id: string): Promise<void> {
 
   if (error) {
     console.error('Error deleting partner:', error);
-    throw new Error('Failed to delete partner');
+    throw new Error(`Failed to delete partner: ${error.message}`);
   }
+
+  revalidatePath('/admin/partners');
 }
 
 /**
@@ -156,7 +218,7 @@ export async function getPartnerFilters(partnerId: string): Promise<PartnerFilte
     console.error('Invalid partner ID for filters:', partnerId);
     return [];
   }
-  
+
   const { data, error } = await supabase
     .from('partner_filters')
     .select('*')
@@ -231,7 +293,7 @@ export async function getPartnerOffersWithDetails(
 
   // Get filters to determine which offers to show
   const filters = await getPartnerFilters(partnerId);
-  
+
   // Build query for offers
   let query = supabase
     .from('car_offers')
@@ -241,7 +303,7 @@ export async function getPartnerOffersWithDetails(
   if (filters.length > 0) {
     const brandFilters = filters.filter(f => !f.model_name);
     const modelFilters = filters.filter(f => f.model_name);
-    
+
     if (brandFilters.length > 0 || modelFilters.length > 0) {
       const brandNames = brandFilters.map(f => f.brand_name.toLowerCase());
       const modelConditions = modelFilters.map(f => ({
@@ -310,7 +372,7 @@ export async function getPartnerOffersWithDetails(
       marginPercent: partner.default_margin_percent,
       customPrice: partnerOffer?.custom_price,
     });
-    
+
     // Calculate net price (remove 23% VAT)
     const calculatedPriceNet = calculateNetPrice(calculatedPrice);
 
