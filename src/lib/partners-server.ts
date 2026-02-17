@@ -15,6 +15,7 @@ import {
 import {
   calculateDisplayPrice,
   calculateNetPrice,
+  normalizeAdditionalCostItems,
   normalizeTransportTiers,
 } from './price-calculator';
 
@@ -29,22 +30,17 @@ const BACKWARD_COMPAT_OPTIONAL_COLUMNS = [
 
 type PartnerCostsShape = {
   financing_cost_percent?: number;
-  additional_cost_items?: Array<{ description: string; valueEurNet: number }>;
+  additional_cost_items?: ReturnType<typeof normalizeAdditionalCostItems>;
   transport_cost_tiers_eur?: ReturnType<typeof normalizeTransportTiers>;
 };
 
 function sanitizePartnerCosts<T extends Record<string, unknown>>(input: T): T & PartnerCostsShape {
-  const rawAdditionalCosts = (input.additional_cost_items as Array<{ description?: string; valueEurNet?: number }> | undefined) || [];
-
   return {
     ...input,
     financing_cost_percent: Math.max(0, Number(input.financing_cost_percent ?? 0)),
-    additional_cost_items: rawAdditionalCosts
-      .map((item) => ({
-        description: String(item.description || '').trim(),
-        valueEurNet: Math.max(0, Number(item.valueEurNet || 0)),
-      }))
-      .filter((item) => item.description.length > 0),
+    additional_cost_items: normalizeAdditionalCostItems(
+      input.additional_cost_items as Parameters<typeof normalizeAdditionalCostItems>[0]
+    ),
     transport_cost_tiers_eur: normalizeTransportTiers(
       input.transport_cost_tiers_eur as Record<number, number> | undefined
     ),

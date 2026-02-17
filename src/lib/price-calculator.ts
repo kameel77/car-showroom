@@ -8,9 +8,13 @@ export interface PriceCalculationParams {
   customPrice?: number | null;
 }
 
+export type AdditionalCostMode = 'fixed_eur' | 'percent_of_net_plus_financing';
+
 export interface AdditionalCostItem {
   description: string;
-  valueEurNet: number;
+  mode?: AdditionalCostMode;
+  valueEurNet?: number;
+  percentValue?: number;
 }
 
 export interface TransportCostTiers {
@@ -25,9 +29,9 @@ export interface VehicleMarginCalculationInput {
   purchaseGrossPln: number;
   exchangeRatePlnPerEur: number;
   financingCostPercent: number;
-  additionalCostsEur: number;
+  additionalCostItems?: AdditionalCostItem[];
   transportCostEur: number;
-  saleValueEur: number;
+  saleGrossEur: number;
 }
 
 export interface VehicleMarginBreakdown {
@@ -38,7 +42,8 @@ export interface VehicleMarginBreakdown {
   additionalCostsEur: number;
   transportCostEur: number;
   totalCostEur: number;
-  saleValueEur: number;
+  saleGrossEur: number;
+  saleNetEur: number;
   marginEur: number;
   marginPercent: number;
 }
@@ -105,9 +110,14 @@ export function calculateMarginPercent(
 }
 
 /**
- * VAT rate (23% for Poland)
+ * VAT rate (23% for Poland purchase)
  */
 export const VAT_RATE = 23;
+
+/**
+ * VAT rate for NL sale input (gross -> net)
+ */
+export const NL_SALE_VAT_RATE = 21;
 
 /**
  * Calculate net price from gross price (removes VAT)
@@ -156,6 +166,23 @@ export function normalizeTransportTiers(tiers?: Partial<TransportCostTiers> | nu
   };
 }
 
+export function normalizeAdditionalCostItems(items?: AdditionalCostItem[] | null): AdditionalCostItem[] {
+  return (items || [])
+    .map((item) => {
+      const mode: AdditionalCostMode = item.mode === 'percent_of_net_plus_financing'
+        ? 'percent_of_net_plus_financing'
+        : 'fixed_eur';
+
+      return {
+        description: String(item.description || '').trim(),
+        mode,
+        valueEurNet: mode === 'fixed_eur' ? Math.max(0, Number(item.valueEurNet || 0)) : 0,
+        percentValue: mode === 'percent_of_net_plus_financing' ? Math.max(0, Number(item.percentValue || 0)) : 0,
+      };
+    })
+    .filter((item) => item.description.length > 0);
+}
+
 /**
  * Returns transport bundle decomposition for selected vehicle count.
  * - For <=9 uses upward mapping to nearest configured tier (e.g. 3 -> 4).
@@ -167,8 +194,6 @@ export function decomposeTransportBundles(
 ): number[] {
   const count = Math.max(0, Math.floor(selectedCarsCount));
   if (count === 0) return [];
-
-  const normalized = normalizeTransportTiers(tiers);
 
   if (count <= 9) {
     const tier = SUPPORTED_TRANSPORT_TIERS.find((item) => item >= count) ?? 9;
@@ -193,9 +218,6 @@ export function decomposeTransportBundles(
   if (bundles.length === 0) {
     bundles.push(1);
   }
-
-  // keep function deterministic and avoid "unused" in future extensions
-  void normalized;
 
   return bundles;
 }
@@ -225,16 +247,27 @@ export function calculateTransportCostPerCarEur(
   return round2(calculateTransportCostTotalEur(count, tiers) / count);
 }
 
-export function calculateAdditionalCostsTotalEur(items?: AdditionalCostItem[] | null): number {
-  if (!items || items.length === 0) return 0;
+export function calculateAdditionalCostsTotalEur(
+  items?: AdditionalCostItem[] | null,
+  baseNetPlusFinancingEur: number = 0
+): number {
+  const normalizedItems = normalizeAdditionalCostItems(items);
+  if (normalizedItems.length === 0) return 0;
 
   return round2(
-    items.reduce((sum, item) => sum + Math.max(0, Number(item.valueEurNet || 0)), 0)
+    normalizedItems.reduce((sum, item) => {
+      if (item.mode === 'percent_of_net_plus_financing') {
+        return sum + (Math.max(0, Number(item.percentValue || 0)) / 100) * Math.max(0, baseNetPlusFinancingEur);
+      }
+
+      return sum + Math.max(0, Number(item.valueEurNet || 0));
+    }, 0)
   );
 }
 
 /**
- * Margin % is calculated against sale value (sale margin convention).
+ * Margin % is calculated against total net cost.
+ * margin_pct = margin_eur / total_cost_net_eur * 100
  */
 export function calculateVehicleMarginBreakdown(input: VehicleMarginCalculationInput): VehicleMarginBreakdown {
   const purchaseNetPln = round2(input.purchaseGrossPln / 1.23);
@@ -244,16 +277,18 @@ export function calculateVehicleMarginBreakdown(input: VehicleMarginCalculationI
     : 0;
 
   const financingCostEur = round2(purchaseNetEur * Math.max(0, input.financingCostPercent) / 100);
-  const additionalCostsEur = round2(Math.max(0, input.additionalCostsEur));
+  const netPlusFinancing = round2(purchaseNetEur + financingCostEur);
+  const additionalCostsEur = round2(calculateAdditionalCostsTotalEur(input.additionalCostItems, netPlusFinancing));
   const transportCostEur = round2(Math.max(0, input.transportCostEur));
 
   const totalCostEur = round2(
     purchaseNetEur + financingCostEur + additionalCostsEur + transportCostEur
   );
 
-  const saleValueEur = round2(Math.max(0, input.saleValueEur));
-  const marginEur = round2(saleValueEur - totalCostEur);
-  const marginPercent = saleValueEur > 0 ? round2((marginEur / saleValueEur) * 100) : 0;
+  const saleGrossEur = round2(Math.max(0, input.saleGrossEur));
+  const saleNetEur = round2(saleGrossEur / (1 + NL_SALE_VAT_RATE / 100));
+  const marginEur = round2(saleNetEur - totalCostEur);
+  const marginPercent = totalCostEur > 0 ? round2((marginEur / totalCostEur) * 100) : 0;
 
   return {
     purchaseNetPln,
@@ -263,7 +298,8 @@ export function calculateVehicleMarginBreakdown(input: VehicleMarginCalculationI
     additionalCostsEur,
     transportCostEur,
     totalCostEur,
-    saleValueEur,
+    saleGrossEur,
+    saleNetEur,
     marginEur,
     marginPercent,
   };

@@ -2,9 +2,8 @@ import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { Header } from '@/components/Header';
-import { PartnerPublicOffer } from '@/types/partners';
 import { getPartnerBySlug, getPartnerPublicOffers } from '@/lib/partners-server';
-import { PartnerListingCard } from '@/components/partners/PartnerListingCard';
+import { PartnerOffersView } from '@/components/partners/PartnerOffersView';
 
 interface PartnerPageProps {
   params: Promise<{
@@ -86,29 +85,18 @@ export default async function PartnerPage({ params }: PartnerPageProps) {
           </p>
         </div>
 
-        {/* Offers Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {offers.length > 0 ? (
-            offers.map((offer, index) => (
-              <PartnerListingCard
-                key={offer.offer_id}
-                offer={offer}
-                partnerSlug={partnerSlug}
-                locale={locale}
-                index={index}
-              />
-            ))
-          ) : (
-            <div className="col-span-full py-16 text-center">
-              <p className="text-lg font-medium text-gray-900">
-                {t('partner.noOffersAvailable')}
-              </p>
-              <p className="text-gray-500 mt-1">
-                {t('partner.checkLaterOrContact')}
-              </p>
-            </div>
-          )}
-        </div>
+        {offers.length > 0 ? (
+          <PartnerOffersView offers={offers} partnerSlug={partnerSlug} locale={locale} />
+        ) : (
+          <div className="col-span-full py-16 text-center">
+            <p className="text-lg font-medium text-gray-900">
+              {t('partner.noOffersAvailable')}
+            </p>
+            <p className="text-gray-500 mt-1">
+              {t('partner.checkLaterOrContact')}
+            </p>
+          </div>
+        )}
 
         {/* Footer Info */}
         <div className="mt-12 pt-8 border-t border-gray-200 text-center text-sm text-gray-500">

@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Partner, CreatePartnerInput, UpdatePartnerInput } from '@/types/partners';
 import { createPartner, updatePartner } from '@/lib/partners-server';
-import { AdditionalCostItem, normalizeTransportTiers } from '@/lib/price-calculator';
+import { AdditionalCostItem, AdditionalCostMode, normalizeAdditionalCostItems, normalizeTransportTiers } from '@/lib/price-calculator';
 import { Building2, ArrowLeft, Loader2, AlertCircle, Plus, Trash2 } from 'lucide-react';
 
 interface PartnerFormProps {
@@ -36,9 +36,9 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
     show_net_prices: partner?.show_net_prices ?? false,
     show_secondary_currency: partner?.show_secondary_currency ?? false,
     financing_cost_percent: partner?.financing_cost_percent ?? 0,
-    additional_cost_items: partner?.additional_cost_items?.length
-      ? partner.additional_cost_items
-      : [{ description: '', valueEurNet: 0 } as AdditionalCostItem],
+    additional_cost_items: normalizeAdditionalCostItems(partner?.additional_cost_items)?.length
+      ? normalizeAdditionalCostItems(partner?.additional_cost_items)
+      : [{ description: '', mode: 'fixed_eur', valueEurNet: 0, percentValue: 0 } as AdditionalCostItem],
     transport_cost_tiers_eur: normalizeTransportTiers(partner?.transport_cost_tiers_eur || DEFAULT_TRANSPORT_TIERS),
     is_active: partner?.is_active ?? true,
     notes: partner?.notes || '',
@@ -77,10 +77,28 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
   const handleAdditionalCostChange = (index: number, field: keyof AdditionalCostItem, value: string) => {
     setFormData(prev => {
       const updated = [...prev.additional_cost_items];
-      updated[index] = {
-        ...updated[index],
-        [field]: field === 'valueEurNet' ? Math.max(0, Number(value || 0)) : value,
-      };
+      const current = updated[index];
+
+      if (field === 'mode') {
+        const mode = (value === 'percent_of_net_plus_financing' ? value : 'fixed_eur') as AdditionalCostMode;
+        updated[index] = {
+          ...current,
+          mode,
+          valueEurNet: mode === 'fixed_eur' ? Math.max(0, Number(current.valueEurNet || 0)) : 0,
+          percentValue: mode === 'percent_of_net_plus_financing' ? Math.max(0, Number(current.percentValue || 0)) : 0,
+        };
+      } else if (field === 'valueEurNet' || field === 'percentValue') {
+        updated[index] = {
+          ...current,
+          [field]: Math.max(0, Number(value || 0)),
+        };
+      } else {
+        updated[index] = {
+          ...current,
+          [field]: value,
+        };
+      }
+
       return { ...prev, additional_cost_items: updated };
     });
   };
@@ -88,7 +106,7 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
   const addAdditionalCost = () => {
     setFormData(prev => ({
       ...prev,
-      additional_cost_items: [...prev.additional_cost_items, { description: '', valueEurNet: 0 }],
+      additional_cost_items: [...prev.additional_cost_items, { description: '', mode: 'fixed_eur', valueEurNet: 0, percentValue: 0 }],
     }));
   };
 
@@ -101,9 +119,7 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
 
   const validateSlug = (slug: string): boolean => /^[a-z0-9-]+$/.test(slug);
 
-  const getCleanAdditionalCosts = () => formData.additional_cost_items
-    .map(item => ({ description: item.description.trim(), valueEurNet: Math.max(0, Number(item.valueEurNet || 0)) }))
-    .filter(item => item.description.length > 0);
+  const getCleanAdditionalCosts = () => normalizeAdditionalCostItems(formData.additional_cost_items);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -205,28 +221,49 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
 
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-gray-700">Koszty dodatkowe (EUR netto)</label>
+                <label className="block text-sm font-medium text-gray-700">Koszty dodatkowe (na pojazd)</label>
                 <button type="button" onClick={addAdditionalCost} className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"><Plus className="h-4 w-4" />Dodaj</button>
               </div>
+              <p className="text-xs text-gray-500 mb-2">Tryb kosztu: stała kwota EUR albo % od (net EUR + finansowanie EUR).</p>
               <div className="space-y-2">
                 {formData.additional_cost_items.map((item, index) => (
-                  <div key={index} className="grid grid-cols-12 gap-2">
+                  <div key={index} className="grid grid-cols-12 gap-2 items-center">
                     <input
                       type="text"
                       value={item.description}
                       onChange={(e) => handleAdditionalCostChange(index, 'description', e.target.value)}
                       placeholder="Opis kosztu"
-                      className="col-span-7 px-3 py-2 border rounded-lg text-gray-900"
-                    />
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={item.valueEurNet}
-                      onChange={(e) => handleAdditionalCostChange(index, 'valueEurNet', e.target.value)}
-                      placeholder="EUR"
                       className="col-span-4 px-3 py-2 border rounded-lg text-gray-900"
                     />
+                    <select
+                      value={item.mode || 'fixed_eur'}
+                      onChange={(e) => handleAdditionalCostChange(index, 'mode', e.target.value)}
+                      className="col-span-4 px-3 py-2 border rounded-lg text-gray-900 bg-white"
+                    >
+                      <option value="fixed_eur">Kwota stała EUR netto</option>
+                      <option value="percent_of_net_plus_financing">% od (net EUR + finansowanie EUR)</option>
+                    </select>
+                    {(item.mode || 'fixed_eur') === 'percent_of_net_plus_financing' ? (
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={item.percentValue || 0}
+                        onChange={(e) => handleAdditionalCostChange(index, 'percentValue', e.target.value)}
+                        placeholder="%"
+                        className="col-span-3 px-3 py-2 border rounded-lg text-gray-900"
+                      />
+                    ) : (
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={item.valueEurNet || 0}
+                        onChange={(e) => handleAdditionalCostChange(index, 'valueEurNet', e.target.value)}
+                        placeholder="EUR"
+                        className="col-span-3 px-3 py-2 border rounded-lg text-gray-900"
+                      />
+                    )}
                     <button type="button" onClick={() => removeAdditionalCost(index)} className="col-span-1 p-2 text-gray-500 hover:text-red-600" disabled={formData.additional_cost_items.length === 1}>
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -240,7 +277,7 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
               <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
                 {[1, 2, 4, 8, 9].map((tier) => (
                   <div key={tier}>
-                    <label className="text-xs text-gray-500">{tier} auto{tier === 1 ? '' : 'a'}</label>
+                    <label className="text-xs text-gray-500">{tier === 9 ? '9+' : tier} auto{tier === 1 ? '' : 'a'}</label>
                     <input
                       type="number"
                       min="0"
