@@ -21,7 +21,6 @@ import {
   Search
 } from 'lucide-react';
 import { Partner, PartnerFilter, PartnerOfferWithDetails } from '@/types/partners';
-import { CarOffer } from '@/types/car';
 import {
   getPartnerById,
   getPartnerFilters,
@@ -72,9 +71,14 @@ export default function PartnerOffersPage() {
   const [arbitrageSort, setArbitrageSort] = useState<'margin_eur_desc' | 'margin_pct_desc'>('margin_pct_desc');
 
   const id = partnerId;
+  const isInvalidId = !id || !uuidRegex.test(id);
 
-  // Prevent rendering if id is invalid
-  if (!id || !uuidRegex.test(id)) {
+  useEffect(() => {
+    if (isInvalidId) return;
+    loadData();
+  }, [id, isInvalidId]);
+
+  if (isInvalidId) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -90,10 +94,6 @@ export default function PartnerOffersPage() {
       </div>
     );
   }
-
-  useEffect(() => {
-    loadData();
-  }, [id]);
 
   const loadData = async () => {
     try {
