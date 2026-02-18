@@ -69,7 +69,14 @@ Aplikacja korzysta z tabeli `car_offers` w Supabase. Schemat znajdziesz w:
 
 ## Deployment
 
-Aplikacja może być wdrożona na Vercel, Netlify lub inną platformę wspierającą Next.js.
+### Kontekst produkcyjny (IZZY)
+
+- Ten projekt jest wdrażany na **VPS z Coolify (self-hosted)**.
+- Aktualny endpoint projektu: **https://cool.izzycars.pl**
+- Dla tego workspace przyjmujemy zasadę: obecne projekty deployujemy przez Coolify na VPS (nie przez Vercel/Netlify).
+
+Link operacyjny do panelu Coolify (uzupełnij właściwy URL instancji):
+- `COOLIFY_DASHBOARD_URL=<wstaw-url-panelu-coolify>`
 
 ```bash
 npm run build

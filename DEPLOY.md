@@ -1,5 +1,17 @@
 # Coolify Deployment Guide
 
+## Kontekst środowiska (ważne)
+
+- Deployment docelowy: **VPS + Coolify (self-hosted)**.
+- Aktualny adres aplikacji: **https://cool.izzycars.pl**.
+- Ten projekt i pozostałe aktywne projekty w tym setupie wdrażamy przez Coolify na VPS.
+- Przy pracy na wielu środowiskach zawsze zapisuj jawnie, której instancji dotyczy deploy.
+
+**Stałe pola konfiguracyjne (uzupełnić raz i utrzymywać):**
+- `COOLIFY_DASHBOARD_URL=<wstaw-url-panelu-coolify>`
+- `COOLIFY_SERVER_LABEL=vps-izzy`
+- `COOLIFY_PROJECT_LABEL=car-showroom`
+
 ## Wymagania wstępne
 
 1. **Konto Coolify** - zarejestruj się na coolify.io lub użyj self-hosted
