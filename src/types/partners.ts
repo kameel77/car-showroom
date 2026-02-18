@@ -35,7 +35,7 @@ export interface PartnerOffer {
   id: number;
   partner_id: string;
   offer_id: string;
-  custom_price?: number;
+  custom_price?: number | null;
   is_visible: boolean;
   notes?: string;
   created_at: string;
@@ -106,7 +106,7 @@ export interface CreatePartnerFilterInput {
 }
 
 export interface UpdatePartnerOfferInput {
-  custom_price?: number;
+  custom_price?: number | null;
   is_visible?: boolean;
   notes?: string;
 }

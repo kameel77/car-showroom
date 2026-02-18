@@ -167,7 +167,7 @@ export default function PartnerOffersPage() {
   const handleUpdatePrice = async (offerId: string, customPrice: number | undefined) => {
     try {
       setSaving(true);
-      await updatePartnerOffer(id, offerId, { custom_price: customPrice });
+      await updatePartnerOffer(id, offerId, { custom_price: customPrice ?? null });
 
       // Update local state with recalculated prices
       setOffers(offers.map(o => {

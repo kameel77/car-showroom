@@ -469,6 +469,8 @@ export async function updatePartnerOffer(
       .select()
       .single();
 
+    revalidatePath(`/admin/partners/${partnerId}/offers`);
+
     if (error) {
       console.error('Error updating partner offer:', error);
       throw new Error('Failed to update partner offer');
@@ -488,6 +490,8 @@ export async function updatePartnerOffer(
       })
       .select()
       .single();
+
+    revalidatePath(`/admin/partners/${partnerId}/offers`);
 
     if (error) {
       console.error('Error creating partner offer:', error);
