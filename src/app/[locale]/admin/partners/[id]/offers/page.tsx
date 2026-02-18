@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useTranslations, useLocale } from 'next-intl';
+import { useLocale } from 'next-intl';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useParams } from 'next/navigation';
@@ -12,18 +12,15 @@ import {
   ExternalLink,
   Eye,
   EyeOff,
-  Save,
   Filter,
   Percent,
   Car,
-  Check,
   X,
   ChevronDown,
   ChevronUp,
   Search
 } from 'lucide-react';
 import { Partner, PartnerFilter, PartnerOfferWithDetails } from '@/types/partners';
-import { CarOffer } from '@/types/car';
 import {
   getPartnerById,
   getPartnerFilters,
@@ -31,16 +28,24 @@ import {
   createPartnerFilter,
   deletePartnerFilter,
   updatePartnerOffer,
-  bulkUpdatePartnerOffers,
 } from '@/lib/partners-server';
 import { getAllBrandsFromOffers } from '@/lib/filters-server';
-import { formatPrice, calculateMarginPercent, calculateNetPrice } from '@/lib/price-calculator';
+import {
+  formatPrice,
+  formatPricePrecise,
+  calculateMarginAmount,
+  calculateMarginPercent,
+  calculateNetPrice,
+  calculateTransportCostPerCarEur,
+  calculateTransportCostTotalEur,
+  calculateVehicleMarginBreakdown,
+  decomposeTransportBundles,
+} from '@/lib/price-calculator';
 import { useAppSettings } from '@/hooks/useAppSettings';
 
 const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export default function PartnerOffersPage() {
-  const t = useTranslations();
   const locale = useLocale();
   const router = useRouter();
   const params = useParams();
@@ -61,11 +66,19 @@ export default function PartnerOffersPage() {
   const [selectedOffers, setSelectedOffers] = useState<Set<string>>(new Set());
   const [bulkMargin, setBulkMargin] = useState<number | ''>('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [saleGrossValuesEur, setSaleGrossValuesEur] = useState<Record<string, number>>({});
+  const [listView, setListView] = useState<'spec' | 'arbitrage'>('spec');
+  const [arbitrageSort, setArbitrageSort] = useState<'margin_eur_desc' | 'margin_pct_desc'>('margin_pct_desc');
 
   const id = partnerId;
+  const isInvalidId = !id || !uuidRegex.test(id);
 
-  // Prevent rendering if id is invalid
-  if (!id || !uuidRegex.test(id)) {
+  useEffect(() => {
+    if (isInvalidId) return;
+    loadData();
+  }, [id, isInvalidId]);
+
+  if (isInvalidId) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -81,10 +94,6 @@ export default function PartnerOffersPage() {
       </div>
     );
   }
-
-  useEffect(() => {
-    loadData();
-  }, [id]);
 
   const loadData = async () => {
     try {
@@ -262,6 +271,26 @@ export default function PartnerOffersPage() {
       offer.offer.model_version?.toLowerCase().includes(query)
     );
   });
+
+  const arbitrageOffers = [...filteredOffers].sort((a, b) => {
+    const marginPlnA = calculateMarginAmount(a.offer.price, a.calculated_price);
+    const marginPlnB = calculateMarginAmount(b.offer.price, b.calculated_price);
+    const marginPctA = calculateMarginPercent(a.offer.price, a.calculated_price);
+    const marginPctB = calculateMarginPercent(b.offer.price, b.calculated_price);
+
+    if (arbitrageSort === 'margin_eur_desc') {
+      return marginPlnB - marginPlnA;
+    }
+
+    return marginPctB - marginPctA;
+  });
+
+  const selectedOfferRows = offers.filter((offer) => selectedOffers.has(offer.offer_id));
+  const selectedCarsCount = selectedOfferRows.length;
+  const exchangeRate = settings?.exchange_rate_eur || 0;
+  const transportCostPerCarEur = calculateTransportCostPerCarEur(selectedCarsCount, partner?.transport_cost_tiers_eur);
+  const transportCostTotalEur = calculateTransportCostTotalEur(selectedCarsCount, partner?.transport_cost_tiers_eur);
+  const transportBundles = decomposeTransportBundles(selectedCarsCount, partner?.transport_cost_tiers_eur);
 
   if (loading) {
     return (
@@ -450,188 +479,219 @@ export default function PartnerOffersPage() {
           </div>
         </div>
 
-        {/* Offers Grid */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          {/* Table Header */}
-          <div className="grid grid-cols-12 gap-4 p-4 bg-gray-50 border-b border-gray-200 text-sm font-medium text-gray-700">
-            <div className="col-span-1 flex items-center">
-              <input
-                type="checkbox"
-                checked={selectedOffers.size === filteredOffers.length && filteredOffers.length > 0}
-                onChange={selectAllOffers}
-                className="h-4 w-4 text-blue-600 rounded"
-              />
-            </div>
-            <div className={`${settings?.show_eur_prices && settings?.exchange_rate_eur ? 'col-span-3' : 'col-span-4'} flex items-center`}>Pojazd</div>
-            <div className="col-span-1 flex items-center justify-end text-right">Cena oryg.</div>
-            <div className="col-span-1 flex items-center justify-end text-right">Netto PLN</div>
-            {settings?.show_eur_prices && settings?.exchange_rate_eur && (
-              <div className="col-span-1 flex items-center justify-end text-right">Netto EUR</div>
-            )}
-            <div className="col-span-2 flex items-center justify-end text-right">Własna cena</div>
-            <div className="col-span-1 flex items-center justify-end text-right">Cena partnera</div>
-            <div className="col-span-1 flex items-center justify-center text-center">Widoczność</div>
-            <div className="col-span-1 flex items-center justify-center text-center">Akcje</div>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div>
+            <h3 className="text-base font-semibold text-gray-900">Widok ofert</h3>
+            <p className="text-sm text-gray-600">Przełącz między pełną specyfikacją a widokiem biznesowym (arbitraż).</p>
           </div>
-
-          {/* Offers List */}
-          <div className="divide-y divide-gray-200 max-h-[600px] overflow-y-auto">
-            {filteredOffers.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
-                <Car className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                <p>Brak ofert dla tego partnera</p>
-                <p className="text-sm mt-1">
-                  Dodaj filtry lub sprawdź czy są dostępne pojazdy w bazie
-                </p>
-              </div>
-            ) : (
-              filteredOffers.map((offer) => (
-                <div
-                  key={offer.offer_id}
-                  className={`grid grid-cols-12 gap-4 p-4 items-center hover:bg-gray-50 ${!offer.is_visible ? 'opacity-60' : ''
-                    }`}
-                >
-                  {/* Checkbox */}
-                  <div className="col-span-1 flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={selectedOffers.has(offer.offer_id)}
-                      onChange={() => toggleOfferSelection(offer.offer_id)}
-                      className="h-4 w-4 text-blue-600 rounded"
-                    />
-                  </div>
-
-                  {/* Vehicle Info */}
-                  <div className={`${settings?.show_eur_prices && settings?.exchange_rate_eur ? 'col-span-3' : 'col-span-4'} flex items-center gap-3`}>
-                    {offer.offer.main_photo_url && (
-                      <div className="relative w-16 h-12 rounded-lg overflow-hidden flex-shrink-0">
-                        <Image
-                          src={offer.offer.main_photo_url}
-                          alt={`${offer.offer.brand} ${offer.offer.model}`}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                    )}
-                    <div>
-                      <p className="font-medium text-gray-900">
-                        {offer.offer.brand} {offer.offer.model}
-                        {offer.offer.model_version && offer.offer.model_version !== 'Brak' && (
-                          <span className="ml-1 text-gray-500 font-normal">
-                            {offer.offer.model_version}
-                          </span>
-                        )}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {offer.offer.year} • {offer.offer.mileage?.toLocaleString()} km
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Original Price (Gross) */}
-                  <div className="col-span-1 text-right">
-                    <p className="font-medium text-gray-900">
-                      {formatPrice(offer.offer.price)}
-                    </p>
-                  </div>
-
-                  {/* Net Price PLN */}
-                  <div className="col-span-1 text-right">
-                    <p className="font-medium text-gray-700">
-                      {formatPrice(offer.calculated_price_net)}
-                    </p>
-                  </div>
-
-                  {/* Net Price EUR */}
-                  {settings?.show_eur_prices && settings?.exchange_rate_eur && (
-                    <div className="col-span-1 text-right">
-                      <p className="font-medium text-gray-700">
-                        ≈ {Math.round(offer.calculated_price_net / settings.exchange_rate_eur).toLocaleString()} €
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Custom Price Input */}
-                  <div className="col-span-2 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <input
-                        key={offer.custom_price || 'empty'}
-                        type="number"
-                        defaultValue={offer.custom_price || ''}
-                        onBlur={(e) => {
-                          const value = e.target.value === '' ? undefined : Number(e.target.value);
-                          if (value !== offer.custom_price) {
-                            handleUpdatePrice(offer.offer_id, value);
-                          }
-                        }}
-                        placeholder={offer.show_net_prices ? "Cena netto" : "Własna cena"}
-                        className="w-full px-2 py-1 text-sm font-medium text-gray-900 border border-gray-400 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white placeholder:font-normal placeholder:text-gray-400"
-                      />
-                      {offer.custom_price && (
-                        <button
-                          onClick={() => handleUpdatePrice(offer.offer_id, undefined)}
-                          className="text-gray-500 hover:text-red-600 flex-shrink-0"
-                          title="Usuń własną cenę"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Partner Price & Margin */}
-                  <div className="col-span-1 text-right">
-                    <div className="space-y-0.5">
-                      <p className="font-bold text-gray-900 leading-tight">
-                        {offer.show_net_prices
-                          ? formatPrice(offer.calculated_price_net)
-                          : formatPrice(offer.calculated_price)}
-                      </p>
-                      <p className={`text-xs font-semibold ${offer.custom_price ? 'text-blue-600' : 'text-gray-500'}`}>
-                        {calculateMarginPercent(offer.offer.price, offer.calculated_price)}% marży
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Visibility Toggle */}
-                  <div className="col-span-1 flex items-center justify-center">
-                    <button
-                      onClick={() => handleToggleVisibility(offer.offer_id, offer.is_visible)}
-                      className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-colors ${offer.is_visible
-                        ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                        }`}
-                    >
-                      {offer.is_visible ? (
-                        <>
-                          <Eye className="h-3.5 w-3.5" />
-                          <span className="hidden sm:inline">Widoczna</span>
-                        </>
-                      ) : (
-                        <>
-                          <EyeOff className="h-3.5 w-3.5" />
-                          <span className="hidden sm:inline">Ukryta</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="col-span-1 flex items-center justify-center">
-                    <Link
-                      href={`/${locale}/${partner.slug}/offer/${offer.offer_id}`}
-                      target="_blank"
-                      className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                      title="Pokaż ofertę"
-                    >
-                      <ExternalLink className="h-5 w-5" />
-                    </Link>
-                  </div>
-                </div>
-              ))
-            )}
+          <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden">
+            <button
+              onClick={() => setListView('spec')}
+              className={`px-4 py-2 text-sm font-medium ${listView === 'spec' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
+            >
+              Specyfikacja
+            </button>
+            <button
+              onClick={() => setListView('arbitrage')}
+              className={`px-4 py-2 text-sm font-medium border-l border-gray-200 ${listView === 'arbitrage' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
+            >
+              Arbitraż
+            </button>
           </div>
         </div>
+
+        {selectedCarsCount > 0 && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-1">Kalkulator marży (zaznaczone auta: {selectedCarsCount})</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Transport: {formatPricePrecise(transportCostTotalEur, 'EUR')} łącznie ({transportBundles.join(' + ') || '-'}),
+              {' '}na auto: {formatPricePrecise(transportCostPerCarEur, 'EUR')}. 
+              VAT zakupu PL jest stały i liczony jako 23%. 
+              Sprzedaż NL wprowadzaj brutto (VAT 21%) — netto liczy się automatycznie.
+            </p>
+
+            {exchangeRate <= 0 ? (
+              <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                Brak kursu EUR w ustawieniach — kalkulator wymaga dodatniej wartości exchange_rate_eur.
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="text-left border-b border-gray-200 text-gray-600">
+                      <th className="py-2 pr-4">Pojazd</th>
+                      <th className="py-2 pr-4">Koszt zakupu netto PLN</th>
+                      <th className="py-2 pr-4">VAT PLN (23%)</th>
+                      <th className="py-2 pr-4">Koszt netto EUR</th>
+                      <th className="py-2 pr-4">Koszt finansowania EUR</th>
+                      <th className="py-2 pr-4">Koszty inne EUR</th>
+                      <th className="py-2 pr-4">Koszt transportu EUR</th>
+                      <th className="py-2 pr-4">Koszt total EUR</th>
+                      <th className="py-2 pr-4">Sprzedaż NL brutto EUR (input)</th>
+                      <th className="py-2 pr-4">Sprzedaż NL netto EUR</th>
+                      <th className="py-2 pr-4">Marża EUR (netto)</th>
+                      <th className="py-2 pr-0">Marża % (od kosztu netto)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedOfferRows.map((offer) => {
+                      const saleGrossEur = saleGrossValuesEur[offer.offer_id] ?? 0;
+                      const margin = calculateVehicleMarginBreakdown({
+                        purchaseGrossPln: offer.offer.price,
+                        exchangeRatePlnPerEur: exchangeRate,
+                        financingCostPercent: partner.financing_cost_percent || 0,
+                        additionalCostItems: partner.additional_cost_items || [],
+                        transportCostEur: transportCostPerCarEur,
+                        saleGrossEur,
+                      });
+
+                      return (
+                        <tr key={`calc-${offer.offer_id}`} className="border-b border-gray-100 last:border-b-0">
+                          <td className="py-2 pr-4 font-medium text-gray-800">{offer.offer.brand} {offer.offer.model}</td>
+                          <td className="py-2 pr-4">{formatPricePrecise(margin.purchaseNetPln, 'PLN')}</td>
+                          <td className="py-2 pr-4">{formatPricePrecise(margin.vatPln, 'PLN')}</td>
+                          <td className="py-2 pr-4">{formatPricePrecise(margin.purchaseNetEur, 'EUR')}</td>
+                          <td className="py-2 pr-4">{formatPricePrecise(margin.financingCostEur, 'EUR')}</td>
+                          <td className="py-2 pr-4">{formatPricePrecise(margin.additionalCostsEur, 'EUR')}</td>
+                          <td className="py-2 pr-4">{formatPricePrecise(margin.transportCostEur, 'EUR')}</td>
+                          <td className="py-2 pr-4 font-semibold">{formatPricePrecise(margin.totalCostEur, 'EUR')}</td>
+                          <td className="py-2 pr-4">
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={saleGrossEur}
+                              onChange={(e) => setSaleGrossValuesEur((prev) => ({ ...prev, [offer.offer_id]: Math.max(0, Number(e.target.value || 0)) }))}
+                              className="w-32 px-2 py-1 border border-gray-300 rounded"
+                            />
+                          </td>
+                          <td className="py-2 pr-4 font-medium text-gray-800">
+                            {formatPricePrecise(margin.saleNetEur, 'EUR')}
+                          </td>
+                          <td className={`py-2 pr-4 font-semibold ${margin.marginEur >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                            {formatPricePrecise(margin.marginEur, 'EUR')}
+                          </td>
+                          <td className={`py-2 pr-0 font-semibold ${margin.marginPercent >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                            {margin.marginPercent.toFixed(2)}%
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {listView === 'spec' ? (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="grid grid-cols-12 gap-4 p-4 bg-gray-50 border-b border-gray-200 text-sm font-medium text-gray-700">
+              <div className="col-span-1 flex items-center">
+                <input
+                  type="checkbox"
+                  checked={selectedOffers.size === filteredOffers.length && filteredOffers.length > 0}
+                  onChange={selectAllOffers}
+                  className="h-4 w-4 text-blue-600 rounded"
+                />
+              </div>
+              <div className={`${settings?.show_eur_prices && settings?.exchange_rate_eur ? 'col-span-3' : 'col-span-4'} flex items-center`}>Pojazd</div>
+              <div className="col-span-1 flex items-center justify-end text-right">Cena oryg.</div>
+              <div className="col-span-1 flex items-center justify-end text-right">Netto PLN</div>
+              {settings?.show_eur_prices && settings?.exchange_rate_eur && (
+                <div className="col-span-1 flex items-center justify-end text-right">Netto EUR</div>
+              )}
+              <div className="col-span-2 flex items-center justify-end text-right">Własna cena</div>
+              <div className="col-span-1 flex items-center justify-end text-right">Cena partnera</div>
+              <div className="col-span-1 flex items-center justify-center text-center">Widoczność</div>
+              <div className="col-span-1 flex items-center justify-center text-center">Akcje</div>
+            </div>
+            <div className="divide-y divide-gray-200 max-h-[600px] overflow-y-auto">
+              {filteredOffers.length === 0 ? (
+                <div className="p-8 text-center text-gray-500">
+                  <Car className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p>Brak ofert dla tego partnera</p>
+                </div>
+              ) : (
+                filteredOffers.map((offer) => (
+                  <div key={offer.offer_id} className={`grid grid-cols-12 gap-4 p-4 items-center hover:bg-gray-50 ${!offer.is_visible ? 'opacity-60' : ''}`}>
+                    <div className="col-span-1 flex items-center">
+                      <input type="checkbox" checked={selectedOffers.has(offer.offer_id)} onChange={() => toggleOfferSelection(offer.offer_id)} className="h-4 w-4 text-blue-600 rounded" />
+                    </div>
+                    <div className={`${settings?.show_eur_prices && settings?.exchange_rate_eur ? 'col-span-3' : 'col-span-4'} flex items-center gap-3`}>
+                      {offer.offer.main_photo_url && <div className="relative w-16 h-12 rounded-lg overflow-hidden flex-shrink-0"><Image src={offer.offer.main_photo_url} alt={`${offer.offer.brand} ${offer.offer.model}`} fill className="object-cover" /></div>}
+                      <div>
+                        <p className="font-medium text-gray-900">{offer.offer.brand} {offer.offer.model}</p>
+                        <p className="text-sm text-gray-500">{offer.offer.year} • {offer.offer.mileage?.toLocaleString()} km</p>
+                      </div>
+                    </div>
+                    <div className="col-span-1 text-right"><p className="font-medium text-gray-900">{formatPrice(offer.offer.price)}</p></div>
+                    <div className="col-span-1 text-right"><p className="font-medium text-gray-700">{formatPrice(offer.calculated_price_net)}</p></div>
+                    {settings?.show_eur_prices && settings?.exchange_rate_eur && <div className="col-span-1 text-right"><p className="font-medium text-gray-700">≈ {Math.round(offer.calculated_price_net / settings.exchange_rate_eur).toLocaleString()} €</p></div>}
+                    <div className="col-span-2 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <input key={offer.custom_price || 'empty'} type="number" defaultValue={offer.custom_price || ''} onBlur={(e) => {
+                          const value = e.target.value === '' ? undefined : Number(e.target.value);
+                          if (value !== offer.custom_price) handleUpdatePrice(offer.offer_id, value);
+                        }} placeholder={offer.show_net_prices ? 'Cena netto' : 'Własna cena'} className="w-full px-2 py-1 text-sm font-medium text-gray-900 border border-gray-400 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white placeholder:font-normal placeholder:text-gray-400" />
+                        {offer.custom_price && <button onClick={() => handleUpdatePrice(offer.offer_id, undefined)} className="text-gray-500 hover:text-red-600 flex-shrink-0" title="Usuń własną cenę"><X className="h-4 w-4" /></button>}
+                      </div>
+                    </div>
+                    <div className="col-span-1 text-right"><p className="font-bold text-gray-900 leading-tight">{offer.show_net_prices ? formatPrice(offer.calculated_price_net) : formatPrice(offer.calculated_price)}</p></div>
+                    <div className="col-span-1 flex items-center justify-center"><button onClick={() => handleToggleVisibility(offer.offer_id, offer.is_visible)} className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-colors ${offer.is_visible ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>{offer.is_visible ? <><Eye className="h-3.5 w-3.5" /><span className="hidden sm:inline">Widoczna</span></> : <><EyeOff className="h-3.5 w-3.5" /><span className="hidden sm:inline">Ukryta</span></>}</button></div>
+                    <div className="col-span-1 flex items-center justify-center"><Link href={`/${locale}/${partner.slug}/offer/${offer.offer_id}`} target="_blank" className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Pokaż ofertę"><ExternalLink className="h-5 w-5" /></Link></div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="p-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+              <p className="text-sm text-gray-700">Widok Arbitraż: tylko metryki biznesowe (bez specyfikacji technicznej).</p>
+              <select value={arbitrageSort} onChange={(e) => setArbitrageSort(e.target.value as 'margin_eur_desc' | 'margin_pct_desc')} className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-900 bg-white">
+                <option value="margin_pct_desc">Sortuj: marża % malejąco</option>
+                <option value="margin_eur_desc">Sortuj: marża PLN malejąco</option>
+              </select>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="text-left border-b border-gray-200 text-gray-600">
+                    <th className="py-2 px-4">#</th>
+                    <th className="py-2 px-4">Pojazd</th>
+                    <th className="py-2 px-4 text-right">Zakup brutto PLN</th>
+                    <th className="py-2 px-4 text-right">Cena partnera PLN</th>
+                    <th className="py-2 px-4 text-right">Marża PLN</th>
+                    <th className="py-2 px-4 text-right">Marża %</th>
+                    <th className="py-2 px-4 text-center">Widoczność</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {arbitrageOffers.map((offer, index) => {
+                    const marginPln = calculateMarginAmount(offer.offer.price, offer.calculated_price);
+                    const marginPct = calculateMarginPercent(offer.offer.price, offer.calculated_price);
+                    return (
+                      <tr key={`arb-${offer.offer_id}`} className="border-b border-gray-100 last:border-b-0">
+                        <td className="py-2 px-4 font-semibold text-gray-500">{index + 1}</td>
+                        <td className="py-2 px-4 font-medium text-gray-900">{offer.offer.brand} {offer.offer.model}</td>
+                        <td className="py-2 px-4 text-right">{formatPrice(offer.offer.price)}</td>
+                        <td className="py-2 px-4 text-right">{formatPrice(offer.calculated_price)}</td>
+                        <td className={`py-2 px-4 text-right font-semibold ${marginPln >= 0 ? 'text-green-700' : 'text-red-700'}`}>{formatPricePrecise(marginPln, 'PLN')}</td>
+                        <td className={`py-2 px-4 text-right font-semibold ${marginPct >= 0 ? 'text-green-700' : 'text-red-700'}`}>{marginPct.toFixed(2)}%</td>
+                        <td className="py-2 px-4 text-center">
+                          <button onClick={() => handleToggleVisibility(offer.offer_id, offer.is_visible)} className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${offer.is_visible ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                            {offer.is_visible ? 'Widoczna' : 'Ukryta'}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
         {/* Summary */}
         <div className="mt-6 flex items-center justify-between text-sm text-gray-600">
