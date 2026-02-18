@@ -69,6 +69,7 @@ export default function PartnerOffersPage() {
   const [saleGrossValuesEur, setSaleGrossValuesEur] = useState<Record<string, number>>({});
   const [listView, setListView] = useState<'spec' | 'arbitrage'>('spec');
   const [arbitrageSort, setArbitrageSort] = useState<'margin_eur_desc' | 'margin_pct_desc'>('margin_pct_desc');
+  const [transportBatchSize, setTransportBatchSize] = useState<number>(1);
 
   const id = partnerId;
   const isInvalidId = !id || !uuidRegex.test(id);
@@ -505,8 +506,8 @@ export default function PartnerOffersPage() {
             <h3 className="text-lg font-semibold text-gray-900 mb-1">Kalkulator marży (zaznaczone auta: {selectedCarsCount})</h3>
             <p className="text-sm text-gray-600 mb-4">
               Transport: {formatPricePrecise(transportCostTotalEur, 'EUR')} łącznie ({transportBundles.join(' + ') || '-'}),
-              {' '}na auto: {formatPricePrecise(transportCostPerCarEur, 'EUR')}. 
-              VAT zakupu PL jest stały i liczony jako 23%. 
+              {' '}na auto: {formatPricePrecise(transportCostPerCarEur, 'EUR')}.
+              VAT zakupu PL jest stały i liczony jako 23%.
               Sprzedaż NL wprowadzaj brutto (VAT 21%) — netto liczy się automatycznie.
             </p>
 
@@ -647,49 +648,105 @@ export default function PartnerOffersPage() {
           </div>
         ) : (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="p-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
-              <p className="text-sm text-gray-700">Widok Arbitraż: tylko metryki biznesowe (bez specyfikacji technicznej).</p>
-              <select value={arbitrageSort} onChange={(e) => setArbitrageSort(e.target.value as 'margin_eur_desc' | 'margin_pct_desc')} className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-900 bg-white">
+            <div className="p-4 border-b border-gray-200 bg-gray-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-gray-900">Kalkulacja kosztów i marży</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Kurs EUR: {settings?.exchange_rate_eur ? settings.exchange_rate_eur.toFixed(4) : '-'} •
+                  Transport dla: <input
+                    type="number"
+                    min="1"
+                    max="20"
+                    value={transportBatchSize}
+                    onChange={(e) => setTransportBatchSize(Math.max(1, parseInt(e.target.value) || 1))}
+                    className="inline-block w-16 px-1 py-0.5 border border-gray-300 rounded text-xs mx-1"
+                  /> aut
+                </p>
+              </div>
+              <select
+                value={arbitrageSort}
+                onChange={(e) => setArbitrageSort(e.target.value as 'margin_eur_desc' | 'margin_pct_desc')}
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-900 bg-white"
+              >
                 <option value="margin_pct_desc">Sortuj: marża % malejąco</option>
-                <option value="margin_eur_desc">Sortuj: marża PLN malejąco</option>
+                <option value="margin_eur_desc">Sortuj: marża EUR malejąco</option>
               </select>
             </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-sm">
-                <thead>
-                  <tr className="text-left border-b border-gray-200 text-gray-600">
-                    <th className="py-2 px-4">#</th>
-                    <th className="py-2 px-4">Pojazd</th>
-                    <th className="py-2 px-4 text-right">Zakup brutto PLN</th>
-                    <th className="py-2 px-4 text-right">Cena partnera PLN</th>
-                    <th className="py-2 px-4 text-right">Marża PLN</th>
-                    <th className="py-2 px-4 text-right">Marża %</th>
-                    <th className="py-2 px-4 text-center">Widoczność</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {arbitrageOffers.map((offer, index) => {
-                    const marginPln = calculateMarginAmount(offer.offer.price, offer.calculated_price);
-                    const marginPct = calculateMarginPercent(offer.offer.price, offer.calculated_price);
-                    return (
-                      <tr key={`arb-${offer.offer_id}`} className="border-b border-gray-100 last:border-b-0">
-                        <td className="py-2 px-4 font-semibold text-gray-500">{index + 1}</td>
-                        <td className="py-2 px-4 font-medium text-gray-900">{offer.offer.brand} {offer.offer.model}</td>
-                        <td className="py-2 px-4 text-right">{formatPrice(offer.offer.price)}</td>
-                        <td className="py-2 px-4 text-right">{formatPrice(offer.calculated_price)}</td>
-                        <td className={`py-2 px-4 text-right font-semibold ${marginPln >= 0 ? 'text-green-700' : 'text-red-700'}`}>{formatPricePrecise(marginPln, 'PLN')}</td>
-                        <td className={`py-2 px-4 text-right font-semibold ${marginPct >= 0 ? 'text-green-700' : 'text-red-700'}`}>{marginPct.toFixed(2)}%</td>
-                        <td className="py-2 px-4 text-center">
-                          <button onClick={() => handleToggleVisibility(offer.offer_id, offer.is_visible)} className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${offer.is_visible ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-                            {offer.is_visible ? 'Widoczna' : 'Ukryta'}
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+
+            {!settings?.exchange_rate_eur ? (
+              <div className="p-8 text-center text-gray-500">
+                <AlertCircle className="h-8 w-8 mx-auto mb-2 text-amber-500" />
+                <p>Brak skonfigurowanego kursu EUR w ustawieniach systemu.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="text-left border-b border-gray-200 text-gray-600 bg-gray-50/50">
+                      <th className="py-2 px-4 whitespace-nowrap">#</th>
+                      <th className="py-2 px-4 whitespace-nowrap">Pojazd</th>
+                      <th className="py-2 px-4 text-right whitespace-nowrap">Zakup Netto EUR</th>
+                      <th className="py-2 px-4 text-right whitespace-nowrap">Finansowanie</th>
+                      <th className="py-2 px-4 text-right whitespace-nowrap">Dodatkowe</th>
+                      <th className="py-2 px-4 text-right whitespace-nowrap">Transport</th>
+                      <th className="py-2 px-4 text-right whitespace-nowrap font-medium text-gray-900">Koszt Całkowity</th>
+                      <th className="py-2 px-4 text-right whitespace-nowrap">Cena Partnera (Net EUR)</th>
+                      <th className="py-2 px-4 text-right whitespace-nowrap font-bold">Marża EUR</th>
+                      <th className="py-2 px-4 text-right whitespace-nowrap font-bold">Marża %</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {arbitrageOffers.map((offer, index) => {
+                      const exchangeRate = settings.exchange_rate_eur || 0;
+
+                      // Calculate sale Gross EUR from Partner's displayed price (which is usually Gross PLN)
+                      // If partner has 'show_net_prices', then calculated_price is Net PLN ??
+                      // Let's assume calculated_price is always the final display price in PLN.
+                      // To get EUR Gross for the calculator:
+                      const saleGrossEur = (offer.calculated_price / exchangeRate);
+
+                      const transportCost = calculateTransportCostPerCarEur(transportBatchSize, partner.transport_cost_tiers_eur);
+
+                      const breakdown = calculateVehicleMarginBreakdown({
+                        purchaseGrossPln: offer.offer.price,
+                        exchangeRatePlnPerEur: exchangeRate,
+                        financingCostPercent: partner.financing_cost_percent || 0,
+                        additionalCostItems: partner.additional_cost_items || [],
+                        transportCostEur: transportCost,
+                        saleGrossEur: saleGrossEur
+                      });
+
+                      // Use breakdown.marginEur and marginPercent
+                      // Note: breakdown.saleNetEur is what we compare against totalCostEur
+
+                      return (
+                        <tr key={`arb-${offer.offer_id}`} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50">
+                          <td className="py-2 px-4 text-gray-500">{index + 1}</td>
+                          <td className="py-2 px-4 font-medium text-gray-900">
+                            <div className="flex flex-col">
+                              <span>{offer.offer.brand} {offer.offer.model}</span>
+                              <span className="text-xs text-gray-500">{offer.offer.model_version}</span>
+                            </div>
+                          </td>
+                          <td className="py-2 px-4 text-right">{formatPricePrecise(breakdown.purchaseNetEur, 'EUR')}</td>
+                          <td className="py-2 px-4 text-right text-gray-600">{formatPricePrecise(breakdown.financingCostEur, 'EUR')}</td>
+                          <td className="py-2 px-4 text-right text-gray-600">{formatPricePrecise(breakdown.additionalCostsEur, 'EUR')}</td>
+                          <td className="py-2 px-4 text-right text-gray-600">{formatPricePrecise(breakdown.transportCostEur, 'EUR')}</td>
+                          <td className="py-2 px-4 text-right font-medium text-gray-900">{formatPricePrecise(breakdown.totalCostEur, 'EUR')}</td>
+                          <td className="py-2 px-4 text-right text-blue-700">{formatPricePrecise(breakdown.saleNetEur, 'EUR')}</td>
+                          <td className={`py-2 px-4 text-right font-bold ${breakdown.marginEur >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {formatPricePrecise(breakdown.marginEur, 'EUR')}
+                          </td>
+                          <td className={`py-2 px-4 text-right font-bold ${breakdown.marginPercent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {breakdown.marginPercent.toFixed(2)}%
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
 

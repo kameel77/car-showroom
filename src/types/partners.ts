@@ -1,4 +1,4 @@
-import type { AdditionalCostItem, TransportCostTiers } from '@/lib/price-calculator';
+import { AdditionalCostItem, TransportCostTiers } from '@/lib/price-calculator';
 
 export interface Partner {
   id: string;
@@ -13,7 +13,7 @@ export interface Partner {
   default_margin_percent: number;
   show_net_prices: boolean;
   show_secondary_currency: boolean;
-  financing_cost_percent?: number;
+  financing_cost_percent: number;
   additional_cost_items?: AdditionalCostItem[];
   transport_cost_tiers_eur?: TransportCostTiers;
   is_active: boolean;
