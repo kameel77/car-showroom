@@ -51,7 +51,10 @@ function stripMissingColumns<T extends Record<string, unknown>>(payload: T, erro
   const result = { ...payload };
 
   for (const column of BACKWARD_COMPAT_OPTIONAL_COLUMNS) {
-    if (errorMessage.includes(`column "${column}" does not exist`)) {
+    const pgStyleMissing = errorMessage.includes(`column "${column}" does not exist`);
+    const postgrestSchemaCacheMissing = errorMessage.includes(`Could not find the '${column}' column`);
+
+    if (pgStyleMissing || postgrestSchemaCacheMissing) {
       delete result[column];
     }
   }
