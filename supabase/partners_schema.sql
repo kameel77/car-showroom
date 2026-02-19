@@ -272,9 +272,9 @@ DROP POLICY IF EXISTS "Allow all" ON partner_filters;
 DROP POLICY IF EXISTS "Allow all" ON partner_offers;
 
 -- Create policies (allow all for now, will restrict later)
-CREATE POLICY "Allow all" ON partners FOR ALL USING (true);
-CREATE POLICY "Allow all" ON partner_filters FOR ALL USING (true);
-CREATE POLICY "Allow all" ON partner_offers FOR ALL USING (true);
+CREATE POLICY "Allow all" ON partners FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all" ON partner_filters FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all" ON partner_offers FOR ALL USING (true) WITH CHECK (true);
 
 COMMENT ON TABLE partners IS 'Partner companies with custom showroom access';
 COMMENT ON TABLE partner_filters IS 'Brand/model filters for each partner';

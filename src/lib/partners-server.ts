@@ -1,6 +1,6 @@
 'use server';
 
-import { supabase } from './supabase';
+import { supabase, supabaseAdmin } from './supabase';
 import {
   Partner,
   PartnerFilter,
@@ -142,7 +142,7 @@ export async function createPartner(input: CreatePartnerInput): Promise<Partner>
     is_active: input.is_active ?? true,
   });
 
-  let { data, error } = await supabase
+  let { data, error } = await supabaseAdmin
     .from('partners')
     .insert(payload)
     .select()
@@ -154,7 +154,7 @@ export async function createPartner(input: CreatePartnerInput): Promise<Partner>
     if (Object.keys(safePayload).length !== Object.keys(payload).length) {
       console.warn('Some partner columns missing in DB, retrying create with backward-compatible payload...');
 
-      const retry = await supabase
+      const retry = await supabaseAdmin
         .from('partners')
         .insert(safePayload)
         .select()
@@ -191,7 +191,7 @@ export async function updatePartner(
     updated_at: new Date().toISOString(),
   });
 
-  let { data, error } = await supabase
+  let { data, error } = await supabaseAdmin
     .from('partners')
     .update(payload)
     .eq('id', id)
@@ -204,7 +204,7 @@ export async function updatePartner(
     if (Object.keys(safePayload).length !== Object.keys(payload).length) {
       console.warn('Some partner columns missing in DB, retrying update with backward-compatible payload...');
 
-      const retry = await supabase
+      const retry = await supabaseAdmin
         .from('partners')
         .update(safePayload)
         .eq('id', id)
@@ -230,7 +230,7 @@ export async function updatePartner(
  * Delete partner
  */
 export async function deletePartner(id: string): Promise<void> {
-  const { error } = await supabase
+  const { error } = await supabaseAdmin
     .from('partners')
     .delete()
     .eq('id', id);
@@ -273,7 +273,7 @@ export async function getPartnerFilters(partnerId: string): Promise<PartnerFilte
 export async function createPartnerFilter(
   input: CreatePartnerFilterInput
 ): Promise<PartnerFilter> {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('partner_filters')
     .insert({
       partner_id: input.partner_id,
@@ -296,7 +296,7 @@ export async function createPartnerFilter(
  * Delete partner filter
  */
 export async function deletePartnerFilter(filterId: number): Promise<void> {
-  const { error } = await supabase
+  const { error } = await supabaseAdmin
     .from('partner_filters')
     .delete()
     .eq('id', filterId);
@@ -450,7 +450,7 @@ export async function updatePartnerOffer(
   input: UpdatePartnerOfferInput
 ): Promise<PartnerOffer> {
   // Check if partner_offer exists
-  const { data: existing } = await supabase
+  const { data: existing } = await supabaseAdmin
     .from('partner_offers')
     .select('*')
     .eq('partner_id', partnerId)
@@ -459,27 +459,35 @@ export async function updatePartnerOffer(
 
   if (existing) {
     // Update existing
-    const { data, error } = await supabase
+    const updatePayload: Record<string, unknown> = {
+      updated_at: new Date().toISOString(),
+    };
+    // Explicitly include all input fields, including null values
+    if ('custom_price' in input) updatePayload.custom_price = input.custom_price ?? null;
+    if ('is_visible' in input) updatePayload.is_visible = input.is_visible;
+    if ('notes' in input) updatePayload.notes = input.notes;
+
+    console.log('[updatePartnerOffer] Updating existing row id:', existing.id, 'payload:', updatePayload);
+
+    const { data, error } = await supabaseAdmin
       .from('partner_offers')
-      .update({
-        ...input,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updatePayload)
       .eq('id', existing.id)
       .select()
       .single();
 
-    revalidatePath(`/admin/partners/${partnerId}/offers`);
-
     if (error) {
-      console.error('Error updating partner offer:', error);
+      console.error('[updatePartnerOffer] Error updating partner offer:', error);
       throw new Error('Failed to update partner offer');
     }
+
+    console.log('[updatePartnerOffer] Updated successfully:', data);
+    revalidatePath(`/admin/partners/${partnerId}/offers`);
 
     return data;
   } else {
     // Create new
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('partner_offers')
       .insert({
         partner_id: partnerId,
@@ -491,13 +499,12 @@ export async function updatePartnerOffer(
       .select()
       .single();
 
-    revalidatePath(`/admin/partners/${partnerId}/offers`);
-
     if (error) {
-      console.error('Error creating partner offer:', error);
+      console.error('[updatePartnerOffer] Error creating partner offer:', error);
       throw new Error('Failed to create partner offer');
     }
 
+    revalidatePath(`/admin/partners/${partnerId}/offers`);
     return data;
   }
 }

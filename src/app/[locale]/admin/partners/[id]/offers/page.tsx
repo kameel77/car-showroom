@@ -165,33 +165,35 @@ export default function PartnerOffersPage() {
     }
   };
 
-  const handleUpdatePrice = async (offerId: string, customPrice: number | undefined) => {
+  const handleUpdatePrice = async (offerId: string, customPriceEur: number | undefined) => {
     try {
       setSaving(true);
-      await updatePartnerOffer(id, offerId, { custom_price: customPrice ?? null });
+      // custom_price stores EUR brutto value
+      await updatePartnerOffer(id, offerId, { custom_price: customPriceEur ?? null });
 
-      // Update local state with recalculated prices
+      const rate = settings?.exchange_rate_eur || 0;
+
       setOffers(offers.map(o => {
         if (o.offer_id !== offerId) return o;
 
-        // Recalculate price when custom price is cleared
-        let newCalculatedPrice = o.calculated_price;
-        if (customPrice === undefined || customPrice === null) {
-          // Reset to standard price with partner's default margin
+        let newCalculatedPrice: number;
+        if (customPriceEur === undefined || customPriceEur === null) {
+          // Reset to standard price with partner's default margin (PLN)
           newCalculatedPrice = Math.round(o.offer.price * (1 + o.margin_percent / 100));
+        } else if (rate > 0) {
+          // custom_price is EUR brutto → convert to PLN gross
+          newCalculatedPrice = Math.round(customPriceEur * rate);
         } else {
-          // Use custom price
-          newCalculatedPrice = customPrice;
+          newCalculatedPrice = o.calculated_price;
         }
 
-        // Recalculate net price
         const newCalculatedPriceNet = calculateNetPrice(newCalculatedPrice);
 
         return {
           ...o,
-          custom_price: customPrice,
+          custom_price: customPriceEur ?? null,
           calculated_price: newCalculatedPrice,
-          calculated_price_net: newCalculatedPriceNet
+          calculated_price_net: newCalculatedPriceNet,
         };
       }));
     } catch (err) {
@@ -602,7 +604,7 @@ export default function PartnerOffersPage() {
               {settings?.show_eur_prices && settings?.exchange_rate_eur && (
                 <div className="col-span-1 flex items-center justify-end text-right">Netto EUR</div>
               )}
-              <div className="col-span-2 flex items-center justify-end text-right">Własna cena</div>
+              <div className="col-span-2 flex items-center justify-end text-right">Cena EUR Brutto</div>
               <div className="col-span-1 flex items-center justify-end text-right">Cena partnera</div>
               <div className="col-span-1 flex items-center justify-center text-center">Widoczność</div>
               <div className="col-span-1 flex items-center justify-center text-center">Akcje</div>
@@ -631,11 +633,23 @@ export default function PartnerOffersPage() {
                     {settings?.show_eur_prices && settings?.exchange_rate_eur && <div className="col-span-1 text-right"><p className="font-medium text-gray-700">≈ {Math.round(offer.calculated_price_net / settings.exchange_rate_eur).toLocaleString()} €</p></div>}
                     <div className="col-span-2 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <input key={offer.custom_price || 'empty'} type="number" defaultValue={offer.custom_price || ''} onBlur={(e) => {
-                          const value = e.target.value === '' ? undefined : Number(e.target.value);
-                          if (value !== offer.custom_price) handleUpdatePrice(offer.offer_id, value);
-                        }} placeholder={offer.show_net_prices ? 'Cena netto' : 'Własna cena'} className="w-full px-2 py-1 text-sm font-medium text-gray-900 border border-gray-400 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white placeholder:font-normal placeholder:text-gray-400" />
-                        {offer.custom_price && <button onClick={() => handleUpdatePrice(offer.offer_id, undefined)} className="text-gray-500 hover:text-red-600 flex-shrink-0" title="Usuń własną cenę"><X className="h-4 w-4" /></button>}
+                        <input
+                          key={offer.custom_price != null ? offer.custom_price : 'empty'}
+                          type="number"
+                          step="0.01"
+                          defaultValue={offer.custom_price != null ? offer.custom_price : ''}
+                          onBlur={(e) => {
+                            const value = e.target.value === '' ? undefined : Number(e.target.value);
+                            if (value !== offer.custom_price) handleUpdatePrice(offer.offer_id, value);
+                          }}
+                          placeholder="np. 12 500"
+                          className="w-full px-2 py-1 text-sm font-semibold text-gray-900 border border-gray-400 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white placeholder:font-normal placeholder:text-gray-400"
+                        />
+                        {offer.custom_price != null && (
+                          <button onClick={() => handleUpdatePrice(offer.offer_id, undefined)} className="text-gray-400 hover:text-red-600 flex-shrink-0" title="Usuń własną cenę">
+                            <X className="h-4 w-4" />
+                          </button>
+                        )}
                       </div>
                     </div>
                     <div className="col-span-1 text-right"><p className="font-bold text-gray-900 leading-tight">{offer.show_net_prices ? formatPrice(offer.calculated_price_net) : formatPrice(offer.calculated_price)}</p></div>
@@ -728,10 +742,10 @@ export default function PartnerOffersPage() {
                               <span className="text-xs text-gray-500">{offer.offer.model_version}</span>
                             </div>
                           </td>
-                          <td className="py-2 px-4 text-right">{formatPricePrecise(breakdown.purchaseNetEur, 'EUR')}</td>
-                          <td className="py-2 px-4 text-right text-gray-600">{formatPricePrecise(breakdown.financingCostEur, 'EUR')}</td>
-                          <td className="py-2 px-4 text-right text-gray-600">{formatPricePrecise(breakdown.additionalCostsEur, 'EUR')}</td>
-                          <td className="py-2 px-4 text-right text-gray-600">{formatPricePrecise(breakdown.transportCostEur, 'EUR')}</td>
+                          <td className="py-2 px-4 text-right text-gray-800">{formatPricePrecise(breakdown.purchaseNetEur, 'EUR')}</td>
+                          <td className="py-2 px-4 text-right text-gray-800">{formatPricePrecise(breakdown.financingCostEur, 'EUR')}</td>
+                          <td className="py-2 px-4 text-right text-gray-800">{formatPricePrecise(breakdown.additionalCostsEur, 'EUR')}</td>
+                          <td className="py-2 px-4 text-right text-gray-800">{formatPricePrecise(breakdown.transportCostEur, 'EUR')}</td>
                           <td className="py-2 px-4 text-right font-medium text-gray-900">{formatPricePrecise(breakdown.totalCostEur, 'EUR')}</td>
                           <td className="py-2 px-4 text-right text-blue-700">{formatPricePrecise(breakdown.saleNetEur, 'EUR')}</td>
                           <td className={`py-2 px-4 text-right font-bold ${breakdown.marginEur >= 0 ? 'text-green-600' : 'text-red-600'}`}>
