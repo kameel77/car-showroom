@@ -217,99 +217,118 @@ export default function PartnerSelfAdminPage() {
         {/* SPEC VIEW */}
         {listView === 'spec' && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            {/* Header row */}
-            <div className="grid grid-cols-12 gap-4 p-4 bg-gray-50 border-b border-gray-200 text-sm font-medium text-gray-700">
-              <div className={`${settings?.show_eur_prices && exchangeRate ? 'col-span-4' : 'col-span-5'} flex items-center`}>Pojazd</div>
-              <div className="col-span-1 flex items-center justify-end text-right">Cena oryg.</div>
+            {/* Header row — kolumny: Pojazd | PLN brutto | Netto PLN | Netto EUR | [input EUR brutto] | EUR brutto | Akcje */}
+            <div className="grid grid-cols-12 gap-2 px-4 py-3 bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              <div className="col-span-4 flex items-center">Pojazd</div>
+              <div className="col-span-1 flex items-center justify-end text-right">PLN brutto</div>
               <div className="col-span-1 flex items-center justify-end text-right">Netto PLN</div>
-              {settings?.show_eur_prices && exchangeRate > 0 && (
-                <div className="col-span-1 flex items-center justify-end text-right">Netto EUR</div>
-              )}
-              <div className="col-span-2 flex items-center justify-end text-right">Cena EUR Brutto</div>
-              <div className="col-span-1 flex items-center justify-end text-right">Cena PLN</div>
-              <div className="col-span-1 flex items-center justify-center text-center">Akcje</div>
+              <div className="col-span-1 flex items-center justify-end text-right">Netto EUR</div>
+              <div className="col-span-2 flex items-center justify-end text-right text-blue-600">EUR brutto →</div>
+              <div className="col-span-2 flex items-center justify-end text-right font-bold text-gray-700">EUR brutto</div>
+              <div className="col-span-1 flex items-center justify-center text-center"></div>
             </div>
 
-            <div className="divide-y divide-gray-200">
+            <div className="divide-y divide-gray-100">
               {filteredOffers.length === 0 ? (
                 <div className="p-8 text-center text-gray-500">
                   <Car className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                   <p>Brak ofert</p>
                 </div>
               ) : (
-                filteredOffers.map((offer) => (
-                  <div key={offer.offer_id} className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-gray-50">
-                    <div className={`${settings?.show_eur_prices && exchangeRate ? 'col-span-4' : 'col-span-5'} flex items-center gap-3`}>
-                      {offer.offer.main_photo_url && (
-                        <div className="relative w-16 h-12 rounded-lg overflow-hidden flex-shrink-0">
-                          <Image src={offer.offer.main_photo_url} alt={`${offer.offer.brand} ${offer.offer.model}`} fill className="object-cover" />
-                        </div>
-                      )}
-                      <div>
-                        <p className="font-medium text-gray-900">{offer.offer.brand} {offer.offer.model}</p>
-                        <p className="text-sm text-gray-500">{offer.offer.year} • {offer.offer.mileage?.toLocaleString()} km</p>
-                      </div>
-                    </div>
+                filteredOffers.map((offer) => {
+                  const netPln = calculateNetPrice(offer.offer.price);
+                  const netEur = exchangeRate > 0 ? netPln / exchangeRate : 0;
+                  const grossEur = offer.custom_price != null
+                    ? offer.custom_price
+                    : exchangeRate > 0 ? offer.calculated_price / exchangeRate : 0;
 
-                    <div className="col-span-1 text-right">
-                      <p className="font-medium text-gray-900">{formatPrice(offer.offer.price)}</p>
-                    </div>
-                    <div className="col-span-1 text-right">
-                      <p className="font-medium text-gray-700">{formatPrice(offer.calculated_price_net)}</p>
-                    </div>
-                    {settings?.show_eur_prices && exchangeRate > 0 && (
+                  return (
+                    <div key={offer.offer_id} className="grid grid-cols-12 gap-2 px-4 py-3 items-center hover:bg-gray-50">
+                      {/* Pojazd */}
+                      <div className="col-span-4 flex items-center gap-3">
+                        {offer.offer.main_photo_url && (
+                          <div className="relative w-14 h-10 rounded-md overflow-hidden flex-shrink-0">
+                            <Image src={offer.offer.main_photo_url} alt={`${offer.offer.brand} ${offer.offer.model}`} fill className="object-cover" />
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <p className="font-medium text-gray-900 truncate">{offer.offer.brand} {offer.offer.model}</p>
+                          <p className="text-xs text-gray-500">
+                            {offer.offer.year} • {offer.offer.mileage?.toLocaleString()} km
+                            {offer.offer.fuel_type && <> • {offer.offer.fuel_type}</>}
+                            {offer.offer.transmission && <> • {offer.offer.transmission}</>}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* PLN brutto (cena oryginalna) */}
                       <div className="col-span-1 text-right">
-                        <p className="font-medium text-gray-700">
-                          ≈ {Math.round(offer.calculated_price_net / exchangeRate).toLocaleString()} €
+                        <p className="text-sm text-gray-700">{formatPrice(offer.offer.price)}</p>
+                      </div>
+
+                      {/* Netto PLN */}
+                      <div className="col-span-1 text-right">
+                        <p className="text-sm text-gray-700">{formatPrice(netPln)}</p>
+                      </div>
+
+                      {/* Netto EUR */}
+                      <div className="col-span-1 text-right">
+                        <p className="text-sm text-gray-700">
+                          {exchangeRate > 0 ? `${netEur.toLocaleString('pl-PL', { maximumFractionDigits: 0 })} €` : '—'}
                         </p>
                       </div>
-                    )}
 
-                    {/* Cena EUR Brutto input */}
-                    <div className="col-span-2 text-right">
-                      <div className="flex items-center justify-end gap-1">
+                      {/* Input: EUR brutto (własna cena) */}
+                      <div className="col-span-2 flex items-center justify-end gap-1">
                         <input
                           key={offer.custom_price != null ? offer.custom_price : 'empty'}
                           type="number"
-                          step="0.01"
+                          step="1"
                           defaultValue={offer.custom_price != null ? offer.custom_price : ''}
                           onBlur={(e) => {
                             const value = e.target.value === '' ? undefined : Number(e.target.value);
                             if (value !== offer.custom_price) handleUpdatePrice(offer.offer_id, value);
                           }}
-                          placeholder="np. 12 500"
-                          className="w-full px-2 py-1 text-sm font-semibold text-gray-900 border border-gray-400 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white placeholder:font-normal placeholder:text-gray-400"
+                          placeholder="—"
+                          className="w-24 px-2 py-1 text-sm font-semibold text-gray-900 border border-blue-400 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white placeholder:text-gray-300 text-right"
                         />
                         {offer.custom_price != null && (
                           <button
                             onClick={() => handleUpdatePrice(offer.offer_id, undefined)}
-                            className="text-gray-400 hover:text-red-600 flex-shrink-0"
+                            className="text-gray-300 hover:text-red-500 flex-shrink-0"
                             title="Usuń własną cenę"
                           >
-                            <X className="h-4 w-4" />
+                            <X className="h-3.5 w-3.5" />
                           </button>
                         )}
                       </div>
-                    </div>
 
-                    {/* Cena PLN (przeliczona) */}
-                    <div className="col-span-1 text-right">
-                      <p className="font-bold text-gray-900">{formatPrice(offer.calculated_price)}</p>
-                    </div>
+                      {/* EUR brutto wynikowe */}
+                      <div className="col-span-2 text-right">
+                        <p className="font-bold text-gray-900 text-sm">
+                          {grossEur > 0 ? `${grossEur.toLocaleString('pl-PL', { maximumFractionDigits: 0 })} €` : '—'}
+                        </p>
+                        {partner.show_net_prices && grossEur > 0 && (
+                          <p className="text-xs text-gray-500">
+                            netto: {(grossEur / 1.21).toLocaleString('pl-PL', { maximumFractionDigits: 0 })} €
+                          </p>
+                        )}
+                      </div>
 
-                    {/* Link do oferty */}
-                    <div className="col-span-1 flex items-center justify-center">
-                      <Link
-                        href={`/${locale}/${partner.slug}/offer/${offer.offer_id}`}
-                        target="_blank"
-                        className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        title="Pokaż ofertę"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                      </Link>
+                      {/* Link */}
+                      <div className="col-span-1 flex items-center justify-center">
+                        <Link
+                          href={`/${locale}/${partner.slug}/offer/${offer.offer_id}`}
+                          target="_blank"
+                          className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Pokaż ofertę"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </Link>
+                      </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
