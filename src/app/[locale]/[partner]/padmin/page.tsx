@@ -1,0 +1,439 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useLocale } from 'next-intl';
+import Link from 'next/link';
+import Image from 'next/image';
+import { useParams } from 'next/navigation';
+import {
+  Loader2,
+  AlertCircle,
+  ExternalLink,
+  Car,
+  X,
+  Search,
+} from 'lucide-react';
+import { Partner, PartnerOfferWithDetails } from '@/types/partners';
+import {
+  getPartnerOffersBySlug,
+  updatePartnerOffer,
+} from '@/lib/partners-server';
+import {
+  formatPrice,
+  formatPricePrecise,
+  calculateNetPrice,
+  calculateTransportCostPerCarEur,
+  calculateTransportCostTotalEur,
+  calculateVehicleMarginBreakdown,
+  decomposeTransportBundles,
+} from '@/lib/price-calculator';
+import { useAppSettings } from '@/hooks/useAppSettings';
+
+export default function PartnerSelfAdminPage() {
+  const locale = useLocale();
+  const params = useParams();
+  const partnerSlug = params.partner as string;
+  const { settings } = useAppSettings();
+
+  const [partner, setPartner] = useState<Partner | null>(null);
+  const [offers, setOffers] = useState<PartnerOfferWithDetails[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [listView, setListView] = useState<'spec' | 'arbitrage'>('spec');
+  const [arbitrageSort, setArbitrageSort] = useState<'margin_eur_desc' | 'margin_pct_desc'>('margin_pct_desc');
+  const [transportBatchSize, setTransportBatchSize] = useState<number>(1);
+
+  useEffect(() => {
+    loadData();
+  }, [partnerSlug]);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const { partner: partnerData, offers: offersData } = await getPartnerOffersBySlug(partnerSlug);
+      setPartner(partnerData);
+      setOffers(offersData);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdatePrice = async (offerId: string, customPriceEur: number | undefined) => {
+    if (!partner) return;
+    try {
+      setSaving(true);
+      await updatePartnerOffer(partner.id, offerId, { custom_price: customPriceEur ?? null });
+
+      const rate = settings?.exchange_rate_eur || 0;
+
+      setOffers(prev => prev.map(o => {
+        if (o.offer_id !== offerId) return o;
+
+        let newCalculatedPrice: number;
+        if (customPriceEur === undefined || customPriceEur === null) {
+          newCalculatedPrice = Math.round(o.offer.price * (1 + o.margin_percent / 100));
+        } else if (rate > 0) {
+          newCalculatedPrice = Math.round(customPriceEur * rate);
+        } else {
+          newCalculatedPrice = o.calculated_price;
+        }
+
+        return {
+          ...o,
+          custom_price: customPriceEur ?? null,
+          calculated_price: newCalculatedPrice,
+          calculated_price_net: calculateNetPrice(newCalculatedPrice),
+        };
+      }));
+    } catch (err) {
+      alert('Błąd zapisu: ' + (err instanceof Error ? err.message : 'Unknown error'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const filteredOffers = offers.filter(offer => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      offer.offer.brand.toLowerCase().includes(q) ||
+      offer.offer.model.toLowerCase().includes(q) ||
+      offer.offer.model_version?.toLowerCase().includes(q)
+    );
+  });
+
+  const arbitrageOffers = [...filteredOffers].sort((a, b) => {
+    const rateLocal = settings?.exchange_rate_eur || 1;
+    const saleA = a.custom_price != null ? a.custom_price : a.calculated_price / rateLocal;
+    const saleB = b.custom_price != null ? b.custom_price : b.calculated_price / rateLocal;
+    const costA = calculateVehicleMarginBreakdown({
+      purchaseGrossPln: a.offer.price,
+      exchangeRatePlnPerEur: rateLocal,
+      financingCostPercent: partner?.financing_cost_percent || 0,
+      additionalCostItems: partner?.additional_cost_items || [],
+      transportCostEur: calculateTransportCostPerCarEur(transportBatchSize, partner?.transport_cost_tiers_eur),
+      saleGrossEur: saleA,
+    });
+    const costB = calculateVehicleMarginBreakdown({
+      purchaseGrossPln: b.offer.price,
+      exchangeRatePlnPerEur: rateLocal,
+      financingCostPercent: partner?.financing_cost_percent || 0,
+      additionalCostItems: partner?.additional_cost_items || [],
+      transportCostEur: calculateTransportCostPerCarEur(transportBatchSize, partner?.transport_cost_tiers_eur),
+      saleGrossEur: saleB,
+    });
+    if (arbitrageSort === 'margin_eur_desc') return costB.marginEur - costA.marginEur;
+    return costB.marginPercent - costA.marginPercent;
+  });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  if (error || !partner) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <p className="text-red-600">{error || 'Partner not found'}</p>
+        </div>
+      </div>
+    );
+  }
+
+  const exchangeRate = settings?.exchange_rate_eur || 0;
+  const transportCostPerCarEur = calculateTransportCostPerCarEur(transportBatchSize, partner.transport_cost_tiers_eur);
+  const transportCostTotalEur = calculateTransportCostTotalEur(transportBatchSize, partner.transport_cost_tiers_eur);
+  const transportBundles = decomposeTransportBundles(transportBatchSize, partner.transport_cost_tiers_eur);
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">{partner.company_name} — Panel zarządzania</h1>
+            <p className="text-gray-500 mt-1 text-sm">
+              Ustaw własne ceny sprzedaży (EUR brutto) dla swoich ofert
+            </p>
+          </div>
+          <Link
+            href={`/${locale}/${partnerSlug}`}
+            target="_blank"
+            className="flex items-center gap-2 px-4 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 text-sm"
+          >
+            <ExternalLink className="h-4 w-4" />
+            Podgląd showroom
+          </Link>
+        </div>
+
+        {/* Search */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Szukaj po marce, modelu..."
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+            />
+          </div>
+        </div>
+
+        {/* View toggle */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6 flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-base font-semibold text-gray-900">Widok ofert</h3>
+            <p className="text-sm text-gray-500">Specyfikacja — ustaw ceny. Arbitraż — analiza marży.</p>
+          </div>
+          <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden">
+            <button
+              onClick={() => setListView('spec')}
+              className={`px-4 py-2 text-sm font-medium ${listView === 'spec' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
+            >
+              Specyfikacja
+            </button>
+            <button
+              onClick={() => setListView('arbitrage')}
+              className={`px-4 py-2 text-sm font-medium border-l border-gray-200 ${listView === 'arbitrage' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
+            >
+              Arbitraż
+            </button>
+          </div>
+        </div>
+
+        {/* SPEC VIEW */}
+        {listView === 'spec' && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            {/* Header row */}
+            <div className="grid grid-cols-12 gap-4 p-4 bg-gray-50 border-b border-gray-200 text-sm font-medium text-gray-700">
+              <div className={`${settings?.show_eur_prices && exchangeRate ? 'col-span-4' : 'col-span-5'} flex items-center`}>Pojazd</div>
+              <div className="col-span-1 flex items-center justify-end text-right">Cena oryg.</div>
+              <div className="col-span-1 flex items-center justify-end text-right">Netto PLN</div>
+              {settings?.show_eur_prices && exchangeRate > 0 && (
+                <div className="col-span-1 flex items-center justify-end text-right">Netto EUR</div>
+              )}
+              <div className="col-span-2 flex items-center justify-end text-right">Cena EUR Brutto</div>
+              <div className="col-span-1 flex items-center justify-end text-right">Cena PLN</div>
+              <div className="col-span-1 flex items-center justify-center text-center">Akcje</div>
+            </div>
+
+            <div className="divide-y divide-gray-200">
+              {filteredOffers.length === 0 ? (
+                <div className="p-8 text-center text-gray-500">
+                  <Car className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p>Brak ofert</p>
+                </div>
+              ) : (
+                filteredOffers.map((offer) => (
+                  <div key={offer.offer_id} className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-gray-50">
+                    <div className={`${settings?.show_eur_prices && exchangeRate ? 'col-span-4' : 'col-span-5'} flex items-center gap-3`}>
+                      {offer.offer.main_photo_url && (
+                        <div className="relative w-16 h-12 rounded-lg overflow-hidden flex-shrink-0">
+                          <Image src={offer.offer.main_photo_url} alt={`${offer.offer.brand} ${offer.offer.model}`} fill className="object-cover" />
+                        </div>
+                      )}
+                      <div>
+                        <p className="font-medium text-gray-900">{offer.offer.brand} {offer.offer.model}</p>
+                        <p className="text-sm text-gray-500">{offer.offer.year} • {offer.offer.mileage?.toLocaleString()} km</p>
+                      </div>
+                    </div>
+
+                    <div className="col-span-1 text-right">
+                      <p className="font-medium text-gray-900">{formatPrice(offer.offer.price)}</p>
+                    </div>
+                    <div className="col-span-1 text-right">
+                      <p className="font-medium text-gray-700">{formatPrice(offer.calculated_price_net)}</p>
+                    </div>
+                    {settings?.show_eur_prices && exchangeRate > 0 && (
+                      <div className="col-span-1 text-right">
+                        <p className="font-medium text-gray-700">
+                          ≈ {Math.round(offer.calculated_price_net / exchangeRate).toLocaleString()} €
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Cena EUR Brutto input */}
+                    <div className="col-span-2 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <input
+                          key={offer.custom_price != null ? offer.custom_price : 'empty'}
+                          type="number"
+                          step="0.01"
+                          defaultValue={offer.custom_price != null ? offer.custom_price : ''}
+                          onBlur={(e) => {
+                            const value = e.target.value === '' ? undefined : Number(e.target.value);
+                            if (value !== offer.custom_price) handleUpdatePrice(offer.offer_id, value);
+                          }}
+                          placeholder="np. 12 500"
+                          className="w-full px-2 py-1 text-sm font-semibold text-gray-900 border border-gray-400 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white placeholder:font-normal placeholder:text-gray-400"
+                        />
+                        {offer.custom_price != null && (
+                          <button
+                            onClick={() => handleUpdatePrice(offer.offer_id, undefined)}
+                            className="text-gray-400 hover:text-red-600 flex-shrink-0"
+                            title="Usuń własną cenę"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Cena PLN (przeliczona) */}
+                    <div className="col-span-1 text-right">
+                      <p className="font-bold text-gray-900">{formatPrice(offer.calculated_price)}</p>
+                    </div>
+
+                    {/* Link do oferty */}
+                    <div className="col-span-1 flex items-center justify-center">
+                      <Link
+                        href={`/${locale}/${partner.slug}/offer/${offer.offer_id}`}
+                        target="_blank"
+                        className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Pokaż ofertę"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </Link>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ARBITRAGE VIEW */}
+        {listView === 'arbitrage' && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="p-4 border-b border-gray-200 bg-gray-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-gray-900">Kalkulacja kosztów i marży</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Kurs EUR: {exchangeRate ? exchangeRate.toFixed(4) : '-'} •
+                  Transport dla:{' '}
+                  <input
+                    type="number"
+                    min="1"
+                    max="20"
+                    value={transportBatchSize}
+                    onChange={(e) => setTransportBatchSize(Math.max(1, parseInt(e.target.value) || 1))}
+                    className="inline-block w-16 px-1 py-0.5 border border-gray-300 rounded text-xs mx-1 text-gray-900 bg-white"
+                  /> aut
+                  {transportCostTotalEur > 0 && (
+                    <span className="ml-2">
+                      ({formatPricePrecise(transportCostTotalEur, 'EUR')} łącznie,
+                      {' '}{formatPricePrecise(transportCostPerCarEur, 'EUR')}/auto,
+                      {' '}bundl: {transportBundles.join(' + ')})
+                    </span>
+                  )}
+                </p>
+              </div>
+              <select
+                value={arbitrageSort}
+                onChange={(e) => setArbitrageSort(e.target.value as 'margin_eur_desc' | 'margin_pct_desc')}
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-900 bg-white"
+              >
+                <option value="margin_pct_desc">Sortuj: marża % malejąco</option>
+                <option value="margin_eur_desc">Sortuj: marża EUR malejąco</option>
+              </select>
+            </div>
+
+            {!exchangeRate ? (
+              <div className="p-8 text-center text-gray-500">
+                <AlertCircle className="h-8 w-8 mx-auto mb-2 text-amber-500" />
+                <p>Brak skonfigurowanego kursu EUR.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="text-left border-b border-gray-200 text-gray-600 bg-gray-50/50">
+                      <th className="py-2 px-4 whitespace-nowrap">#</th>
+                      <th className="py-2 px-4 whitespace-nowrap">Pojazd</th>
+                      <th className="py-2 px-4 text-right whitespace-nowrap">Zakup Netto EUR</th>
+                      <th className="py-2 px-4 text-right whitespace-nowrap">Finansowanie</th>
+                      <th className="py-2 px-4 text-right whitespace-nowrap">Dodatkowe</th>
+                      <th className="py-2 px-4 text-right whitespace-nowrap">Transport</th>
+                      <th className="py-2 px-4 text-right whitespace-nowrap font-medium text-gray-900">Koszt Całkowity</th>
+                      <th className="py-2 px-4 text-right whitespace-nowrap">Cena EUR Brutto</th>
+                      <th className="py-2 px-4 text-right whitespace-nowrap">Sprzedaż Netto EUR</th>
+                      <th className="py-2 px-4 text-right whitespace-nowrap font-bold">Marża EUR</th>
+                      <th className="py-2 px-4 text-right whitespace-nowrap font-bold">Marża %</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {arbitrageOffers.map((offer, index) => {
+                      const saleGrossEur = offer.custom_price != null
+                        ? offer.custom_price
+                        : exchangeRate > 0 ? offer.calculated_price / exchangeRate : 0;
+
+                      const breakdown = calculateVehicleMarginBreakdown({
+                        purchaseGrossPln: offer.offer.price,
+                        exchangeRatePlnPerEur: exchangeRate,
+                        financingCostPercent: partner.financing_cost_percent || 0,
+                        additionalCostItems: partner.additional_cost_items || [],
+                        transportCostEur: transportCostPerCarEur,
+                        saleGrossEur,
+                      });
+
+                      return (
+                        <tr key={`arb-${offer.offer_id}`} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50">
+                          <td className="py-2 px-4 text-gray-500">{index + 1}</td>
+                          <td className="py-2 px-4 font-medium text-gray-900">
+                            <div className="flex flex-col">
+                              <span>{offer.offer.brand} {offer.offer.model}</span>
+                              <span className="text-xs text-gray-500">{offer.offer.model_version}</span>
+                            </div>
+                          </td>
+                          <td className="py-2 px-4 text-right text-gray-800">{formatPricePrecise(breakdown.purchaseNetEur, 'EUR')}</td>
+                          <td className="py-2 px-4 text-right text-gray-800">{formatPricePrecise(breakdown.financingCostEur, 'EUR')}</td>
+                          <td className="py-2 px-4 text-right text-gray-800">{formatPricePrecise(breakdown.additionalCostsEur, 'EUR')}</td>
+                          <td className="py-2 px-4 text-right text-gray-800">{formatPricePrecise(breakdown.transportCostEur, 'EUR')}</td>
+                          <td className="py-2 px-4 text-right font-medium text-gray-900">{formatPricePrecise(breakdown.totalCostEur, 'EUR')}</td>
+                          <td className="py-2 px-4 text-right">
+                            {offer.custom_price != null
+                              ? <span className="font-semibold text-blue-700">{formatPricePrecise(offer.custom_price, 'EUR')}</span>
+                              : <span className="text-gray-400 text-xs">brak</span>
+                            }
+                          </td>
+                          <td className="py-2 px-4 text-right text-blue-700">{formatPricePrecise(breakdown.saleNetEur, 'EUR')}</td>
+                          <td className={`py-2 px-4 text-right font-bold ${breakdown.marginEur >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {formatPricePrecise(breakdown.marginEur, 'EUR')}
+                          </td>
+                          <td className={`py-2 px-4 text-right font-bold ${breakdown.marginPercent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {breakdown.marginPercent.toFixed(2)}%
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Summary */}
+        <div className="mt-6 flex items-center justify-between text-sm text-gray-500">
+          <p>Oferty: {filteredOffers.length} / {offers.length}</p>
+          <p>Z własną ceną EUR: {offers.filter(o => o.custom_price != null).length}</p>
+          {saving && <span className="flex items-center gap-1 text-blue-600"><Loader2 className="h-4 w-4 animate-spin" /> Zapisywanie...</span>}
+        </div>
+
+      </div>
+    </div>
+  );
+}

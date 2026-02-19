@@ -523,6 +523,23 @@ export async function bulkUpdatePartnerOffers(
 }
 
 /**
+ * Get partner offers by slug (for partner self-admin view)
+ * Returns only visible offers with full detail for price editing
+ */
+export async function getPartnerOffersBySlug(
+  slug: string
+): Promise<{ partner: Partner; offers: PartnerOfferWithDetails[] }> {
+  const partner = await getPartnerBySlug(slug);
+  if (!partner) throw new Error('Partner not found');
+
+  // Reuse getPartnerOffersWithDetails but filter to visible only
+  const allOffers = await getPartnerOffersWithDetails(partner.id);
+  const visibleOffers = allOffers.filter(o => o.is_visible);
+
+  return { partner, offers: visibleOffers };
+}
+
+/**
  * Get public offers for partner (for partner showroom page)
  */
 export async function getPartnerPublicOffers(
