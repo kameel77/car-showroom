@@ -565,7 +565,7 @@ export default function PartnerOffersPage() {
                               step="0.01"
                               value={saleGrossEur}
                               onChange={(e) => setSaleGrossValuesEur((prev) => ({ ...prev, [offer.offer_id]: Math.max(0, Number(e.target.value || 0)) }))}
-                              className="w-32 px-2 py-1 border border-gray-300 rounded"
+                              className="w-32 px-2 py-1 border border-gray-300 rounded text-gray-900 bg-white"
                             />
                           </td>
                           <td className="py-2 pr-4 font-medium text-gray-800">
@@ -673,7 +673,7 @@ export default function PartnerOffersPage() {
                     max="20"
                     value={transportBatchSize}
                     onChange={(e) => setTransportBatchSize(Math.max(1, parseInt(e.target.value) || 1))}
-                    className="inline-block w-16 px-1 py-0.5 border border-gray-300 rounded text-xs mx-1"
+                    className="inline-block w-16 px-1 py-0.5 border border-gray-300 rounded text-xs mx-1 text-gray-900 bg-white"
                   /> aut
                 </p>
               </div>
@@ -713,11 +713,11 @@ export default function PartnerOffersPage() {
                     {arbitrageOffers.map((offer, index) => {
                       const exchangeRate = settings.exchange_rate_eur || 0;
 
-                      // Calculate sale Gross EUR from Partner's displayed price (which is usually Gross PLN)
-                      // If partner has 'show_net_prices', then calculated_price is Net PLN ??
-                      // Let's assume calculated_price is always the final display price in PLN.
-                      // To get EUR Gross for the calculator:
-                      const saleGrossEur = (offer.calculated_price / exchangeRate);
+                      // custom_price is stored as EUR brutto directly.
+                      // If no custom_price, fall back to calculated_price (PLN brutto) / rate.
+                      const saleGrossEur = offer.custom_price != null
+                        ? offer.custom_price
+                        : exchangeRate > 0 ? offer.calculated_price / exchangeRate : 0;
 
                       const transportCost = calculateTransportCostPerCarEur(transportBatchSize, partner.transport_cost_tiers_eur);
 
