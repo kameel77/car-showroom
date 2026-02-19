@@ -4,6 +4,7 @@ import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { PartnerPublicOffer } from '@/types/partners';
 import { PartnerListingCard } from './PartnerListingCard';
+import { useAppSettings } from '@/hooks/useAppSettings';
 
 interface Props {
   offers: PartnerPublicOffer[];
@@ -13,16 +14,22 @@ interface Props {
 
 export function PartnerOffersView({ offers, partnerSlug, locale }: Props) {
   const [view, setView] = useState<'spec' | 'arbitrage'>('spec');
+  const { settings } = useAppSettings();
+  const exchangeRate = settings?.exchange_rate_eur || 4.3;
 
   const rankedOffers = useMemo(() => {
     return [...offers]
       .map((offer) => {
-        const marginValue = Number(offer.display_price || 0) - Number(offer.price || 0);
+        const displayPriceInPln = offer.custom_price && offer.custom_price > 0
+          ? offer.display_price * exchangeRate
+          : offer.display_price;
+
+        const marginValue = Number(displayPriceInPln || 0) - Number(offer.price || 0);
         const marginPercent = offer.price > 0 ? (marginValue / offer.price) * 100 : 0;
-        return { offer, marginValue, marginPercent };
+        return { offer, marginValue, marginPercent, displayPriceInPln };
       })
       .sort((a, b) => b.marginPercent - a.marginPercent);
-  }, [offers]);
+  }, [offers, exchangeRate]);
 
   return (
     <>
@@ -50,12 +57,14 @@ export function PartnerOffersView({ offers, partnerSlug, locale }: Props) {
             Widok Arbitraż: ranking po marży i metryki biznesowe (bez parametrów technicznych).
           </div>
           <div className="divide-y divide-gray-200">
-            {rankedOffers.map(({ offer, marginValue, marginPercent }, index) => (
+            {rankedOffers.map(({ offer, marginValue, marginPercent, displayPriceInPln }, index) => (
               <div key={offer.offer_id} className="grid grid-cols-12 gap-2 p-4 items-center text-sm">
                 <div className="col-span-1 font-semibold text-gray-500">#{index + 1}</div>
                 <div className="col-span-4 font-medium text-gray-900">{offer.brand} {offer.model}</div>
                 <div className="col-span-2 text-right text-gray-600">Zakup: {Math.round(offer.price).toLocaleString()} PLN</div>
-                <div className="col-span-2 text-right text-gray-900">Cena: {Math.round(offer.display_price).toLocaleString()} PLN</div>
+                <div className="col-span-2 text-right text-gray-900">
+                  Cena: {Math.round(displayPriceInPln).toLocaleString()} PLN
+                </div>
                 <div className={`col-span-2 text-right font-semibold ${marginValue >= 0 ? 'text-green-700' : 'text-red-700'}`}>
                   {marginPercent.toFixed(2)}%
                 </div>

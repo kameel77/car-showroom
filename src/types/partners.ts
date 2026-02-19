@@ -121,6 +121,7 @@ export interface PartnerPublicOffer {
   price: number;
   display_price: number;
   display_price_net?: number;
+  custom_price?: number;
   show_net_prices?: boolean;
   show_secondary_currency?: boolean;
   fuel_type?: string;

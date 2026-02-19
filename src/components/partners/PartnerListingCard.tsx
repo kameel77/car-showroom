@@ -54,17 +54,26 @@ export function PartnerListingCard({ offer, partnerSlug, locale, index = 0 }: Pa
               <>
                 {/* PLN brutto zawsze */}
                 <span className="text-lg font-bold text-blue-600 block">
-                  {formatPrice(offer.display_price)}
+                  {offer.custom_price && offer.custom_price > 0 && settings?.exchange_rate_eur
+                    ? formatPrice(Math.round(offer.display_price * settings.exchange_rate_eur))
+                    : formatPrice(offer.display_price)
+                  }
                 </span>
                 {/* PLN netto poniżej jeśli show_net_prices */}
                 {offer.show_net_prices && offer.display_price_net && (
                   <div className="text-xs text-gray-500">
-                    {t('net')}: {formatPrice(offer.display_price_net)}
+                    {t('net')}: {offer.custom_price && offer.custom_price > 0 && settings?.exchange_rate_eur
+                      ? formatPrice(Math.round(offer.display_price_net * settings.exchange_rate_eur))
+                      : formatPrice(offer.display_price_net)
+                    }
                   </div>
                 )}
                 {settings?.show_eur_prices && settings?.exchange_rate_eur && offer.show_secondary_currency && (
                   <div className="text-xs text-gray-400">
-                    ≈ {Math.round(offer.display_price / settings.exchange_rate_eur).toLocaleString()} €
+                    ≈ {offer.custom_price && offer.custom_price > 0
+                      ? offer.display_price.toLocaleString()
+                      : Math.round(offer.display_price / settings.exchange_rate_eur).toLocaleString()
+                    } €
                   </div>
                 )}
               </>
@@ -74,29 +83,44 @@ export function PartnerListingCard({ offer, partnerSlug, locale, index = 0 }: Pa
                   <>
                     {/* EUR brutto */}
                     <span className="text-lg font-bold text-blue-600 block">
-                      {Math.round(offer.display_price / settings.exchange_rate_eur).toLocaleString()}
+                      {offer.custom_price && offer.custom_price > 0
+                        ? offer.display_price.toLocaleString()
+                        : Math.round(offer.display_price / settings.exchange_rate_eur).toLocaleString()
+                      }
                       <span className="text-sm ml-0.5">€</span>
                     </span>
                     {/* EUR netto poniżej jeśli show_net_prices */}
                     {offer.show_net_prices && offer.display_price_net && (
                       <div className="text-xs text-gray-500">
-                        {t('net')}: {Math.round(offer.display_price_net / settings.exchange_rate_eur).toLocaleString()} €
+                        {t('net')}: {offer.custom_price && offer.custom_price > 0
+                          ? offer.display_price_net.toLocaleString()
+                          : Math.round(offer.display_price_net / settings.exchange_rate_eur).toLocaleString()
+                        } €
                       </div>
                     )}
                     {offer.show_secondary_currency && (
                       <div className="text-xs text-gray-400">
-                        ≈ {formatPrice(offer.display_price)}
+                        ≈ {offer.custom_price && offer.custom_price > 0 && settings?.exchange_rate_eur
+                          ? formatPrice(Math.round(offer.display_price * settings.exchange_rate_eur))
+                          : formatPrice(offer.display_price)
+                        }
                       </div>
                     )}
                   </>
                 ) : (
                   <>
                     <span className="text-lg font-bold text-blue-600 block">
-                      {formatPrice(offer.display_price)}
+                      {offer.custom_price && offer.custom_price > 0 && settings?.exchange_rate_eur
+                        ? formatPrice(Math.round(offer.display_price * settings.exchange_rate_eur))
+                        : formatPrice(offer.display_price)
+                      }
                     </span>
                     {offer.show_net_prices && offer.display_price_net && (
                       <div className="text-xs text-gray-500">
-                        {t('net')}: {formatPrice(offer.display_price_net)}
+                        {t('net')}: {offer.custom_price && offer.custom_price > 0 && settings?.exchange_rate_eur
+                          ? formatPrice(Math.round(offer.display_price_net * settings.exchange_rate_eur))
+                          : formatPrice(offer.display_price_net)
+                        }
                       </div>
                     )}
                   </>

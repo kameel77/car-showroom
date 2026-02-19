@@ -387,7 +387,8 @@ export default function PartnerSelfAdminPage() {
                       <th className="py-2 px-4 text-right whitespace-nowrap">Dodatkowe</th>
                       <th className="py-2 px-4 text-right whitespace-nowrap">Transport</th>
                       <th className="py-2 px-4 text-right whitespace-nowrap font-medium text-gray-900">Koszt Całkowity</th>
-                      <th className="py-2 px-4 text-right whitespace-nowrap">Cena EUR Brutto</th>
+                      <th className="py-2 px-4 text-center whitespace-nowrap text-blue-600">EUR Brutto →</th>
+                      <th className="py-2 px-4 text-right whitespace-nowrap font-bold text-gray-700">Cena EUR Brutto</th>
                       <th className="py-2 px-4 text-right whitespace-nowrap">Sprzedaż Netto EUR</th>
                       <th className="py-2 px-4 text-right whitespace-nowrap font-bold">Marża EUR</th>
                       <th className="py-2 px-4 text-right whitespace-nowrap font-bold">Marża %</th>
@@ -395,8 +396,9 @@ export default function PartnerSelfAdminPage() {
                   </thead>
                   <tbody>
                     {arbitrageOffers.map((offer, index) => {
-                      const saleGrossEur = offer.custom_price != null
-                        ? offer.custom_price
+                      const hasCustom = offer.custom_price != null && offer.custom_price > 0;
+                      const saleGrossEur = hasCustom
+                        ? offer.custom_price!
                         : exchangeRate > 0 ? offer.calculated_price / exchangeRate : 0;
 
                       const breakdown = calculateVehicleMarginBreakdown({
@@ -422,13 +424,42 @@ export default function PartnerSelfAdminPage() {
                           <td className="py-2 px-4 text-right text-gray-800">{formatPricePrecise(breakdown.additionalCostsEur, 'EUR')}</td>
                           <td className="py-2 px-4 text-right text-gray-800">{formatPricePrecise(breakdown.transportCostEur, 'EUR')}</td>
                           <td className="py-2 px-4 text-right font-medium text-gray-900">{formatPricePrecise(breakdown.totalCostEur, 'EUR')}</td>
-                          <td className="py-2 px-4 text-right">
-                            {offer.custom_price != null
-                              ? <span className="font-semibold text-blue-700">{formatPricePrecise(offer.custom_price, 'EUR')}</span>
-                              : <span className="text-gray-400 text-xs">brak</span>
-                            }
+
+                          {/* Input column */}
+                          <td className="py-2 px-4">
+                            <div className="flex items-center justify-center gap-1">
+                              <input
+                                key={`arb-input-${offer.offer_id}-${offer.custom_price}`}
+                                type="number"
+                                step="1"
+                                defaultValue={offer.custom_price != null ? offer.custom_price : ''}
+                                onBlur={(e) => {
+                                  const value = e.target.value === '' ? undefined : Number(e.target.value);
+                                  if (value !== offer.custom_price) handleUpdatePrice(offer.offer_id, value);
+                                }}
+                                placeholder="—"
+                                className="w-24 px-2 py-1 text-sm font-semibold text-gray-900 border border-blue-400 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white placeholder:text-gray-300 text-right"
+                              />
+                              {offer.custom_price != null && (
+                                <button
+                                  onClick={() => handleUpdatePrice(offer.offer_id, undefined)}
+                                  className="text-gray-300 hover:text-red-500 flex-shrink-0"
+                                  title="Usuń własną cenę"
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                </button>
+                              )}
+                            </div>
                           </td>
-                          <td className="py-2 px-4 text-right text-blue-700">{formatPricePrecise(breakdown.saleNetEur, 'EUR')}</td>
+
+                          {/* Resulting Sale Price column */}
+                          <td className="py-2 px-4 text-right">
+                            <span className={`font-bold ${hasCustom ? 'text-blue-700' : 'text-gray-900'}`}>
+                              {formatPricePrecise(saleGrossEur, 'EUR')}
+                            </span>
+                          </td>
+
+                          <td className="py-2 px-4 text-right text-gray-800">{formatPricePrecise(breakdown.saleNetEur, 'EUR')}</td>
                           <td className={`py-2 px-4 text-right font-bold ${breakdown.marginEur >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                             {formatPricePrecise(breakdown.marginEur, 'EUR')}
                           </td>

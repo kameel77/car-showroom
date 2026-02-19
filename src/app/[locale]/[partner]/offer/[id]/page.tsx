@@ -144,13 +144,17 @@ export default async function PartnerOfferPage({ params }: PartnerOfferPageProps
                   {locale === 'pl' ? (
                     <>
                       <p className="text-3xl font-bold text-blue-600">
-                        {partner.show_net_prices && partnerOffer.display_price_net
-                          ? formatPrice(partnerOffer.display_price_net)
-                          : formatPrice(partnerOffer.display_price)}
+                        {partnerOffer.custom_price && partnerOffer.custom_price > 0 && settings?.exchange_rate_eur
+                          ? formatPrice(Math.round((partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price) * settings.exchange_rate_eur))
+                          : formatPrice(partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price)
+                        }
                       </p>
                       {settings?.show_eur_prices && settings?.exchange_rate_eur && partner.show_secondary_currency && (
                         <p className="text-lg text-gray-500">
-                          ≈ {Math.round((partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price) / settings.exchange_rate_eur).toLocaleString()}
+                          ≈ {partnerOffer.custom_price && partnerOffer.custom_price > 0
+                            ? (partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price).toLocaleString()
+                            : Math.round((partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price) / settings.exchange_rate_eur).toLocaleString()
+                          }
                           <span className="text-sm ml-0.5">€</span>
                         </p>
                       )}
@@ -160,22 +164,27 @@ export default async function PartnerOfferPage({ params }: PartnerOfferPageProps
                       {settings?.show_eur_prices && settings?.exchange_rate_eur ? (
                         <>
                           <p className="text-3xl font-bold text-blue-600">
-                            {Math.round((partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price) / settings.exchange_rate_eur).toLocaleString()}
+                            {partnerOffer.custom_price && partnerOffer.custom_price > 0
+                              ? (partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price).toLocaleString()
+                              : Math.round((partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price) / settings.exchange_rate_eur).toLocaleString()
+                            }
                             <span className="text-xl ml-1">€</span>
                           </p>
                           {partner.show_secondary_currency && (
                             <p className="text-lg text-gray-500">
-                              ≈ {partner.show_net_prices && partnerOffer.display_price_net
-                                ? formatPrice(partnerOffer.display_price_net)
-                                : formatPrice(partnerOffer.display_price)}
+                              ≈ {partnerOffer.custom_price && partnerOffer.custom_price > 0
+                                ? formatPrice(Math.round((partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price) * settings.exchange_rate_eur))
+                                : formatPrice(partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price)
+                              }
                             </p>
                           )}
                         </>
                       ) : (
                         <p className="text-3xl font-bold text-blue-600">
-                          {partner.show_net_prices && partnerOffer.display_price_net
-                            ? formatPrice(partnerOffer.display_price_net)
-                            : formatPrice(partnerOffer.display_price)}
+                          {partnerOffer.custom_price && partnerOffer.custom_price > 0 && settings?.exchange_rate_eur
+                            ? formatPrice(Math.round((partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price) * settings.exchange_rate_eur))
+                            : formatPrice(partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price)
+                          }
                         </p>
                       )}
                     </>
@@ -286,13 +295,17 @@ export default async function PartnerOfferPage({ params }: PartnerOfferPageProps
                   {locale === 'pl' ? (
                     <>
                       <p className="text-3xl font-bold text-blue-600">
-                        {partner.show_net_prices && partnerOffer.display_price_net
-                          ? formatPrice(partnerOffer.display_price_net)
-                          : formatPrice(partnerOffer.display_price)}
+                        {partnerOffer.custom_price && partnerOffer.custom_price > 0 && settings?.exchange_rate_eur
+                          ? formatPrice(Math.round((partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price) * settings.exchange_rate_eur))
+                          : formatPrice(partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price)
+                        }
                       </p>
                       {settings?.show_eur_prices && settings?.exchange_rate_eur && partner.show_secondary_currency && (
                         <p className="text-lg text-gray-500">
-                          ≈ {Math.round((partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price) / settings.exchange_rate_eur).toLocaleString()}
+                          ≈ {partnerOffer.custom_price && partnerOffer.custom_price > 0
+                            ? (partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price).toLocaleString()
+                            : Math.round((partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price) / settings.exchange_rate_eur).toLocaleString()
+                          }
                           <span className="text-sm ml-0.5">€</span>
                         </p>
                       )}
@@ -302,22 +315,27 @@ export default async function PartnerOfferPage({ params }: PartnerOfferPageProps
                       {settings?.show_eur_prices && settings?.exchange_rate_eur ? (
                         <>
                           <p className="text-3xl font-bold text-blue-600">
-                            {Math.round((partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price) / settings.exchange_rate_eur).toLocaleString()}
+                            {partnerOffer.custom_price && partnerOffer.custom_price > 0
+                              ? (partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price).toLocaleString()
+                              : Math.round((partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price) / settings.exchange_rate_eur).toLocaleString()
+                            }
                             <span className="text-xl ml-1">€</span>
                           </p>
                           {partner.show_secondary_currency && (
                             <p className="text-lg text-gray-500">
-                              ≈ {partner.show_net_prices && partnerOffer.display_price_net
-                                ? formatPrice(partnerOffer.display_price_net)
-                                : formatPrice(partnerOffer.display_price)}
+                              ≈ {partnerOffer.custom_price && partnerOffer.custom_price > 0
+                                ? formatPrice(Math.round((partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price) * settings.exchange_rate_eur))
+                                : formatPrice(partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price)
+                              }
                             </p>
                           )}
                         </>
                       ) : (
                         <p className="text-3xl font-bold text-blue-600">
-                          {partner.show_net_prices && partnerOffer.display_price_net
-                            ? formatPrice(partnerOffer.display_price_net)
-                            : formatPrice(partnerOffer.display_price)}
+                          {partnerOffer.custom_price && partnerOffer.custom_price > 0 && settings?.exchange_rate_eur
+                            ? formatPrice(Math.round((partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price) * settings.exchange_rate_eur))
+                            : formatPrice(partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price)
+                          }
                         </p>
                       )}
                     </>
