@@ -12,7 +12,12 @@ import {
   Car,
   X,
   Search,
+  Calendar,
+  Gauge,
+  Fuel,
+  Settings2,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Partner, PartnerOfferWithDetails } from '@/types/partners';
 import {
   getPartnerOffersBySlug,
@@ -26,11 +31,13 @@ import {
   calculateTransportCostTotalEur,
   calculateVehicleMarginBreakdown,
   decomposeTransportBundles,
+  NL_SALE_VAT_RATE,
 } from '@/lib/price-calculator';
 import { useAppSettings } from '@/hooks/useAppSettings';
 
 export default function PartnerSelfAdminPage() {
   const locale = useLocale();
+  const t = useTranslations('adminSelf');
   const params = useParams();
   const partnerSlug = params.partner as string;
   const { settings } = useAppSettings();
@@ -163,9 +170,9 @@ export default function PartnerSelfAdminPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{partner.company_name} — Panel zarządzania</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{partner.company_name} — {t('title')}</h1>
             <p className="text-gray-500 mt-1 text-sm">
-              Ustaw własne ceny sprzedaży (EUR brutto) dla swoich ofert
+              {t('subtitle')}
             </p>
           </div>
           <Link
@@ -174,7 +181,7 @@ export default function PartnerSelfAdminPage() {
             className="flex items-center gap-2 px-4 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 text-sm"
           >
             <ExternalLink className="h-4 w-4" />
-            Podgląd showroom
+            {t('previewShowroom')}
           </Link>
         </div>
 
@@ -186,7 +193,7 @@ export default function PartnerSelfAdminPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Szukaj po marce, modelu..."
+              placeholder={t('searchPlaceholder')}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
             />
           </div>
@@ -195,21 +202,21 @@ export default function PartnerSelfAdminPage() {
         {/* View toggle */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6 flex items-center justify-between gap-3">
           <div>
-            <h3 className="text-base font-semibold text-gray-900">Widok ofert</h3>
-            <p className="text-sm text-gray-500">Specyfikacja — ustaw ceny. Arbitraż — analiza marży.</p>
+            <h3 className="text-base font-semibold text-gray-900">{t('viewToggle.title')}</h3>
+            <p className="text-sm text-gray-500">{t('viewToggle.subtitle')}</p>
           </div>
           <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden">
             <button
               onClick={() => setListView('spec')}
               className={`px-4 py-2 text-sm font-medium ${listView === 'spec' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
             >
-              Specyfikacja
+              {t('viewToggle.spec')}
             </button>
             <button
               onClick={() => setListView('arbitrage')}
               className={`px-4 py-2 text-sm font-medium border-l border-gray-200 ${listView === 'arbitrage' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
             >
-              Arbitraż
+              {t('viewToggle.arbitrage')}
             </button>
           </div>
         </div>
@@ -219,12 +226,12 @@ export default function PartnerSelfAdminPage() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             {/* Header row — kolumny: Pojazd | PLN brutto | Netto PLN | Netto EUR | [input EUR brutto] | EUR brutto | Akcje */}
             <div className="grid grid-cols-12 gap-2 px-4 py-3 bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              <div className="col-span-4 flex items-center">Pojazd</div>
-              <div className="col-span-1 flex items-center justify-end text-right">PLN brutto</div>
-              <div className="col-span-1 flex items-center justify-end text-right">Netto PLN</div>
-              <div className="col-span-1 flex items-center justify-end text-right">Netto EUR</div>
-              <div className="col-span-2 flex items-center justify-end text-right text-blue-600">EUR brutto →</div>
-              <div className="col-span-2 flex items-center justify-end text-right font-bold text-gray-700">EUR brutto</div>
+              <div className="col-span-4 flex items-center">{t('table.vehicle')}</div>
+              <div className="col-span-1 flex items-center justify-end text-right">{t('table.plnGross')}</div>
+              <div className="col-span-1 flex items-center justify-end text-right">{t('table.plnNet')}</div>
+              <div className="col-span-1 flex items-center justify-end text-right">{t('table.eurNet')}</div>
+              <div className="col-span-2 flex items-center justify-end text-right text-blue-600">{t('table.eurGrossInput')}</div>
+              <div className="col-span-2 flex items-center justify-end text-right font-bold text-gray-700">{t('table.eurGrossResult')}</div>
               <div className="col-span-1 flex items-center justify-center text-center"></div>
             </div>
 
@@ -232,7 +239,7 @@ export default function PartnerSelfAdminPage() {
               {filteredOffers.length === 0 ? (
                 <div className="p-8 text-center text-gray-500">
                   <Car className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                  <p>Brak ofert</p>
+                  <p>{t('table.noOffers')}</p>
                 </div>
               ) : (
                 filteredOffers.map((offer) => {
@@ -296,7 +303,7 @@ export default function PartnerSelfAdminPage() {
                           <button
                             onClick={() => handleUpdatePrice(offer.offer_id, undefined)}
                             className="text-gray-300 hover:text-red-500 flex-shrink-0"
-                            title="Usuń własną cenę"
+                            title={t('table.removeCustomPrice')}
                           >
                             <X className="h-3.5 w-3.5" />
                           </button>
@@ -310,7 +317,7 @@ export default function PartnerSelfAdminPage() {
                         </p>
                         {partner.show_net_prices && grossEur > 0 && (
                           <p className="text-xs text-gray-500">
-                            netto: {(grossEur / 1.21).toLocaleString('pl-PL', { maximumFractionDigits: 0 })} €
+                            netto: {(grossEur / (1 + NL_SALE_VAT_RATE / 100)).toLocaleString('pl-PL', { maximumFractionDigits: 0 })} €
                           </p>
                         )}
                       </div>
@@ -321,7 +328,7 @@ export default function PartnerSelfAdminPage() {
                           href={`/${locale}/${partner.slug}/offer/${offer.offer_id}`}
                           target="_blank"
                           className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                          title="Pokaż ofertę"
+                          title={t('table.showOffer')}
                         >
                           <ExternalLink className="h-4 w-4" />
                         </Link>
@@ -339,10 +346,10 @@ export default function PartnerSelfAdminPage() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div className="p-4 border-b border-gray-200 bg-gray-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <p className="text-sm font-medium text-gray-900">Kalkulacja kosztów i marży</p>
+                <p className="text-sm font-medium text-gray-900">{t('arbitrageHeader.title')}</p>
                 <p className="text-xs text-gray-500 mt-1">
-                  Kurs EUR: {exchangeRate ? exchangeRate.toFixed(4) : '-'} •
-                  Transport dla:{' '}
+                  {t('arbitrageHeader.exchangeRate')}: {exchangeRate ? exchangeRate.toFixed(4) : '-'} •
+                  {t('arbitrageHeader.transportFor')}:{' '}
                   <input
                     type="number"
                     min="1"
@@ -350,12 +357,12 @@ export default function PartnerSelfAdminPage() {
                     value={transportBatchSize}
                     onChange={(e) => setTransportBatchSize(Math.max(1, parseInt(e.target.value) || 1))}
                     className="inline-block w-16 px-1 py-0.5 border border-gray-300 rounded text-xs mx-1 text-gray-900 bg-white"
-                  /> aut
+                  /> {t('arbitrageHeader.cars')}
                   {transportCostTotalEur > 0 && (
                     <span className="ml-2">
-                      ({formatPricePrecise(transportCostTotalEur, 'EUR')} łącznie,
-                      {' '}{formatPricePrecise(transportCostPerCarEur, 'EUR')}/auto,
-                      {' '}bundl: {transportBundles.join(' + ')})
+                      ({formatPricePrecise(transportCostTotalEur, 'EUR')} {t('arbitrageHeader.total')},
+                      {' '}{formatPricePrecise(transportCostPerCarEur, 'EUR')}/{t('arbitrageHeader.perCar')},
+                      {' '}{t('arbitrageHeader.bundle')}: {transportBundles.join(' + ')})
                     </span>
                   )}
                 </p>
@@ -365,8 +372,8 @@ export default function PartnerSelfAdminPage() {
                 onChange={(e) => setArbitrageSort(e.target.value as 'margin_eur_desc' | 'margin_pct_desc')}
                 className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-900 bg-white"
               >
-                <option value="margin_pct_desc">Sortuj: marża % malejąco</option>
-                <option value="margin_eur_desc">Sortuj: marża EUR malejąco</option>
+                <option value="margin_pct_desc">{t('arbitrageHeader.sort.marginPctDesc')}</option>
+                <option value="margin_eur_desc">{t('arbitrageHeader.sort.marginEurDesc')}</option>
               </select>
             </div>
 
@@ -381,46 +388,66 @@ export default function PartnerSelfAdminPage() {
                   <thead>
                     <tr className="text-left border-b border-gray-200 text-gray-600 bg-gray-50/50">
                       <th className="py-2 px-4 whitespace-nowrap">#</th>
-                      <th className="py-2 px-4 whitespace-nowrap">Pojazd</th>
-                      <th className="py-2 px-4 text-right whitespace-nowrap">Zakup Netto EUR</th>
-                      <th className="py-2 px-4 text-right whitespace-nowrap">Finansowanie</th>
-                      <th className="py-2 px-4 text-right whitespace-nowrap">Dodatkowe</th>
-                      <th className="py-2 px-4 text-right whitespace-nowrap">Transport</th>
-                      <th className="py-2 px-4 text-right whitespace-nowrap font-medium text-gray-900">Koszt Całkowity</th>
-                      <th className="py-2 px-4 text-center whitespace-nowrap text-blue-600">EUR Brutto →</th>
-                      <th className="py-2 px-4 text-right whitespace-nowrap font-bold text-gray-700">Cena EUR Brutto</th>
-                      <th className="py-2 px-4 text-right whitespace-nowrap">Sprzedaż Netto EUR</th>
-                      <th className="py-2 px-4 text-right whitespace-nowrap font-bold">Marża EUR</th>
-                      <th className="py-2 px-4 text-right whitespace-nowrap font-bold">Marża %</th>
+                      <th className="py-2 px-4 whitespace-nowrap">{t('table.vehicle')}</th>
+                      <th className="py-2 px-4 text-right whitespace-nowrap">{t('table.purchaseNetEur')}</th>
+                      <th className="py-2 px-4 text-right whitespace-nowrap">{t('table.financing')}</th>
+                      <th className="py-2 px-4 text-right whitespace-nowrap">{t('table.additional')}</th>
+                      <th className="py-2 px-4 text-right whitespace-nowrap">{t('table.transport')}</th>
+                      <th className="py-2 px-4 text-right whitespace-nowrap font-medium text-gray-900">{t('table.totalCost')}</th>
+                      <th className="py-2 px-4 text-center whitespace-nowrap text-blue-600">{t('table.eurGrossInput')}</th>
+                      <th className="py-2 px-4 text-right whitespace-nowrap font-bold text-gray-700">{t('table.eurGrossResult')}</th>
+                      <th className="py-2 px-4 text-right whitespace-nowrap">{t('table.saleNetEur')}</th>
+                      <th className="py-2 px-4 text-right whitespace-nowrap font-bold">{t('table.marginEur')}</th>
+                      <th className="py-2 px-4 text-right whitespace-nowrap font-bold">{t('table.marginPct')}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {arbitrageOffers.map((offer, index) => {
                       const hasCustom = offer.custom_price != null && offer.custom_price > 0;
-                      const saleGrossEur = hasCustom
-                        ? offer.custom_price!
-                        : exchangeRate > 0 ? offer.calculated_price / exchangeRate : 0;
 
-                      const breakdown = calculateVehicleMarginBreakdown({
+                      // Calculate initial breakdown to get totalCostEur
+                      const baseBreakdown = calculateVehicleMarginBreakdown({
                         purchaseGrossPln: offer.offer.price,
-                        exchangeRatePlnPerEur: exchangeRate,
+                        exchangeRatePlnPerEur: exchangeRate || 4.3,
                         financingCostPercent: partner.financing_cost_percent || 0,
                         additionalCostItems: partner.additional_cost_items || [],
                         transportCostEur: transportCostPerCarEur,
-                        saleGrossEur,
+                        saleGrossEur: 0 // placeholder
+                      });
+
+                      const saleGrossEur = hasCustom
+                        ? offer.custom_price!
+                        : baseBreakdown.totalCostEur * 1.18;
+
+                      const breakdown = calculateVehicleMarginBreakdown({
+                        purchaseGrossPln: offer.offer.price,
+                        exchangeRatePlnPerEur: exchangeRate || 4.3,
+                        financingCostPercent: partner.financing_cost_percent || 0,
+                        additionalCostItems: partner.additional_cost_items || [],
+                        transportCostEur: transportCostPerCarEur,
+                        saleGrossEur: saleGrossEur
                       });
 
                       return (
-                        <tr key={`arb-${offer.offer_id}`} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50">
-                          <td className="py-2 px-4 text-gray-500">{index + 1}</td>
-                          <td className="py-2 px-4 font-medium text-gray-900">
-                            <div className="flex flex-col">
-                              <span>{offer.offer.brand} {offer.offer.model}</span>
-                              <span className="text-xs text-gray-500">{offer.offer.model_version}</span>
+                        <tr key={offer.offer_id} className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors text-sm">
+                          <td className="py-2 px-4 text-gray-400 font-medium">{index + 1}</td>
+                          <td className="py-2 px-4">
+                            <div className="flex items-center gap-3">
+                              {offer.offer.main_photo_url && (
+                                <div className="relative w-12 h-8 rounded overflow-hidden flex-shrink-0">
+                                  <Image src={offer.offer.main_photo_url} alt="" fill className="object-cover" />
+                                </div>
+                              )}
+                              <div className="min-w-0">
+                                <p className="font-medium text-gray-900 truncate leading-tight">{offer.offer.brand} {offer.offer.model}</p>
+                                <p className="text-[10px] text-gray-500 truncate mt-0.5">
+                                  {offer.offer.year} • {offer.offer.mileage?.toLocaleString()} km • {offer.offer.fuel_type}
+                                </p>
+                              </div>
                             </div>
                           </td>
-                          <td className="py-2 px-4 text-right text-gray-800">{formatPricePrecise(breakdown.purchaseNetEur, 'EUR')}</td>
-                          <td className="py-2 px-4 text-right text-gray-800">{formatPricePrecise(breakdown.financingCostEur, 'EUR')}</td>
+                          <td className="py-2 px-4 text-right text-gray-600">{formatPricePrecise(breakdown.purchaseNetEur, 'EUR')}</td>
+                          <td className="py-2 px-4 text-right text-gray-600">{formatPricePrecise(breakdown.financingCostEur, 'EUR')}</td>
                           <td className="py-2 px-4 text-right text-gray-800">{formatPricePrecise(breakdown.additionalCostsEur, 'EUR')}</td>
                           <td className="py-2 px-4 text-right text-gray-800">{formatPricePrecise(breakdown.transportCostEur, 'EUR')}</td>
                           <td className="py-2 px-4 text-right font-medium text-gray-900">{formatPricePrecise(breakdown.totalCostEur, 'EUR')}</td>
@@ -444,7 +471,7 @@ export default function PartnerSelfAdminPage() {
                                 <button
                                   onClick={() => handleUpdatePrice(offer.offer_id, undefined)}
                                   className="text-gray-300 hover:text-red-500 flex-shrink-0"
-                                  title="Usuń własną cenę"
+                                  title={t('table.removeCustomPrice')}
                                 >
                                   <X className="h-3.5 w-3.5" />
                                 </button>
@@ -478,9 +505,9 @@ export default function PartnerSelfAdminPage() {
 
         {/* Summary */}
         <div className="mt-6 flex items-center justify-between text-sm text-gray-500">
-          <p>Oferty: {filteredOffers.length} / {offers.length}</p>
-          <p>Z własną ceną EUR: {offers.filter(o => o.custom_price != null).length}</p>
-          {saving && <span className="flex items-center gap-1 text-blue-600"><Loader2 className="h-4 w-4 animate-spin" /> Zapisywanie...</span>}
+          <p>{t('summary.offers')}: {filteredOffers.length} / {offers.length}</p>
+          <p>{t('summary.withCustomPrice')}: {offers.filter(o => o.custom_price != null).length}</p>
+          {saving && <span className="flex items-center gap-1 text-blue-600"><Loader2 className="h-4 w-4 animate-spin" /> {t('summary.saving')}</span>}
         </div>
 
       </div>

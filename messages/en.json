@@ -175,5 +175,56 @@
     "fuelType": "Fuel type",
     "transmission": "Transmission",
     "bodyType": "Body type"
+  },
+  "adminSelf": {
+    "title": "Management Panel",
+    "subtitle": "Set your own sale prices (EUR gross) for your offers",
+    "searchPlaceholder": "Search by brand, model...",
+    "previewShowroom": "Preview showroom",
+    "viewToggle": {
+      "title": "Offers View",
+      "subtitle": "Specification — set prices. Arbitrage — margin analysis.",
+      "spec": "Specification",
+      "arbitrage": "Arbitrage"
+    },
+    "table": {
+      "noOffers": "No offers",
+      "vehicle": "Vehicle",
+      "plnGross": "PLN gross",
+      "plnNet": "Net PLN",
+      "eurNet": "Net EUR",
+      "eurGrossInput": "EUR gross →",
+      "eurGrossResult": "EUR gross",
+      "purchaseNetEur": "Purchase Net EUR",
+      "financing": "Financing",
+      "additional": "Additional",
+      "transport": "Transport",
+      "totalCost": "Total Cost",
+      "saleNetEur": "Sale Net EUR",
+      "marginEur": "Margin EUR",
+      "marginPct": "Margin %",
+      "actions": "Actions",
+      "showOffer": "Show offer",
+      "removeCustomPrice": "Remove custom price"
+    },
+    "arbitrageHeader": {
+      "title": "Cost and Margin Calculation",
+      "exchangeRate": "EUR Rate",
+      "transportFor": "Transport for",
+      "cars": "cars",
+      "total": "total",
+      "perCar": "per car",
+      "bundle": "bundle",
+      "sort": {
+        "label": "Sort",
+        "marginPctDesc": "Sort: margin % descending",
+        "marginEurDesc": "Sort: margin EUR descending"
+      }
+    },
+    "summary": {
+      "offers": "Offers",
+      "withCustomPrice": "With custom EUR price",
+      "saving": "Saving..."
+    }
   }
 }

@@ -115,9 +115,9 @@ export function calculateMarginPercent(
 export const VAT_RATE = 23;
 
 /**
- * VAT rate for NL sale input (gross -> net)
+ * VAT rate for sale input (gross -> net) - changed to 18% as per user requirement
  */
-export const NL_SALE_VAT_RATE = 21;
+export const NL_SALE_VAT_RATE = 18;
 
 /**
  * Calculate net price from gross price (removes VAT)

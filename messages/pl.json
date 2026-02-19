@@ -175,5 +175,56 @@
     "fuelType": "Rodzaj paliwa",
     "transmission": "Skrzynia biegów",
     "bodyType": "Typ nadwozia"
+  },
+  "adminSelf": {
+    "title": "Panel zarządzania",
+    "subtitle": "Ustaw własne ceny sprzedaży (EUR brutto) dla swoich ofert",
+    "searchPlaceholder": "Szukaj po marce, modelu...",
+    "previewShowroom": "Podgląd showroom",
+    "viewToggle": {
+      "title": "Widok ofert",
+      "subtitle": "Specyfikacja — ustaw ceny. Arbitraż — analiza marży.",
+      "spec": "Specyfikacja",
+      "arbitrage": "Arbitraż"
+    },
+    "table": {
+      "noOffers": "Brak ofert",
+      "vehicle": "Pojazd",
+      "plnGross": "PLN brutto",
+      "plnNet": "Netto PLN",
+      "eurNet": "Netto EUR",
+      "eurGrossInput": "EUR brutto →",
+      "eurGrossResult": "EUR brutto",
+      "purchaseNetEur": "Zakup Netto EUR",
+      "financing": "Finansowanie",
+      "additional": "Dodatkowe",
+      "transport": "Transport",
+      "totalCost": "Koszt Całkowity",
+      "saleNetEur": "Sprzedaż Netto EUR",
+      "marginEur": "Marża EUR",
+      "marginPct": "Marża %",
+      "actions": "Akcje",
+      "showOffer": "Pokaż ofertę",
+      "removeCustomPrice": "Usuń własną cenę"
+    },
+    "arbitrageHeader": {
+      "title": "Kalkulacja kosztów i marży",
+      "exchangeRate": "Kurs EUR",
+      "transportFor": "Transport dla",
+      "cars": "aut",
+      "total": "łącznie",
+      "perCar": "auto",
+      "bundle": "bundl",
+      "sort": {
+        "label": "Sortuj",
+        "marginPctDesc": "Sortuj: marża % malejąco",
+        "marginEurDesc": "Sortuj: marża EUR malejąco"
+      }
+    },
+    "summary": {
+      "offers": "Oferty",
+      "withCustomPrice": "Z własną ceną EUR",
+      "saving": "Zapisywanie..."
+    }
   }
 }
