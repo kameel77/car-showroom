@@ -18,6 +18,8 @@ export interface Partner {
   transport_cost_tiers_eur?: TransportCostTiers;
   is_active: boolean;
   notes?: string;
+  presentation_currency?: string;
+  presentation_value?: string;
   created_at: string;
   updated_at: string;
 }
@@ -55,6 +57,7 @@ export interface PartnerOfferWithDetails extends PartnerOffer {
     engine_power?: string;
     transmission?: string;
     main_photo_url?: string;
+    additional_photos?: string[] | null;
   };
   calculated_price: number;
   calculated_price_net: number;
@@ -79,6 +82,8 @@ export interface CreatePartnerInput {
   transport_cost_tiers_eur?: TransportCostTiers;
   is_active?: boolean;
   notes?: string;
+  presentation_currency?: string;
+  presentation_value?: string;
 }
 
 export interface UpdatePartnerInput {
@@ -97,6 +102,8 @@ export interface UpdatePartnerInput {
   transport_cost_tiers_eur?: TransportCostTiers;
   is_active?: boolean;
   notes?: string;
+  presentation_currency?: string;
+  presentation_value?: string;
 }
 
 export interface CreatePartnerFilterInput {
@@ -124,6 +131,8 @@ export interface PartnerPublicOffer {
   custom_price?: number;
   show_net_prices?: boolean;
   show_secondary_currency?: boolean;
+  presentation_currency?: string;
+  presentation_value?: string;
   fuel_type?: string;
   engine_power?: string;
   transmission?: string;

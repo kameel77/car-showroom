@@ -141,54 +141,61 @@ export default async function PartnerOfferPage({ params }: PartnerOfferPageProps
                   <p className="text-sm text-gray-500">
                     {t('partner.priceFor')} {partner.company_name} {partner.show_net_prices && `(${t('listing.net')})`}
                   </p>
-                  {locale === 'pl' ? (
-                    <>
-                      <p className="text-3xl font-bold text-blue-600">
-                        {partnerOffer.custom_price && partnerOffer.custom_price > 0 && settings?.exchange_rate_eur
-                          ? formatPrice(Math.round((partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price) * settings.exchange_rate_eur))
-                          : formatPrice(partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price)
-                        }
-                      </p>
-                      {settings?.show_eur_prices && settings?.exchange_rate_eur && partner.show_secondary_currency && (
-                        <p className="text-lg text-gray-500">
-                          ≈ {partnerOffer.custom_price && partnerOffer.custom_price > 0
-                            ? (partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price).toLocaleString()
-                            : Math.round((partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price) / settings.exchange_rate_eur).toLocaleString()
-                          }
-                          <span className="text-sm ml-0.5">€</span>
-                        </p>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      {settings?.show_eur_prices && settings?.exchange_rate_eur ? (
-                        <>
-                          <p className="text-3xl font-bold text-blue-600">
-                            {partnerOffer.custom_price && partnerOffer.custom_price > 0
-                              ? (partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price).toLocaleString()
-                              : Math.round((partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price) / settings.exchange_rate_eur).toLocaleString()
-                            }
-                            <span className="text-xl ml-1">€</span>
-                          </p>
-                          {partner.show_secondary_currency && (
-                            <p className="text-lg text-gray-500">
-                              ≈ {partnerOffer.custom_price && partnerOffer.custom_price > 0
-                                ? formatPrice(Math.round((partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price) * settings.exchange_rate_eur))
-                                : formatPrice(partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price)
-                              }
-                            </p>
-                          )}
-                        </>
-                      ) : (
+                  {(() => {
+                    const baseIsEur = partnerOffer.presentation_currency === 'EUR' || (!partnerOffer.presentation_currency && locale !== 'pl');
+                    const baseIsNetto = partnerOffer.presentation_value === 'netto';
+                    
+                    const plnGross = partnerOffer.custom_price && partnerOffer.custom_price > 0 && settings?.exchange_rate_eur
+                      ? Math.round(partnerOffer.display_price * settings.exchange_rate_eur)
+                      : partnerOffer.display_price;
+                    const plnNet = partnerOffer.display_price_net || 0;
+                    const eurGross = partnerOffer.custom_price && partnerOffer.custom_price > 0
+                      ? partnerOffer.display_price
+                      : (settings?.exchange_rate_eur ? Math.round(partnerOffer.display_price / settings.exchange_rate_eur) : 0);
+                    const eurNet = partnerOffer.display_price_net && settings?.exchange_rate_eur
+                      ? Math.round(partnerOffer.display_price_net / settings.exchange_rate_eur)
+                      : 0;
+
+                    const primaryPrice = baseIsEur ? (baseIsNetto ? eurNet : eurGross) : (baseIsNetto ? plnNet : plnGross);
+                    const formattedPrimary = baseIsEur ? `${primaryPrice.toLocaleString()} €` : formatPrice(primaryPrice);
+                    
+                    const showSecondarySubtext = partner.show_net_prices;
+                    let secondarySubtext = '';
+                    if (showSecondarySubtext) {
+                      if (baseIsNetto) {
+                        const grossVal = baseIsEur ? eurGross : plnGross;
+                        secondarySubtext = `brutto: ${baseIsEur ? `${grossVal.toLocaleString()} €` : formatPrice(grossVal)}`;
+                      } else {
+                        const netVal = baseIsEur ? eurNet : plnNet;
+                        secondarySubtext = `netto: ${baseIsEur ? `${netVal.toLocaleString()} €` : formatPrice(netVal)}`;
+                      }
+                    }
+
+                    const showForeignSubtext = partner.show_secondary_currency && settings?.show_eur_prices && settings?.exchange_rate_eur;
+                    let foreignSubtext = '';
+                    if (showForeignSubtext) {
+                      const foreignVal = baseIsEur ? (baseIsNetto ? plnNet : plnGross) : (baseIsNetto ? eurNet : eurGross);
+                      foreignSubtext = `≈ ${baseIsEur ? formatPrice(foreignVal) : `${foreignVal.toLocaleString()} €`}`;
+                    }
+
+                    return (
+                      <>
                         <p className="text-3xl font-bold text-blue-600">
-                          {partnerOffer.custom_price && partnerOffer.custom_price > 0 && settings?.exchange_rate_eur
-                            ? formatPrice(Math.round((partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price) * settings.exchange_rate_eur))
-                            : formatPrice(partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price)
-                          }
+                          {formattedPrimary}
                         </p>
-                      )}
-                    </>
-                  )}
+                        {secondarySubtext && (
+                          <p className="text-sm text-gray-500 mt-1">
+                            {secondarySubtext}
+                          </p>
+                        )}
+                        {foreignSubtext && (
+                          <p className="text-lg text-gray-400 mt-1">
+                            {foreignSubtext}
+                          </p>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
 
                 <div className="pt-4 border-t border-gray-100 space-y-2">
@@ -292,54 +299,61 @@ export default async function PartnerOfferPage({ params }: PartnerOfferPageProps
                   <p className="text-sm text-gray-500">
                     {t('partner.priceFor')} {partner.company_name} {partner.show_net_prices && `(${t('listing.net')})`}
                   </p>
-                  {locale === 'pl' ? (
-                    <>
-                      <p className="text-3xl font-bold text-blue-600">
-                        {partnerOffer.custom_price && partnerOffer.custom_price > 0 && settings?.exchange_rate_eur
-                          ? formatPrice(Math.round((partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price) * settings.exchange_rate_eur))
-                          : formatPrice(partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price)
-                        }
-                      </p>
-                      {settings?.show_eur_prices && settings?.exchange_rate_eur && partner.show_secondary_currency && (
-                        <p className="text-lg text-gray-500">
-                          ≈ {partnerOffer.custom_price && partnerOffer.custom_price > 0
-                            ? (partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price).toLocaleString()
-                            : Math.round((partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price) / settings.exchange_rate_eur).toLocaleString()
-                          }
-                          <span className="text-sm ml-0.5">€</span>
-                        </p>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      {settings?.show_eur_prices && settings?.exchange_rate_eur ? (
-                        <>
-                          <p className="text-3xl font-bold text-blue-600">
-                            {partnerOffer.custom_price && partnerOffer.custom_price > 0
-                              ? (partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price).toLocaleString()
-                              : Math.round((partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price) / settings.exchange_rate_eur).toLocaleString()
-                            }
-                            <span className="text-xl ml-1">€</span>
-                          </p>
-                          {partner.show_secondary_currency && (
-                            <p className="text-lg text-gray-500">
-                              ≈ {partnerOffer.custom_price && partnerOffer.custom_price > 0
-                                ? formatPrice(Math.round((partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price) * settings.exchange_rate_eur))
-                                : formatPrice(partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price)
-                              }
-                            </p>
-                          )}
-                        </>
-                      ) : (
+                  {(() => {
+                    const baseIsEur = partnerOffer.presentation_currency === 'EUR' || (!partnerOffer.presentation_currency && locale !== 'pl');
+                    const baseIsNetto = partnerOffer.presentation_value === 'netto';
+                    
+                    const plnGross = partnerOffer.custom_price && partnerOffer.custom_price > 0 && settings?.exchange_rate_eur
+                      ? Math.round(partnerOffer.display_price * settings.exchange_rate_eur)
+                      : partnerOffer.display_price;
+                    const plnNet = partnerOffer.display_price_net || 0;
+                    const eurGross = partnerOffer.custom_price && partnerOffer.custom_price > 0
+                      ? partnerOffer.display_price
+                      : (settings?.exchange_rate_eur ? Math.round(partnerOffer.display_price / settings.exchange_rate_eur) : 0);
+                    const eurNet = partnerOffer.display_price_net && settings?.exchange_rate_eur
+                      ? Math.round(partnerOffer.display_price_net / settings.exchange_rate_eur)
+                      : 0;
+
+                    const primaryPrice = baseIsEur ? (baseIsNetto ? eurNet : eurGross) : (baseIsNetto ? plnNet : plnGross);
+                    const formattedPrimary = baseIsEur ? `${primaryPrice.toLocaleString()} €` : formatPrice(primaryPrice);
+                    
+                    const showSecondarySubtext = partner.show_net_prices;
+                    let secondarySubtext = '';
+                    if (showSecondarySubtext) {
+                      if (baseIsNetto) {
+                        const grossVal = baseIsEur ? eurGross : plnGross;
+                        secondarySubtext = `brutto: ${baseIsEur ? `${grossVal.toLocaleString()} €` : formatPrice(grossVal)}`;
+                      } else {
+                        const netVal = baseIsEur ? eurNet : plnNet;
+                        secondarySubtext = `netto: ${baseIsEur ? `${netVal.toLocaleString()} €` : formatPrice(netVal)}`;
+                      }
+                    }
+
+                    const showForeignSubtext = partner.show_secondary_currency && settings?.show_eur_prices && settings?.exchange_rate_eur;
+                    let foreignSubtext = '';
+                    if (showForeignSubtext) {
+                      const foreignVal = baseIsEur ? (baseIsNetto ? plnNet : plnGross) : (baseIsNetto ? eurNet : eurGross);
+                      foreignSubtext = `≈ ${baseIsEur ? formatPrice(foreignVal) : `${foreignVal.toLocaleString()} €`}`;
+                    }
+
+                    return (
+                      <>
                         <p className="text-3xl font-bold text-blue-600">
-                          {partnerOffer.custom_price && partnerOffer.custom_price > 0 && settings?.exchange_rate_eur
-                            ? formatPrice(Math.round((partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price) * settings.exchange_rate_eur))
-                            : formatPrice(partner.show_net_prices && partnerOffer.display_price_net ? partnerOffer.display_price_net : partnerOffer.display_price)
-                          }
+                          {formattedPrimary}
                         </p>
-                      )}
-                    </>
-                  )}
+                        {secondarySubtext && (
+                          <p className="text-sm text-gray-500 mt-1">
+                            {secondarySubtext}
+                          </p>
+                        )}
+                        {foreignSubtext && (
+                          <p className="text-lg text-gray-400 mt-1">
+                            {foreignSubtext}
+                          </p>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
 
                 <div className="pt-4 border-t border-gray-100 space-y-2">

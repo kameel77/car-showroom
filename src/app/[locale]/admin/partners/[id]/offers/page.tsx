@@ -18,7 +18,8 @@ import {
   X,
   ChevronDown,
   ChevronUp,
-  Search
+  Search,
+  Image as ImageIcon
 } from 'lucide-react';
 import { Partner, PartnerFilter, PartnerOfferWithDetails } from '@/types/partners';
 import {
@@ -28,7 +29,9 @@ import {
   createPartnerFilter,
   deletePartnerFilter,
   updatePartnerOffer,
+  updateCarPhotos,
 } from '@/lib/partners-server';
+import { PhotoManagerModal } from '@/components/cars/PhotoManagerModal';
 import { getAllBrandsFromOffers } from '@/lib/filters-server';
 import {
   formatPrice,
@@ -70,6 +73,7 @@ export default function PartnerOffersPage() {
   const [listView, setListView] = useState<'spec' | 'arbitrage'>('spec');
   const [arbitrageSort, setArbitrageSort] = useState<'margin_eur_desc' | 'margin_pct_desc'>('margin_pct_desc');
   const [transportBatchSize, setTransportBatchSize] = useState<number>(1);
+  const [photoModalOfferId, setPhotoModalOfferId] = useState<string | null>(null);
 
   const id = partnerId;
   const isInvalidId = !id || !uuidRegex.test(id);
@@ -254,6 +258,23 @@ export default function PartnerOffersPage() {
       newSelected.add(offerId);
     }
     setSelectedOffers(newSelected);
+  };
+
+  const handleSavePhotos = async (offerId: string, additionalPhotos: string[]) => {
+    await updateCarPhotos(offerId, additionalPhotos);
+    // update local state
+    setOffers(offers.map(o => {
+      if (o.offer_id === offerId) {
+        return {
+          ...o,
+          offer: {
+            ...o.offer,
+            additional_photos: additionalPhotos,
+          }
+        };
+      }
+      return o;
+    }));
   };
 
   const selectAllOffers = () => {
@@ -653,8 +674,22 @@ export default function PartnerOffersPage() {
                       </div>
                     </div>
                     <div className="col-span-1 text-right"><p className="font-bold text-gray-900 leading-tight">{offer.show_net_prices ? formatPrice(offer.calculated_price_net) : formatPrice(offer.calculated_price)}</p></div>
-                    <div className="col-span-1 flex items-center justify-center"><button onClick={() => handleToggleVisibility(offer.offer_id, offer.is_visible)} className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-colors ${offer.is_visible ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>{offer.is_visible ? <><Eye className="h-3.5 w-3.5" /><span className="hidden sm:inline">Widoczna</span></> : <><EyeOff className="h-3.5 w-3.5" /><span className="hidden sm:inline">Ukryta</span></>}</button></div>
-                    <div className="col-span-1 flex items-center justify-center"><Link href={`/${locale}/${partner.slug}/offer/${offer.offer_id}`} target="_blank" className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Pokaż ofertę"><ExternalLink className="h-5 w-5" /></Link></div>
+                    <div className="col-span-1 flex items-center justify-center"><button onClick={() => handleToggleVisibility(offer.offer_id, offer.is_visible)} className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-colors ${offer.is_visible ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>{offer.is_visible ? <><Eye className="h-3.5 w-3.5" /><span className="hidden sm:inline">Widoczne</span></> : <><EyeOff className="h-3.5 w-3.5" /><span className="hidden sm:inline">Ukryte</span></>}</button></div>
+                    <div className="col-span-1 flex items-center justify-center gap-1">
+                      <button
+                        onClick={() => setPhotoModalOfferId(offer.offer_id)}
+                        className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors relative"
+                        title="Zarządzaj zdjęciami"
+                      >
+                        <ImageIcon className="h-4 w-4" />
+                        {offer.offer.additional_photos && offer.offer.additional_photos.length > 0 && (
+                          <span className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full border-2 border-white"></span>
+                        )}
+                      </button>
+                      <Link href={`/${locale}/${partner.slug}/offer/${offer.offer_id}`} target="_blank" className="p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Pokaż ofertę">
+                        <ExternalLink className="h-5 w-5" />
+                      </Link>
+                    </div>
                   </div>
                 ))
               )}
@@ -773,6 +808,16 @@ export default function PartnerOffersPage() {
             Z własną ceną: {offers.filter(o => o.custom_price).length}
           </p>
         </div>
+
+        {photoModalOfferId && (
+          <PhotoManagerModal
+            isOpen={true}
+            onClose={() => setPhotoModalOfferId(null)}
+            offerId={photoModalOfferId}
+            initialPhotos={offers.find(o => o.offer_id === photoModalOfferId)?.offer.additional_photos || []}
+            onSave={handleSavePhotos}
+          />
+        )}
       </div>
     </div>
   );

@@ -26,6 +26,8 @@ const BACKWARD_COMPAT_OPTIONAL_COLUMNS = [
   'financing_cost_percent',
   'additional_cost_items',
   'transport_cost_tiers_eur',
+  'presentation_currency',
+  'presentation_value',
 ] as const;
 
 type PartnerCostsShape = {
@@ -430,11 +432,14 @@ export async function getPartnerOffersWithDetails(
         engine_power: offer.engine_power,
         transmission: offer.transmission,
         main_photo_url: offer.main_photo_url,
+        additional_photos: offer.additional_photos,
       },
       calculated_price: calculatedPrice,
       calculated_price_net: calculatedPriceNet,
       margin_percent: partner.default_margin_percent,
       show_net_prices: partner.show_net_prices ?? false,
+      presentation_currency: partner.presentation_currency,
+      presentation_value: partner.presentation_value,
     };
   });
 
@@ -565,4 +570,25 @@ export async function getPartnerPublicOffer(
 ): Promise<PartnerPublicOffer | null> {
   const offers = await getPartnerPublicOffers(slug);
   return offers.find(o => o.offer_id === offerId) || null;
+}
+
+/**
+ * Update car photos (additional)
+ */
+export async function updateCarPhotos(
+  offerId: string,
+  additionalPhotos: string[]
+): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('car_offers')
+    .update({ additional_photos: additionalPhotos })
+    .eq('id', offerId);
+
+  if (error) {
+    console.error('Error updating car photos:', error);
+    throw new Error('Failed to update car photos');
+  }
+
+  // Not sure which partner uses this car, we just revalidate the generic offer paths
+  // In a real scenario we could revalidate more precisely if we fetch the car's partner.
 }

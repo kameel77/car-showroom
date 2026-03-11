@@ -16,13 +16,16 @@ import {
   Gauge,
   Fuel,
   Settings2,
+  Image as ImageIcon,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Partner, PartnerOfferWithDetails } from '@/types/partners';
 import {
   getPartnerOffersBySlug,
   updatePartnerOffer,
+  updateCarPhotos,
 } from '@/lib/partners-server';
+import { PhotoManagerModal } from '@/components/cars/PhotoManagerModal';
 import {
   formatPrice,
   formatPricePrecise,
@@ -52,6 +55,7 @@ export default function PartnerSelfAdminPage() {
   const [listView, setListView] = useState<'spec' | 'arbitrage'>('spec');
   const [arbitrageSort, setArbitrageSort] = useState<'margin_eur_desc' | 'margin_pct_desc'>('margin_pct_desc');
   const [transportBatchSize, setTransportBatchSize] = useState<number>(1);
+  const [photoModalOfferId, setPhotoModalOfferId] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -103,6 +107,23 @@ export default function PartnerSelfAdminPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSavePhotos = async (offerId: string, additionalPhotos: string[]) => {
+    await updateCarPhotos(offerId, additionalPhotos);
+    // update local state
+    setOffers(offers.map(o => {
+      if (o.offer_id === offerId) {
+        return {
+          ...o,
+          offer: {
+            ...o.offer,
+            additional_photos: additionalPhotos,
+          }
+        };
+      }
+      return o;
+    }));
   };
 
   const filteredOffers = offers.filter(offer => {
@@ -322,8 +343,18 @@ export default function PartnerSelfAdminPage() {
                         )}
                       </div>
 
-                      {/* Link */}
-                      <div className="col-span-1 flex items-center justify-center">
+                      {/* Link & Photos */}
+                      <div className="col-span-1 flex items-center justify-center gap-1">
+                        <button
+                          onClick={() => setPhotoModalOfferId(offer.offer_id)}
+                          className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors relative"
+                          title="Zarządzaj zdjęciami"
+                        >
+                          <ImageIcon className="h-4 w-4" />
+                          {offer.offer.additional_photos && offer.offer.additional_photos.length > 0 && (
+                            <span className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full border-2 border-white"></span>
+                          )}
+                        </button>
                         <Link
                           href={`/${locale}/${partner.slug}/offer/${offer.offer_id}`}
                           target="_blank"
@@ -510,6 +541,15 @@ export default function PartnerSelfAdminPage() {
           {saving && <span className="flex items-center gap-1 text-blue-600"><Loader2 className="h-4 w-4 animate-spin" /> {t('summary.saving')}</span>}
         </div>
 
+        {photoModalOfferId && (
+          <PhotoManagerModal
+            isOpen={true}
+            onClose={() => setPhotoModalOfferId(null)}
+            offerId={photoModalOfferId}
+            initialPhotos={offers.find(o => o.offer_id === photoModalOfferId)?.offer.additional_photos || []}
+            onSave={handleSavePhotos}
+          />
+        )}
       </div>
     </div>
   );

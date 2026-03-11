@@ -42,9 +42,11 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
     transport_cost_tiers_eur: normalizeTransportTiers(partner?.transport_cost_tiers_eur || DEFAULT_TRANSPORT_TIERS),
     is_active: partner?.is_active ?? true,
     notes: partner?.notes || '',
+    presentation_currency: partner?.presentation_currency || '',
+    presentation_value: partner?.presentation_value || '',
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
 
     if (type === 'checkbox') {
@@ -147,6 +149,8 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
       transport_cost_tiers_eur: normalizeTransportTiers(formData.transport_cost_tiers_eur),
       is_active: formData.is_active,
       notes: formData.notes || undefined,
+      presentation_currency: formData.presentation_currency || undefined,
+      presentation_value: formData.presentation_value || undefined,
     };
 
     try {
@@ -292,10 +296,33 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
             </div>
           </div>
 
-          <div className="space-y-2 pt-6 border-t border-gray-200">
-            <label className="flex items-center gap-2"><input type="checkbox" name="show_net_prices" checked={formData.show_net_prices} onChange={handleChange} /> Ceny netto</label>
-            <label className="flex items-center gap-2"><input type="checkbox" name="show_secondary_currency" checked={formData.show_secondary_currency} onChange={handleChange} /> Druga waluta</label>
-            <label className="flex items-center gap-2"><input type="checkbox" name="is_active" checked={formData.is_active} onChange={handleChange} /> Aktywny</label>
+          <div className="space-y-4 pt-6 border-t border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900">Ustawienia widoczności cen</h2>
+            <div className="space-y-2">
+              <label className="flex items-center gap-2"><input type="checkbox" name="show_net_prices" checked={formData.show_net_prices} onChange={handleChange} /> Pokaż dodatkową cenę netto</label>
+              <label className="flex items-center gap-2"><input type="checkbox" name="show_secondary_currency" checked={formData.show_secondary_currency} onChange={handleChange} /> Pokaż cenę w drugiej walucie (≈)</label>
+              <label className="flex items-center gap-2"><input type="checkbox" name="is_active" checked={formData.is_active} onChange={handleChange} /> Aktywny</label>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Główna prezentowana waluta</label>
+                <select name="presentation_currency" value={formData.presentation_currency} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg text-gray-900 bg-white">
+                  <option value="">Domyślnie (na podst. języka systemu)</option>
+                  <option value="PLN">Zawsze PLN</option>
+                  <option value="EUR">Zawsze EUR</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Główna prezentowana wartość</label>
+                <select name="presentation_value" value={formData.presentation_value} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg text-gray-900 bg-white">
+                  <option value="">Domyślnie (Brutto)</option>
+                  <option value="brutto">Brutto</option>
+                  <option value="netto">Netto</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">Gdy wybrano "Netto", cena główna (wielka) to cena po odjęciu VAT.</p>
+              </div>
+            </div>
           </div>
 
           <textarea name="notes" value={formData.notes} onChange={handleChange} rows={3} className="w-full px-3 py-2 border rounded-lg text-gray-900" placeholder="Notatki" />

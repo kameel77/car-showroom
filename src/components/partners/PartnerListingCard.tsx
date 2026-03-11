@@ -50,83 +50,66 @@ export function PartnerListingCard({ offer, partnerSlug, locale, index = 0 }: Pa
 
           {/* Price Badge */}
           <div className="absolute top-3 right-3 px-3 py-1.5 bg-white/95 backdrop-blur-sm rounded-lg shadow-md min-w-[80px] text-right">
-            {locale === 'pl' ? (
-              <>
-                {/* PLN brutto zawsze */}
-                <span className="text-lg font-bold text-blue-600 block">
-                  {offer.custom_price && offer.custom_price > 0 && settings?.exchange_rate_eur
-                    ? formatPrice(Math.round(offer.display_price * settings.exchange_rate_eur))
-                    : formatPrice(offer.display_price)
-                  }
-                </span>
-                {/* PLN netto poniżej jeśli show_net_prices */}
-                {offer.show_net_prices && offer.display_price_net && (
-                  <div className="text-xs text-gray-500">
-                    {t('net')}: {offer.custom_price && offer.custom_price > 0 && settings?.exchange_rate_eur
-                      ? formatPrice(Math.round(offer.display_price_net * settings.exchange_rate_eur))
-                      : formatPrice(offer.display_price_net)
-                    }
-                  </div>
-                )}
-                {settings?.show_eur_prices && settings?.exchange_rate_eur && offer.show_secondary_currency && (
-                  <div className="text-xs text-gray-400">
-                    ≈ {offer.custom_price && offer.custom_price > 0
-                      ? offer.display_price.toLocaleString()
-                      : Math.round(offer.display_price / settings.exchange_rate_eur).toLocaleString()
-                    } €
-                  </div>
-                )}
-              </>
-            ) : (
-              <>
-                {settings?.show_eur_prices && settings?.exchange_rate_eur ? (
-                  <>
-                    {/* EUR brutto */}
-                    <span className="text-lg font-bold text-blue-600 block">
-                      {offer.custom_price && offer.custom_price > 0
-                        ? offer.display_price.toLocaleString()
-                        : Math.round(offer.display_price / settings.exchange_rate_eur).toLocaleString()
-                      }
-                      <span className="text-sm ml-0.5">€</span>
-                    </span>
-                    {/* EUR netto poniżej jeśli show_net_prices */}
-                    {offer.show_net_prices && offer.display_price_net && (
-                      <div className="text-xs text-gray-500">
-                        {t('net')}: {offer.custom_price && offer.custom_price > 0
-                          ? offer.display_price_net.toLocaleString()
-                          : Math.round(offer.display_price_net / settings.exchange_rate_eur).toLocaleString()
-                        } €
-                      </div>
-                    )}
-                    {offer.show_secondary_currency && (
-                      <div className="text-xs text-gray-400">
-                        ≈ {offer.custom_price && offer.custom_price > 0 && settings?.exchange_rate_eur
-                          ? formatPrice(Math.round(offer.display_price * settings.exchange_rate_eur))
-                          : formatPrice(offer.display_price)
-                        }
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <span className="text-lg font-bold text-blue-600 block">
-                      {offer.custom_price && offer.custom_price > 0 && settings?.exchange_rate_eur
-                        ? formatPrice(Math.round(offer.display_price * settings.exchange_rate_eur))
-                        : formatPrice(offer.display_price)
-                      }
-                    </span>
-                    {offer.show_net_prices && offer.display_price_net && (
-                      <div className="text-xs text-gray-500">
-                        {t('net')}: {offer.custom_price && offer.custom_price > 0 && settings?.exchange_rate_eur
-                          ? formatPrice(Math.round(offer.display_price_net * settings.exchange_rate_eur))
-                          : formatPrice(offer.display_price_net)
-                        }
-                      </div>
-                    )}
-                  </>
-                )}
-              </>
-            )}
+            {(() => {
+              // Determine logic for Base Currency
+              const baseIsEur = offer.presentation_currency === 'EUR' || (!offer.presentation_currency && locale !== 'pl');
+              const baseIsNetto = offer.presentation_value === 'netto';
+              
+              // Calculate values
+              const plnGross = offer.custom_price && offer.custom_price > 0 && settings?.exchange_rate_eur
+                ? Math.round(offer.display_price * settings.exchange_rate_eur)
+                : offer.display_price;
+              const plnNet = offer.display_price_net || 0;
+              const eurGross = offer.custom_price && offer.custom_price > 0
+                ? offer.display_price
+                : (settings?.exchange_rate_eur ? Math.round(offer.display_price / settings.exchange_rate_eur) : 0);
+              const eurNet = offer.display_price_net && settings?.exchange_rate_eur
+                ? Math.round(offer.display_price_net / settings.exchange_rate_eur)
+                : 0;
+
+              // What to display primarily
+              const primaryPrice = baseIsEur ? (baseIsNetto ? eurNet : eurGross) : (baseIsNetto ? plnNet : plnGross);
+              const formattedPrimary = baseIsEur ? `${primaryPrice.toLocaleString()} €` : formatPrice(primaryPrice);
+              
+              // What to display as primary subtext (the opposite of netto/brutto if show_net_prices is true)
+              const showSecondarySubtext = offer.show_net_prices;
+              let secondarySubtext = '';
+              if (showSecondarySubtext) {
+                if (baseIsNetto) {
+                  const grossVal = baseIsEur ? eurGross : plnGross;
+                  secondarySubtext = `brutto: ${baseIsEur ? `${grossVal.toLocaleString()} €` : formatPrice(grossVal)}`;
+                } else {
+                  const netVal = baseIsEur ? eurNet : plnNet;
+                  secondarySubtext = `netto: ${baseIsEur ? `${netVal.toLocaleString()} €` : formatPrice(netVal)}`;
+                }
+              }
+
+              // What to display as foreign currency subtext
+              const showForeignSubtext = offer.show_secondary_currency && settings?.show_eur_prices && settings?.exchange_rate_eur;
+              let foreignSubtext = '';
+              if (showForeignSubtext) {
+                const foreignVal = baseIsEur ? (baseIsNetto ? plnNet : plnGross) : (baseIsNetto ? eurNet : eurGross);
+                foreignSubtext = `≈ ${baseIsEur ? formatPrice(foreignVal) : `${foreignVal.toLocaleString()} €`}`;
+              }
+
+              return (
+                <>
+                  <span className="text-lg font-bold text-blue-600 block">
+                    {formattedPrimary}
+                  </span>
+                  {secondarySubtext && (
+                    <div className="text-xs text-gray-500">
+                      {secondarySubtext}
+                    </div>
+                  )}
+                  {foreignSubtext && (
+                    <div className="text-xs text-gray-400">
+                      {foreignSubtext}
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </div>
         </div>
 
