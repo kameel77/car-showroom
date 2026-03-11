@@ -56,16 +56,10 @@ export function PartnerListingCard({ offer, partnerSlug, locale, index = 0 }: Pa
               const baseIsNetto = offer.presentation_value === 'netto';
               
               // Calculate values
-              const plnGross = offer.custom_price && offer.custom_price > 0 && settings?.exchange_rate_eur
-                ? Math.round(offer.display_price * settings.exchange_rate_eur)
-                : offer.display_price;
+              const plnGross = offer.display_price;
               const plnNet = offer.display_price_net || 0;
-              const eurGross = offer.custom_price && offer.custom_price > 0
-                ? offer.display_price
-                : (settings?.exchange_rate_eur ? Math.round(offer.display_price / settings.exchange_rate_eur) : 0);
-              const eurNet = offer.display_price_net && settings?.exchange_rate_eur
-                ? Math.round(offer.display_price_net / settings.exchange_rate_eur)
-                : 0;
+              const eurGross = settings?.exchange_rate_eur ? Math.round(plnGross / settings.exchange_rate_eur) : 0;
+              const eurNet = settings?.exchange_rate_eur ? Math.round(plnNet / settings.exchange_rate_eur) : 0;
 
               // What to display primarily
               const primaryPrice = baseIsEur ? (baseIsNetto ? eurNet : eurGross) : (baseIsNetto ? plnNet : plnGross);

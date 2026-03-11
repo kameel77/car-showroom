@@ -46,6 +46,103 @@ import {
 } from '@/lib/price-calculator';
 import { useAppSettings } from '@/hooks/useAppSettings';
 
+function PriceInputs({
+  initialCustomPricePln,
+  exchangeRate,
+  onSave,
+}: {
+  initialCustomPricePln: number | null;
+  exchangeRate: number;
+  onSave: (pln: number | undefined) => void;
+}) {
+  const [eur, setEur] = useState<string>(
+    initialCustomPricePln && exchangeRate > 0
+      ? String(Math.round(initialCustomPricePln / exchangeRate))
+      : ''
+  );
+  const [pln, setPln] = useState<string>(
+    initialCustomPricePln != null ? String(initialCustomPricePln) : ''
+  );
+
+  useEffect(() => {
+    setPln(initialCustomPricePln != null ? String(initialCustomPricePln) : '');
+    setEur(
+      initialCustomPricePln != null && exchangeRate > 0
+        ? String(Math.round(initialCustomPricePln / exchangeRate))
+        : ''
+    );
+  }, [initialCustomPricePln, exchangeRate]);
+
+  const handleEurBlur = () => {
+    const parsedEur = Number(eur);
+    if (!eur || isNaN(parsedEur) || parsedEur <= 0) {
+      if (initialCustomPricePln != null) onSave(undefined);
+      setPln('');
+      return;
+    }
+    const newPln = Math.round(parsedEur * exchangeRate);
+    setPln(String(newPln));
+    if (newPln !== initialCustomPricePln) {
+      onSave(newPln);
+    }
+  };
+
+  const handlePlnBlur = () => {
+    const parsedPln = Number(pln);
+    if (!pln || isNaN(parsedPln) || parsedPln <= 0) {
+      if (initialCustomPricePln != null) onSave(undefined);
+      setEur('');
+      return;
+    }
+    if (exchangeRate > 0) {
+      setEur(String(Math.round(parsedPln / exchangeRate)));
+    }
+    if (parsedPln !== initialCustomPricePln) {
+      onSave(parsedPln);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2 justify-end">
+      <div className="flex flex-col items-end">
+        <span className="text-[10px] text-gray-500 uppercase">Cena EUR Brutto</span>
+        <input
+          type="number"
+          value={eur}
+          onChange={(e) => setEur(e.target.value)}
+          onBlur={handleEurBlur}
+          placeholder="EUR"
+          className="w-24 px-2 py-1 text-sm text-gray-900 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 bg-white text-right font-medium"
+        />
+      </div>
+      <div className="flex flex-col items-end">
+        <span className="text-[10px] text-gray-500 uppercase">Cena PLN Brutto</span>
+        <input
+          type="number"
+          value={pln}
+          onChange={(e) => setPln(e.target.value)}
+          onBlur={handlePlnBlur}
+          placeholder="PLN"
+          className="w-24 px-2 py-1 text-sm text-gray-900 border border-blue-400 rounded focus:ring-1 focus:ring-blue-500 bg-white text-right font-bold text-blue-700"
+        />
+      </div>
+      {initialCustomPricePln != null && (
+        <button
+          onClick={() => {
+            setEur('');
+            setPln('');
+            onSave(undefined);
+          }}
+          className="text-gray-400 hover:text-red-500 flex-shrink-0 mt-4"
+          title="Usuń własną cenę"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      )}
+    </div>
+  );
+}
+
 const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export default function PartnerOffersPage() {
@@ -169,33 +266,27 @@ export default function PartnerOffersPage() {
     }
   };
 
-  const handleUpdatePrice = async (offerId: string, customPriceEur: number | undefined) => {
+  const handleUpdatePrice = async (offerId: string, customPricePln: number | undefined) => {
     try {
       setSaving(true);
-      // custom_price stores EUR brutto value
-      await updatePartnerOffer(id, offerId, { custom_price: customPriceEur ?? null });
-
-      const rate = settings?.exchange_rate_eur || 0;
+      await updatePartnerOffer(id, offerId, { custom_price: customPricePln ?? null });
 
       setOffers(offers.map(o => {
         if (o.offer_id !== offerId) return o;
 
         let newCalculatedPrice: number;
-        if (customPriceEur === undefined || customPriceEur === null) {
+        if (customPricePln === undefined || customPricePln === null) {
           // Reset to standard price with partner's default margin (PLN)
           newCalculatedPrice = Math.round(o.offer.price * (1 + o.margin_percent / 100));
-        } else if (rate > 0) {
-          // custom_price is EUR brutto → convert to PLN gross
-          newCalculatedPrice = Math.round(customPriceEur * rate);
         } else {
-          newCalculatedPrice = o.calculated_price;
+          newCalculatedPrice = customPricePln;
         }
 
         const newCalculatedPriceNet = calculateNetPrice(newCalculatedPrice);
 
         return {
           ...o,
-          custom_price: customPriceEur ?? null,
+          custom_price: customPricePln ?? null,
           calculated_price: newCalculatedPrice,
           calculated_price_net: newCalculatedPriceNet,
         };
@@ -625,8 +716,8 @@ export default function PartnerOffersPage() {
               {settings?.show_eur_prices && settings?.exchange_rate_eur && (
                 <div className="col-span-1 flex items-center justify-end text-right">Netto EUR</div>
               )}
-              <div className="col-span-2 flex items-center justify-end text-right">Cena EUR Brutto</div>
-              <div className="col-span-1 flex items-center justify-end text-right">Cena partnera</div>
+              <div className="col-span-3 flex items-center justify-end text-right">EUR Brutto / Własna PLN</div>
+              <div className="col-span-1 flex items-center justify-end text-right">Cena partnera PLN</div>
               <div className="col-span-1 flex items-center justify-center text-center">Widoczność</div>
               <div className="col-span-1 flex items-center justify-center text-center">Akcje</div>
             </div>
@@ -652,26 +743,12 @@ export default function PartnerOffersPage() {
                     <div className="col-span-1 text-right"><p className="font-medium text-gray-900">{formatPrice(offer.offer.price)}</p></div>
                     <div className="col-span-1 text-right"><p className="font-medium text-gray-700">{formatPrice(offer.calculated_price_net)}</p></div>
                     {settings?.show_eur_prices && settings?.exchange_rate_eur && <div className="col-span-1 text-right"><p className="font-medium text-gray-700">≈ {Math.round(offer.calculated_price_net / settings.exchange_rate_eur).toLocaleString()} €</p></div>}
-                    <div className="col-span-2 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <input
-                          key={offer.custom_price != null ? offer.custom_price : 'empty'}
-                          type="number"
-                          step="0.01"
-                          defaultValue={offer.custom_price != null ? offer.custom_price : ''}
-                          onBlur={(e) => {
-                            const value = e.target.value === '' ? undefined : Number(e.target.value);
-                            if (value !== offer.custom_price) handleUpdatePrice(offer.offer_id, value);
-                          }}
-                          placeholder="np. 12 500"
-                          className="w-full px-2 py-1 text-sm font-semibold text-gray-900 border border-gray-400 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white placeholder:font-normal placeholder:text-gray-400"
-                        />
-                        {offer.custom_price != null && (
-                          <button onClick={() => handleUpdatePrice(offer.offer_id, undefined)} className="text-gray-400 hover:text-red-600 flex-shrink-0" title="Usuń własną cenę">
-                            <X className="h-4 w-4" />
-                          </button>
-                        )}
-                      </div>
+                    <div className="col-span-3 text-right">
+                      <PriceInputs
+                        initialCustomPricePln={offer.custom_price ?? null}
+                        exchangeRate={settings?.exchange_rate_eur || 0}
+                        onSave={(pln) => handleUpdatePrice(offer.offer_id, pln)}
+                      />
                     </div>
                     <div className="col-span-1 text-right"><p className="font-bold text-gray-900 leading-tight">{offer.show_net_prices ? formatPrice(offer.calculated_price_net) : formatPrice(offer.calculated_price)}</p></div>
                     <div className="col-span-1 flex items-center justify-center"><button onClick={() => handleToggleVisibility(offer.offer_id, offer.is_visible)} className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-colors ${offer.is_visible ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>{offer.is_visible ? <><Eye className="h-3.5 w-3.5" /><span className="hidden sm:inline">Widoczne</span></> : <><EyeOff className="h-3.5 w-3.5" /><span className="hidden sm:inline">Ukryte</span></>}</button></div>
@@ -748,11 +825,10 @@ export default function PartnerOffersPage() {
                     {arbitrageOffers.map((offer, index) => {
                       const exchangeRate = settings.exchange_rate_eur || 0;
 
-                      // custom_price is stored as EUR brutto directly.
-                      // If no custom_price, fall back to calculated_price (PLN brutto) / rate.
-                      const saleGrossEur = offer.custom_price != null
+                      const saleCustomPln = offer.custom_price != null
                         ? offer.custom_price
-                        : exchangeRate > 0 ? offer.calculated_price / exchangeRate : 0;
+                        : offer.calculated_price;
+                      const saleGrossEur = exchangeRate > 0 ? saleCustomPln / exchangeRate : 0;
 
                       const transportCost = calculateTransportCostPerCarEur(transportBatchSize, partner.transport_cost_tiers_eur);
 

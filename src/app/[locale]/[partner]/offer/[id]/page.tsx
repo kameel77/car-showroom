@@ -145,16 +145,10 @@ export default async function PartnerOfferPage({ params }: PartnerOfferPageProps
                     const baseIsEur = partnerOffer.presentation_currency === 'EUR' || (!partnerOffer.presentation_currency && locale !== 'pl');
                     const baseIsNetto = partnerOffer.presentation_value === 'netto';
                     
-                    const plnGross = partnerOffer.custom_price && partnerOffer.custom_price > 0 && settings?.exchange_rate_eur
-                      ? Math.round(partnerOffer.display_price * settings.exchange_rate_eur)
-                      : partnerOffer.display_price;
+                    const plnGross = partnerOffer.display_price;
                     const plnNet = partnerOffer.display_price_net || 0;
-                    const eurGross = partnerOffer.custom_price && partnerOffer.custom_price > 0
-                      ? partnerOffer.display_price
-                      : (settings?.exchange_rate_eur ? Math.round(partnerOffer.display_price / settings.exchange_rate_eur) : 0);
-                    const eurNet = partnerOffer.display_price_net && settings?.exchange_rate_eur
-                      ? Math.round(partnerOffer.display_price_net / settings.exchange_rate_eur)
-                      : 0;
+                    const eurGross = settings?.exchange_rate_eur ? Math.round(plnGross / settings.exchange_rate_eur) : 0;
+                    const eurNet = settings?.exchange_rate_eur ? Math.round(plnNet / settings.exchange_rate_eur) : 0;
 
                     const primaryPrice = baseIsEur ? (baseIsNetto ? eurNet : eurGross) : (baseIsNetto ? plnNet : plnGross);
                     const formattedPrimary = baseIsEur ? `${primaryPrice.toLocaleString()} €` : formatPrice(primaryPrice);
@@ -303,16 +297,10 @@ export default async function PartnerOfferPage({ params }: PartnerOfferPageProps
                     const baseIsEur = partnerOffer.presentation_currency === 'EUR' || (!partnerOffer.presentation_currency && locale !== 'pl');
                     const baseIsNetto = partnerOffer.presentation_value === 'netto';
                     
-                    const plnGross = partnerOffer.custom_price && partnerOffer.custom_price > 0 && settings?.exchange_rate_eur
-                      ? Math.round(partnerOffer.display_price * settings.exchange_rate_eur)
-                      : partnerOffer.display_price;
-                    const plnNet = partnerOffer.display_price_net || 0;
-                    const eurGross = partnerOffer.custom_price && partnerOffer.custom_price > 0
-                      ? partnerOffer.display_price
-                      : (settings?.exchange_rate_eur ? Math.round(partnerOffer.display_price / settings.exchange_rate_eur) : 0);
-                    const eurNet = partnerOffer.display_price_net && settings?.exchange_rate_eur
-                      ? Math.round(partnerOffer.display_price_net / settings.exchange_rate_eur)
-                      : 0;
+                    const plnGross = partnerOffer.display_price;
+                  const plnNet = partnerOffer.display_price_net || 0;
+                  const eurGross = settings?.exchange_rate_eur ? Math.round(plnGross / settings.exchange_rate_eur) : 0;
+                  const eurNet = settings?.exchange_rate_eur ? Math.round(plnNet / settings.exchange_rate_eur) : 0;
 
                     const primaryPrice = baseIsEur ? (baseIsNetto ? eurNet : eurGross) : (baseIsNetto ? plnNet : plnGross);
                     const formattedPrimary = baseIsEur ? `${primaryPrice.toLocaleString()} €` : formatPrice(primaryPrice);
