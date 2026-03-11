@@ -341,6 +341,28 @@ export default function PartnerOffersPage() {
     }
   };
 
+  const handleBulkSetVisibility = async (isVisible: boolean) => {
+    if (selectedOffers.size === 0) return;
+
+    try {
+      setSaving(true);
+      // Update each selected offer
+      for (const offerId of selectedOffers) {
+        await updatePartnerOffer(id, offerId, { is_visible: isVisible });
+      }
+
+      // Reload offers exactly like margin update (safer for maintaining calculated state)
+      const offersData = await getPartnerOffersWithDetails(id);
+      setOffers(offersData);
+      
+      setSelectedOffers(new Set());
+    } catch (err) {
+      alert('Failed to update visibility: ' + (err instanceof Error ? err.message : 'Unknown error'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const toggleOfferSelection = (offerId: string) => {
     const newSelected = new Set(selectedOffers);
     if (newSelected.has(offerId)) {
@@ -569,26 +591,48 @@ export default function PartnerOffersPage() {
             </div>
 
             {selectedOffers.size > 0 && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="text-sm font-medium text-gray-700 whitespace-nowrap">
                   Wybrano: {selectedOffers.size}
                 </span>
-                <input
-                  type="number"
-                  value={bulkMargin}
-                  onChange={(e) => setBulkMargin(e.target.value === '' ? '' : Number(e.target.value))}
-                  placeholder="Marża %"
-                  className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
-                />
-                <button
-                  onClick={handleBulkSetMargin}
-                  disabled={saving || bulkMargin === ''}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                >
-                  {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                  <Percent className="h-4 w-4" />
-                  Ustaw
-                </button>
+
+                <div className="flex items-center gap-1 border-r border-gray-300 pr-3 mr-1">
+                  <button
+                    onClick={() => handleBulkSetVisibility(true)}
+                    disabled={saving}
+                    className="flex items-center gap-1 px-3 py-1.5 bg-green-50 text-green-700 rounded-md hover:bg-green-100 disabled:opacity-50 text-sm font-medium"
+                  >
+                    <Eye className="h-4 w-4" />
+                    Pokaż
+                  </button>
+                  <button
+                    onClick={() => handleBulkSetVisibility(false)}
+                    disabled={saving}
+                    className="flex items-center gap-1 px-3 py-1.5 bg-gray-50 text-gray-700 border border-gray-200 rounded-md hover:bg-gray-100 disabled:opacity-50 text-sm font-medium"
+                  >
+                    <EyeOff className="h-4 w-4" />
+                    Ukryj
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    value={bulkMargin}
+                    onChange={(e) => setBulkMargin(e.target.value === '' ? '' : Number(e.target.value))}
+                    placeholder="Marża %"
+                    className="w-24 px-3 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-gray-900 text-sm"
+                  />
+                  <button
+                    onClick={handleBulkSetMargin}
+                    disabled={saving || bulkMargin === ''}
+                    className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 text-sm font-medium"
+                  >
+                    {saving && <Loader2 className="h-3 w-3 animate-spin" />}
+                    <Percent className="h-3 w-3" />
+                    Ustaw
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -700,9 +744,9 @@ export default function PartnerOffersPage() {
         )}
 
         {listView === 'spec' ? (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="grid grid-cols-12 gap-4 p-4 bg-gray-50 border-b border-gray-200 text-sm font-medium text-gray-700">
-              <div className="col-span-1 flex items-center">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden overflow-x-auto">
+            <div className={`grid ${settings?.show_eur_prices && settings?.exchange_rate_eur ? 'grid-cols-[40px_minmax(180px,5fr)_100px_100px_100px_230px_110px_60px_70px]' : 'grid-cols-[40px_minmax(180px,5fr)_100px_100px_230px_110px_60px_70px]'} gap-2 px-4 py-3 bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wide items-center`}>
+              <div className="flex items-center">
                 <input
                   type="checkbox"
                   checked={selectedOffers.size === filteredOffers.length && filteredOffers.length > 0}
@@ -710,16 +754,16 @@ export default function PartnerOffersPage() {
                   className="h-4 w-4 text-blue-600 rounded"
                 />
               </div>
-              <div className={`${settings?.show_eur_prices && settings?.exchange_rate_eur ? 'col-span-3' : 'col-span-4'} flex items-center`}>Pojazd</div>
-              <div className="col-span-1 flex items-center justify-end text-right">Cena oryg.</div>
-              <div className="col-span-1 flex items-center justify-end text-right">Netto PLN</div>
+              <div className="flex items-center">Pojazd</div>
+              <div className="flex items-center justify-end text-right">Cena oryg.</div>
+              <div className="flex items-center justify-end text-right">Netto PLN</div>
               {settings?.show_eur_prices && settings?.exchange_rate_eur && (
-                <div className="col-span-1 flex items-center justify-end text-right">Netto EUR</div>
+                <div className="flex items-center justify-end text-right">Netto EUR</div>
               )}
-              <div className="col-span-3 flex items-center justify-end text-right">EUR Brutto / Własna PLN</div>
-              <div className="col-span-1 flex items-center justify-end text-right">Cena partnera PLN</div>
-              <div className="col-span-1 flex items-center justify-center text-center">Widoczność</div>
-              <div className="col-span-1 flex items-center justify-center text-center">Akcje</div>
+              <div className="flex items-center justify-end text-right leading-tight">EUR Brutto /<br/>Własna PLN</div>
+              <div className="flex items-center justify-end text-right leading-tight">Cena partnera<br/>PLN</div>
+              <div className="flex items-center justify-center text-center" title="Widoczność"><Eye className="h-4 w-4" /></div>
+              <div className="flex items-center justify-center text-center">Akcje</div>
             </div>
             <div className="divide-y divide-gray-200 max-h-[600px] overflow-y-auto">
               {filteredOffers.length === 0 ? (
@@ -729,30 +773,38 @@ export default function PartnerOffersPage() {
                 </div>
               ) : (
                 filteredOffers.map((offer) => (
-                  <div key={offer.offer_id} className={`grid grid-cols-12 gap-4 p-4 items-center hover:bg-gray-50 ${!offer.is_visible ? 'opacity-60' : ''}`}>
-                    <div className="col-span-1 flex items-center">
+                  <div key={offer.offer_id} className={`grid ${settings?.show_eur_prices && settings?.exchange_rate_eur ? 'grid-cols-[40px_minmax(180px,5fr)_100px_100px_100px_230px_110px_60px_70px]' : 'grid-cols-[40px_minmax(180px,5fr)_100px_100px_230px_110px_60px_70px]'} gap-2 px-4 py-3 items-center hover:bg-gray-50 transition-colors ${!offer.is_visible ? 'opacity-60 bg-gray-50' : ''}`}>
+                    <div className="flex items-center">
                       <input type="checkbox" checked={selectedOffers.has(offer.offer_id)} onChange={() => toggleOfferSelection(offer.offer_id)} className="h-4 w-4 text-blue-600 rounded" />
                     </div>
-                    <div className={`${settings?.show_eur_prices && settings?.exchange_rate_eur ? 'col-span-3' : 'col-span-4'} flex items-center gap-3`}>
-                      {offer.offer.main_photo_url && <div className="relative w-16 h-12 rounded-lg overflow-hidden flex-shrink-0"><Image src={offer.offer.main_photo_url} alt={`${offer.offer.brand} ${offer.offer.model}`} fill className="object-cover" /></div>}
-                      <div>
-                        <p className="font-medium text-gray-900">{offer.offer.brand} {offer.offer.model}</p>
-                        <p className="text-sm text-gray-500">{offer.offer.year} • {offer.offer.mileage?.toLocaleString()} km</p>
+                    <div className="flex items-center gap-3 min-w-0">
+                      {offer.offer.main_photo_url && <div className="relative w-14 h-10 rounded-md overflow-hidden flex-shrink-0"><Image src={offer.offer.main_photo_url} alt={`${offer.offer.brand} ${offer.offer.model}`} fill className="object-cover" /></div>}
+                      <div className="min-w-0 truncate">
+                        <p className="font-medium text-gray-900 truncate" title={`${offer.offer.brand} ${offer.offer.model}`}>{offer.offer.brand} {offer.offer.model}</p>
+                        <p className="text-xs text-gray-500">{offer.offer.year} • {offer.offer.mileage?.toLocaleString()} km</p>
                       </div>
                     </div>
-                    <div className="col-span-1 text-right"><p className="font-medium text-gray-900">{formatPrice(offer.offer.price)}</p></div>
-                    <div className="col-span-1 text-right"><p className="font-medium text-gray-700">{formatPrice(offer.calculated_price_net)}</p></div>
-                    {settings?.show_eur_prices && settings?.exchange_rate_eur && <div className="col-span-1 text-right"><p className="font-medium text-gray-700">≈ {Math.round(offer.calculated_price_net / settings.exchange_rate_eur).toLocaleString()} €</p></div>}
-                    <div className="col-span-3 text-right">
+                    <div className="text-right"><p className="text-sm font-medium text-gray-900 whitespace-nowrap">{formatPrice(offer.offer.price)}</p></div>
+                    <div className="text-right"><p className="text-sm font-medium text-gray-700 whitespace-nowrap">{formatPrice(offer.calculated_price_net)}</p></div>
+                    {settings?.show_eur_prices && settings?.exchange_rate_eur && <div className="text-right"><p className="text-sm font-medium text-gray-700 whitespace-nowrap">≈ {Math.round(offer.calculated_price_net / settings.exchange_rate_eur).toLocaleString()} €</p></div>}
+                    <div className="text-right flex justify-end">
                       <PriceInputs
                         initialCustomPricePln={offer.custom_price ?? null}
                         exchangeRate={settings?.exchange_rate_eur || 0}
                         onSave={(pln) => handleUpdatePrice(offer.offer_id, pln)}
                       />
                     </div>
-                    <div className="col-span-1 text-right"><p className="font-bold text-gray-900 leading-tight">{offer.show_net_prices ? formatPrice(offer.calculated_price_net) : formatPrice(offer.calculated_price)}</p></div>
-                    <div className="col-span-1 flex items-center justify-center"><button onClick={() => handleToggleVisibility(offer.offer_id, offer.is_visible)} className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-colors ${offer.is_visible ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>{offer.is_visible ? <><Eye className="h-3.5 w-3.5" /><span className="hidden sm:inline">Widoczne</span></> : <><EyeOff className="h-3.5 w-3.5" /><span className="hidden sm:inline">Ukryte</span></>}</button></div>
-                    <div className="col-span-1 flex items-center justify-center gap-1">
+                    <div className="text-right"><p className="font-bold text-gray-900 leading-tight whitespace-nowrap">{offer.show_net_prices ? formatPrice(offer.calculated_price_net) : formatPrice(offer.calculated_price)}</p></div>
+                    <div className="flex items-center justify-center">
+                      <button 
+                        onClick={() => handleToggleVisibility(offer.offer_id, offer.is_visible)} 
+                        className={`inline-flex items-center justify-center p-1.5 rounded-md transition-colors ${offer.is_visible ? 'text-green-600 hover:bg-green-100' : 'text-gray-400 hover:bg-gray-200'}`}
+                        title={offer.is_visible ? 'Ukryj ofertę' : 'Pokaż ofertę'}
+                      >
+                        {offer.is_visible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-center gap-1">
                       <button
                         onClick={() => setPhotoModalOfferId(offer.offer_id)}
                         className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors relative"
