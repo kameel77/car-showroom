@@ -58,6 +58,11 @@ export interface PartnerOfferWithDetails extends PartnerOffer {
     transmission?: string;
     main_photo_url?: string;
     additional_photos?: string[] | null;
+    body_type?: string | null;
+    color?: string | null;
+    technical_spec?: Record<string, any> | null;
+    features?: Record<string, any> | null;
+    advert_url?: string | null;
   };
   calculated_price: number;
   calculated_price_net: number;

@@ -19,7 +19,8 @@ import {
   ChevronDown,
   ChevronUp,
   Search,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Download
 } from 'lucide-react';
 import { Partner, PartnerFilter, PartnerOfferWithDetails } from '@/types/partners';
 import {
@@ -354,7 +355,7 @@ export default function PartnerOffersPage() {
       // Reload offers exactly like margin update (safer for maintaining calculated state)
       const offersData = await getPartnerOffersWithDetails(id);
       setOffers(offersData);
-      
+
       setSelectedOffers(new Set());
     } catch (err) {
       alert('Failed to update visibility: ' + (err instanceof Error ? err.message : 'Unknown error'));
@@ -409,6 +410,117 @@ export default function PartnerOffersPage() {
     );
   });
 
+  const selectedOfferRows = offers.filter((offer) => selectedOffers.has(offer.offer_id));
+
+  const handleExportCSV = () => {
+    if (selectedOfferRows.length === 0) return;
+
+    const headers = [
+      "listing_id", "listing_url", "scraped_at", "make", "model", "version", "vin",
+      "price_pln", "price_display", "omnibus_lowest_30d_pln", "omnibus_text",
+      "production_year", "mileage_km", "fuel_type", "transmission", "engine_power_hp",
+      "registration_number", "first_registration_date", "engine_capacity_cm3", "drive",
+      "body_type", "doors", "seats", "color", "paint_type", "dealer_name",
+      "dealer_address_line1", "dealer_address_line2", "dealer_address_line3",
+      "dealer_google_rating", "dealer_review_count", "dealer_google_link",
+      "contact_phone", "primary_image_url", "image_count", "image_urls",
+      "equipment_audio_multimedia", "equipment_safety", "equipment_comfort_extras",
+      "equipment_other", "additional_info_header", "additional_info_content", "specs_json"
+    ];
+
+    const rows = [];
+    rows.push(headers.join(","));
+
+    const escapeCSV = (value: string | number | undefined | null) => {
+      if (value == null) return '""';
+      const str = String(value);
+      if (str.includes(',') || str.includes('\\n') || str.includes('"')) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
+
+    selectedOfferRows.forEach((po) => {
+      const o = po.offer;
+      const priceDisplay = o.price ? `${o.price.toLocaleString('pl-PL')} PLN` : "";
+      const technical_spec = o.technical_spec || {};
+      const features = o.features || {};
+
+      const primaryImage = o.main_photo_url || "";
+      const additionalPhotos = o.additional_photos || [];
+      const imageCount = additionalPhotos.length + (primaryImage ? 1 : 0);
+      const imageUrls = [primaryImage, ...additionalPhotos].filter(Boolean).join(" | ");
+
+      const audio = features.technologia || features.equipment_audio_multimedia || [];
+      const safety = features.bezpieczenstwo || features.equipment_safety || [];
+      const comfort = features.komfort || features.equipment_comfort_extras || [];
+      const other = features.wyglad || features.equipment_other || [];
+
+      const audioStr = Array.isArray(audio) ? audio.join("|") : String(audio);
+      const safetyStr = Array.isArray(safety) ? safety.join("|") : String(safety);
+      const comfortStr = Array.isArray(comfort) ? comfort.join("|") : String(comfort);
+      const otherStr = Array.isArray(other) ? other.join("|") : String(other);
+
+      const row = [
+        o.id, // listing_id
+        o.advert_url || "", // listing_url
+        po.created_at || "", // scraped_at
+        o.brand || "", // make
+        o.model || "", // model
+        o.model_version || "", // version
+        technical_spec.vin || "", // vin
+        o.price || "", // price_pln
+        priceDisplay, // price_display
+        "", // omnibus_lowest_30d_pln
+        "", // omnibus_text
+        o.year || "", // production_year
+        o.mileage || "", // mileage_km
+        o.fuel_type || "", // fuel_type
+        o.transmission || "", // transmission
+        o.engine_power || "", // engine_power_hp
+        technical_spec.registration_number || "", // registration_number
+        technical_spec.first_registration_date || "", // first_registration_date
+        technical_spec.engine_capacity_cm3 || "", // engine_capacity_cm3
+        technical_spec.drive || "", // drive
+        o.body_type || "", // body_type
+        technical_spec.doors || "", // doors
+        technical_spec.seats || "", // seats
+        o.color || technical_spec.color || "", // color
+        technical_spec.paint_type || "", // paint_type
+        partner?.company_name || "", // dealer_name
+        partner?.company_address || "", // dealer_address_line1
+        "", // dealer_address_line2
+        "", // dealer_address_line3
+        "", // dealer_google_rating
+        "", // dealer_review_count
+        "", // dealer_google_link
+        partner?.phone || "", // contact_phone
+        primaryImage, // primary_image_url
+        imageCount || "", // image_count
+        imageUrls, // image_urls
+        audioStr, // equipment_audio_multimedia
+        safetyStr, // equipment_safety
+        comfortStr, // equipment_comfort_extras
+        otherStr, // equipment_other
+        "", // additional_info_header
+        "", // additional_info_content
+        JSON.stringify(technical_spec) // specs_json
+      ];
+
+      rows.push(row.map(escapeCSV).join(","));
+    });
+
+    const blob = new Blob([rows.join('\\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const dateStr = new Date().toISOString().split('T')[0];
+    link.setAttribute('href', url);
+    link.setAttribute('download', `eksport_pojazdow_showroom_2_carscout_${dateStr}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const arbitrageOffers = [...filteredOffers].sort((a, b) => {
     const marginPlnA = calculateMarginAmount(a.offer.price, a.calculated_price);
     const marginPlnB = calculateMarginAmount(b.offer.price, b.calculated_price);
@@ -422,7 +534,7 @@ export default function PartnerOffersPage() {
     return marginPctB - marginPctA;
   });
 
-  const selectedOfferRows = offers.filter((offer) => selectedOffers.has(offer.offer_id));
+
   const selectedCarsCount = selectedOfferRows.length;
   const exchangeRate = settings?.exchange_rate_eur || 0;
   const transportCostPerCarEur = calculateTransportCostPerCarEur(selectedCarsCount, partner?.transport_cost_tiers_eur);
@@ -613,6 +725,13 @@ export default function PartnerOffersPage() {
                     <EyeOff className="h-4 w-4" />
                     Ukryj
                   </button>
+                  <button
+                    onClick={handleExportCSV}
+                    className="flex items-center gap-1 px-3 py-1.5 ml-1 bg-white text-gray-700 border border-gray-300 shadow-sm rounded-md hover:bg-gray-50 text-sm font-medium"
+                  >
+                    <Download className="h-4 w-4" />
+                    CSV
+                  </button>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -760,8 +879,8 @@ export default function PartnerOffersPage() {
               {settings?.show_eur_prices && settings?.exchange_rate_eur && (
                 <div className="flex items-center justify-end text-right">Netto EUR</div>
               )}
-              <div className="flex items-center justify-end text-right leading-tight">EUR Brutto /<br/>Własna PLN</div>
-              <div className="flex items-center justify-end text-right leading-tight">Cena partnera<br/>PLN</div>
+              <div className="flex items-center justify-end text-right leading-tight">EUR Brutto /<br />Własna PLN</div>
+              <div className="flex items-center justify-end text-right leading-tight">Cena partnera<br />PLN</div>
               <div className="flex items-center justify-center text-center" title="Widoczność"><Eye className="h-4 w-4" /></div>
               <div className="flex items-center justify-center text-center">Akcje</div>
             </div>
@@ -796,8 +915,8 @@ export default function PartnerOffersPage() {
                     </div>
                     <div className="text-right"><p className="font-bold text-gray-900 leading-tight whitespace-nowrap">{offer.show_net_prices ? formatPrice(offer.calculated_price_net) : formatPrice(offer.calculated_price)}</p></div>
                     <div className="flex items-center justify-center">
-                      <button 
-                        onClick={() => handleToggleVisibility(offer.offer_id, offer.is_visible)} 
+                      <button
+                        onClick={() => handleToggleVisibility(offer.offer_id, offer.is_visible)}
                         className={`inline-flex items-center justify-center p-1.5 rounded-md transition-colors ${offer.is_visible ? 'text-green-600 hover:bg-green-100' : 'text-gray-400 hover:bg-gray-200'}`}
                         title={offer.is_visible ? 'Ukryj ofertę' : 'Pokaż ofertę'}
                       >
