@@ -442,7 +442,8 @@ export default function PartnerOffersPage() {
 
     selectedOfferRows.forEach((po) => {
       const o = po.offer;
-      const priceDisplay = o.price ? `${o.price.toLocaleString('pl-PL')} PLN` : "";
+      const calculatedPrice = po.calculated_price || o.price || 0;
+      const priceDisplay = calculatedPrice ? `${calculatedPrice.toLocaleString('pl-PL')} PLN` : "";
       const technical_spec = o.technical_spec || {};
       const features = o.features || {};
 
@@ -451,15 +452,28 @@ export default function PartnerOffersPage() {
       const imageCount = additionalPhotos.length + (primaryImage ? 1 : 0);
       const imageUrls = [primaryImage, ...additionalPhotos].filter(Boolean).join(" | ");
 
-      const audio = features.technologia || features.equipment_audio_multimedia || [];
-      const safety = features.bezpieczenstwo || features.equipment_safety || [];
-      const comfort = features.komfort || features.equipment_comfort_extras || [];
-      const other = features.wyglad || features.equipment_other || [];
+      const getFeatures = (keys: string[], defaultFallback: any) => {
+        let result: string[] = [];
+        keys.forEach(k => {
+          if (Array.isArray(features[k])) result.push(...features[k]);
+        });
+        if (result.length === 0 && Array.isArray(defaultFallback)) return defaultFallback;
+        return result;
+      };
+
+      const audio = getFeatures(['Audio i multimedia'], features.technologia || features.equipment_audio_multimedia || []);
+      const safety = getFeatures(['Bezpieczeństwo', 'Systemy wspomagania kierowcy'], features.bezpieczenstwo || features.equipment_safety || []);
+      const comfort = getFeatures(['Komfort'], features.komfort || features.equipment_comfort_extras || []);
+      const other = getFeatures(['Inne', 'Osiągi i tuning', 'Wygląd'], features.wyglad || features.equipment_other || []);
 
       const audioStr = Array.isArray(audio) ? audio.join("|") : String(audio);
       const safetyStr = Array.isArray(safety) ? safety.join("|") : String(safety);
       const comfortStr = Array.isArray(comfort) ? comfort.join("|") : String(comfort);
       const otherStr = Array.isArray(other) ? other.join("|") : String(other);
+
+      let rawVin = technical_spec.vin || "";
+      let isObfuscatedVin = rawVin.length > 20 && (rawVin.includes('.') || rawVin.endsWith('=='));
+      let finalVin = isObfuscatedVin ? "" : rawVin;
 
       const row = [
         o.id, // listing_id
@@ -468,8 +482,8 @@ export default function PartnerOffersPage() {
         o.brand || "", // make
         o.model || "", // model
         o.model_version || "", // version
-        technical_spec.vin || "", // vin
-        o.price || "", // price_pln
+        finalVin, // vin
+        calculatedPrice || "", // price_pln
         priceDisplay, // price_display
         "", // omnibus_lowest_30d_pln
         "", // omnibus_text
