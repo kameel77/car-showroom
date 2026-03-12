@@ -434,7 +434,7 @@ export default function PartnerOffersPage() {
     const escapeCSV = (value: string | number | undefined | null) => {
       if (value == null) return '""';
       const str = String(value);
-      if (str.includes(',') || str.includes('\\n') || str.includes('"')) {
+      if (str.includes(',') || str.includes('\n') || str.includes('"')) {
         return `"${str.replace(/"/g, '""')}"`;
       }
       return str;
@@ -510,7 +510,7 @@ export default function PartnerOffersPage() {
       rows.push(row.map(escapeCSV).join(","));
     });
 
-    const blob = new Blob([rows.join('\\n')], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     const dateStr = new Date().toISOString().split('T')[0];
