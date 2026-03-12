@@ -578,15 +578,19 @@ export async function getPartnerPublicOffer(
 }
 
 /**
- * Update car photos (additional)
+ * Update car photos (main and additional)
  */
 export async function updateCarPhotos(
   offerId: string,
+  mainPhoto: string | null,
   additionalPhotos: string[]
 ): Promise<void> {
   const { error } = await supabaseAdmin
     .from('car_offers')
-    .update({ additional_photos: additionalPhotos })
+    .update({ 
+      main_photo_url: mainPhoto,
+      additional_photos: additionalPhotos 
+    })
     .eq('id', offerId);
 
   if (error) {
@@ -596,4 +600,33 @@ export async function updateCarPhotos(
 
   // Not sure which partner uses this car, we just revalidate the generic offer paths
   // In a real scenario we could revalidate more precisely if we fetch the car's partner.
+}
+
+/**
+ * Upload an image file directly to Supabase Storage
+ */
+export async function uploadCarImage(formData: FormData): Promise<string> {
+  const file = formData.get('file') as File;
+  if (!file) throw new Error('No file provided');
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const fileName = `showroom_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.\-]/g, "_")}`;
+
+  const { error } = await supabaseAdmin.storage
+    .from('public-img')
+    .upload(fileName, buffer, {
+      contentType: file.type,
+      upsert: false
+    });
+
+  if (error) {
+    console.error('Error uploading image:', error);
+    throw new Error(`Upload failed: ${error.message}`);
+  }
+
+  const { data: publicUrlData } = supabaseAdmin.storage
+    .from('public-img')
+    .getPublicUrl(fileName);
+
+  return publicUrlData.publicUrl;
 }

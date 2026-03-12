@@ -202,8 +202,8 @@ export default function PartnerSelfAdminPage() {
     }
   };
 
-  const handleSavePhotos = async (offerId: string, additionalPhotos: string[]) => {
-    await updateCarPhotos(offerId, additionalPhotos);
+  const handleSavePhotos = async (offerId: string, mainPhoto: string | null, additionalPhotos: string[]) => {
+    await updateCarPhotos(offerId, mainPhoto, additionalPhotos);
     // update local state
     setOffers(offers.map(o => {
       if (o.offer_id === offerId) {
@@ -211,6 +211,7 @@ export default function PartnerSelfAdminPage() {
           ...o,
           offer: {
             ...o.offer,
+            main_photo_url: mainPhoto || undefined,
             additional_photos: additionalPhotos,
           }
         };
@@ -604,6 +605,7 @@ export default function PartnerSelfAdminPage() {
             isOpen={true}
             onClose={() => setPhotoModalOfferId(null)}
             offerId={photoModalOfferId}
+            initialMainPhoto={offers.find(o => o.offer_id === photoModalOfferId)?.offer.main_photo_url || null}
             initialPhotos={offers.find(o => o.offer_id === photoModalOfferId)?.offer.additional_photos || []}
             onSave={handleSavePhotos}
           />
