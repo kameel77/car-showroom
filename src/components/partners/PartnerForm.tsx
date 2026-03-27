@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Partner, CreatePartnerInput, UpdatePartnerInput } from '@/types/partners';
@@ -18,6 +18,7 @@ const DEFAULT_TRANSPORT_TIERS = normalizeTransportTiers();
 
 export function PartnerForm({ partner, mode }: PartnerFormProps) {
   const locale = useLocale();
+  const t = useTranslations('partnerForm');
   const router = useRouter();
 
   const [loading, setLoading] = useState(false);
@@ -36,6 +37,7 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
     show_net_prices: partner?.show_net_prices ?? false,
     show_secondary_currency: partner?.show_secondary_currency ?? false,
     financing_cost_percent: partner?.financing_cost_percent ?? 0,
+    export_vat: partner?.export_vat ?? 0,
     additional_cost_items: normalizeAdditionalCostItems(partner?.additional_cost_items)?.length
       ? normalizeAdditionalCostItems(partner?.additional_cost_items)
       : [{ description: '', mode: 'fixed_eur', valueEurNet: 0, percentValue: 0 } as AdditionalCostItem],
@@ -58,6 +60,7 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
     if ([
       'default_margin_percent',
       'financing_cost_percent',
+      'export_vat',
     ].includes(name)) {
       setFormData(prev => ({ ...prev, [name]: Math.max(0, Number(value || 0)) }));
       return;
@@ -127,9 +130,9 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
     e.preventDefault();
     setError(null);
 
-    if (!formData.company_name.trim()) return setError('Nazwa firmy jest wymagana');
-    if (!formData.slug.trim()) return setError('Slug jest wymagany');
-    if (!validateSlug(formData.slug)) return setError('Slug może zawierać tylko małe litery, cyfry i myślniki');
+    if (!formData.company_name.trim()) return setError(t('errors.companyNameRequired'));
+    if (!formData.slug.trim()) return setError(t('errors.slugRequired'));
+    if (!validateSlug(formData.slug)) return setError(t('errors.slugInvalid'));
 
     setLoading(true);
 
@@ -145,6 +148,7 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
       show_net_prices: formData.show_net_prices,
       show_secondary_currency: formData.show_secondary_currency,
       financing_cost_percent: Math.max(0, formData.financing_cost_percent),
+      export_vat: Math.max(0, formData.export_vat),
       additional_cost_items: getCleanAdditionalCosts(),
       transport_cost_tiers_eur: normalizeTransportTiers(formData.transport_cost_tiers_eur),
       is_active: formData.is_active,
@@ -168,7 +172,7 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
 
       router.push(`/${locale}/admin/partners`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Wystąpił błąd');
+      setError(err instanceof Error ? err.message : t('errors.genericError'));
       setLoading(false);
     }
   };
@@ -181,7 +185,7 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">{mode === 'create' ? 'Nowy partner' : 'Edytuj partnera'}</h1>
+            <h1 className="text-3xl font-bold text-gray-900">{mode === 'create' ? t('titleNew') : t('titleEdit')}</h1>
           </div>
         </div>
 
@@ -194,41 +198,45 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
 
         <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6">
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2"><Building2 className="h-5 w-5" />Podstawowe informacje</h2>
+            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2"><Building2 className="h-5 w-5" />{t('basicInfo')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input type="text" name="company_name" value={formData.company_name} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg text-gray-900" placeholder="Nazwa firmy" required />
+              <input type="text" name="company_name" value={formData.company_name} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg text-gray-900" placeholder={t('companyName')} required />
               <input type="text" name="slug" value={formData.slug} onChange={handleChange} disabled={mode === 'edit'} className="w-full px-3 py-2 border rounded-lg text-gray-900 disabled:bg-gray-100" placeholder="slug" required />
             </div>
-            <textarea name="company_address" value={formData.company_address} onChange={handleChange} rows={2} className="w-full px-3 py-2 border rounded-lg text-gray-900" placeholder="Adres" />
+            <textarea name="company_address" value={formData.company_address} onChange={handleChange} rows={2} className="w-full px-3 py-2 border rounded-lg text-gray-900" placeholder={t('address')} />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input type="text" name="vat_number" value={formData.vat_number} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg text-gray-900" placeholder="NIP / VAT" />
-              <input type="text" name="contact_person" value={formData.contact_person} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg text-gray-900" placeholder="Osoba kontaktowa" />
-              <input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg text-gray-900" placeholder="E-mail" />
-              <input type="tel" name="phone" value={formData.phone} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg text-gray-900" placeholder="Telefon" />
+              <input type="text" name="vat_number" value={formData.vat_number} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg text-gray-900" placeholder={t('vat')} />
+              <input type="text" name="contact_person" value={formData.contact_person} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg text-gray-900" placeholder={t('contactPerson')} />
+              <input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg text-gray-900" placeholder={t('email')} />
+              <input type="tel" name="phone" value={formData.phone} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg text-gray-900" placeholder={t('phone')} />
             </div>
-            <input type="url" name="website" value={formData.website} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg text-gray-900" placeholder="Strona www" />
+            <input type="url" name="website" value={formData.website} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg text-gray-900" placeholder={t('website')} />
           </div>
 
           <div className="space-y-4 pt-6 border-t border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Koszty i kalkulator marży</h2>
+            <h2 className="text-lg font-semibold text-gray-900">{t('costsAndMargin')}</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Domyślna marża (%)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('defaultMargin')}</label>
                 <input type="number" name="default_margin_percent" value={formData.default_margin_percent} onChange={handleChange} min="0" step="0.01" className="w-full px-3 py-2 border rounded-lg text-gray-900" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Koszt finansowania (%)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('financingCost')}</label>
                 <input type="number" name="financing_cost_percent" value={formData.financing_cost_percent} onChange={handleChange} min="0" step="0.01" className="w-full px-3 py-2 border rounded-lg text-gray-900" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('exportVat')}</label>
+                <input type="number" name="export_vat" value={formData.export_vat} onChange={handleChange} min="0" step="0.01" className="w-full px-3 py-2 border rounded-lg text-gray-900" />
               </div>
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-gray-700">Koszty dodatkowe (na pojazd)</label>
-                <button type="button" onClick={addAdditionalCost} className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"><Plus className="h-4 w-4" />Dodaj</button>
+                <label className="block text-sm font-medium text-gray-700">{t('additionalCosts')}</label>
+                <button type="button" onClick={addAdditionalCost} className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"><Plus className="h-4 w-4" />{t('addCost')}</button>
               </div>
-              <p className="text-xs text-gray-500 mb-2">Tryb kosztu: stała kwota EUR albo % od (net EUR + finansowanie EUR).</p>
+              <p className="text-xs text-gray-500 mb-2">{t('costModeHint')}</p>
               <div className="space-y-2">
                 {formData.additional_cost_items.map((item, index) => (
                   <div key={index} className="grid grid-cols-12 gap-2 items-center">
@@ -236,7 +244,7 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
                       type="text"
                       value={item.description}
                       onChange={(e) => handleAdditionalCostChange(index, 'description', e.target.value)}
-                      placeholder="Opis kosztu"
+                      placeholder={t('costDescription')}
                       className="col-span-4 px-3 py-2 border rounded-lg text-gray-900"
                     />
                     <select
@@ -244,8 +252,8 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
                       onChange={(e) => handleAdditionalCostChange(index, 'mode', e.target.value)}
                       className="col-span-4 px-3 py-2 border rounded-lg text-gray-900 bg-white"
                     >
-                      <option value="fixed_eur">Kwota stała EUR netto</option>
-                      <option value="percent_of_net_plus_financing">% od (net EUR + finansowanie EUR)</option>
+                      <option value="fixed_eur">{t('modeFixedEur')}</option>
+                      <option value="percent_of_net_plus_financing">{t('modePercent')}</option>
                     </select>
                     {(item.mode || 'fixed_eur') === 'percent_of_net_plus_financing' ? (
                       <input
@@ -277,11 +285,11 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Koszty transportu wg liczby aut (EUR)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('transportCosts')}</label>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
                 {[1, 2, 4, 8, 9].map((tier) => (
                   <div key={tier}>
-                    <label className="text-xs text-gray-500">{tier === 9 ? '9+' : tier} auto{tier === 1 ? '' : 'a'}</label>
+                    <label className="text-xs text-gray-500">{tier === 9 ? t('carsCountPlus') : t('carsCount', { count: tier })}</label>
                     <input
                       type="number"
                       min="0"
@@ -297,41 +305,41 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
           </div>
 
           <div className="space-y-4 pt-6 border-t border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Ustawienia widoczności cen</h2>
+            <h2 className="text-lg font-semibold text-gray-900">{t('visibilitySettings')}</h2>
             <div className="space-y-2">
-              <label className="flex items-center gap-2"><input type="checkbox" name="show_net_prices" checked={formData.show_net_prices} onChange={handleChange} /> Pokaż dodatkową cenę netto</label>
-              <label className="flex items-center gap-2"><input type="checkbox" name="show_secondary_currency" checked={formData.show_secondary_currency} onChange={handleChange} /> Pokaż cenę w drugiej walucie (≈)</label>
-              <label className="flex items-center gap-2"><input type="checkbox" name="is_active" checked={formData.is_active} onChange={handleChange} /> Aktywny</label>
+              <label className="flex items-center gap-2"><input type="checkbox" name="show_net_prices" checked={formData.show_net_prices} onChange={handleChange} /> {t('showNetPrices')}</label>
+              <label className="flex items-center gap-2"><input type="checkbox" name="show_secondary_currency" checked={formData.show_secondary_currency} onChange={handleChange} /> {t('showSecondaryCurrency')}</label>
+              <label className="flex items-center gap-2"><input type="checkbox" name="is_active" checked={formData.is_active} onChange={handleChange} /> {t('isActive')}</label>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Główna prezentowana waluta</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('presentationCurrency')}</label>
                 <select name="presentation_currency" value={formData.presentation_currency} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg text-gray-900 bg-white">
-                  <option value="">Domyślnie (na podst. języka systemu)</option>
-                  <option value="PLN">Zawsze PLN</option>
-                  <option value="EUR">Zawsze EUR</option>
+                  <option value="">{t('currencyDefault')}</option>
+                  <option value="PLN">{t('currencyPln')}</option>
+                  <option value="EUR">{t('currencyEur')}</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Główna prezentowana wartość</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('presentationValue')}</label>
                 <select name="presentation_value" value={formData.presentation_value} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg text-gray-900 bg-white">
-                  <option value="">Domyślnie (Brutto)</option>
-                  <option value="brutto">Brutto</option>
-                  <option value="netto">Netto</option>
+                  <option value="">{t('valueDefault')}</option>
+                  <option value="brutto">{t('valueGross')}</option>
+                  <option value="netto">{t('valueNet')}</option>
                 </select>
-                <p className="text-xs text-gray-500 mt-1">Gdy wybrano "Netto", cena główna (wielka) to cena po odjęciu VAT.</p>
+                <p className="text-xs text-gray-500 mt-1">{t('valueNetHint')}</p>
               </div>
             </div>
           </div>
 
-          <textarea name="notes" value={formData.notes} onChange={handleChange} rows={3} className="w-full px-3 py-2 border rounded-lg text-gray-900" placeholder="Notatki" />
+          <textarea name="notes" value={formData.notes} onChange={handleChange} rows={3} className="w-full px-3 py-2 border rounded-lg text-gray-900" placeholder={t('notes')} />
 
           <div className="flex items-center justify-end gap-4 pt-6 border-t border-gray-200">
-            <Link href={`/${locale}/admin/partners`} className="px-6 py-2 text-gray-700">Anuluj</Link>
+            <Link href={`/${locale}/admin/partners`} className="px-6 py-2 text-gray-700">{t('cancel')}</Link>
             <button type="submit" disabled={loading} className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg">
               {loading && <Loader2 className="h-5 w-5 animate-spin" />}
-              {mode === 'create' ? 'Utwórz partnera' : 'Zapisz zmiany'}
+              {mode === 'create' ? t('createPartner') : t('saveChanges')}
             </button>
           </div>
         </form>

@@ -533,6 +533,36 @@ export async function bulkUpdatePartnerOffers(
 }
 
 /**
+ * Delete a single car offer
+ */
+export async function deleteCarOffer(offerId: string): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('car_offers')
+    .delete()
+    .eq('id', offerId);
+
+  if (error) {
+    console.error('Error deleting car offer:', error);
+    throw new Error('Failed to delete car offer');
+  }
+}
+
+/**
+ * Bulk delete car offers
+ */
+export async function bulkDeleteCarOffers(offerIds: string[]): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('car_offers')
+    .delete()
+    .in('id', offerIds);
+
+  if (error) {
+    console.error('Error bulk deleting car offers:', error);
+    throw new Error('Failed to delete car offers');
+  }
+}
+
+/**
  * Get partner offers by slug (for partner self-admin view)
  * Returns only visible offers with full detail for price editing
  */

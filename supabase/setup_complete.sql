@@ -419,25 +419,25 @@ BEGIN
         co.model_version,
         co.year,
         co.mileage,
-        co.price,
+        co.price::NUMERIC                        AS price,
         COALESCE(
             CASE
                 WHEN po.custom_price IS NOT NULL THEN po.custom_price::NUMERIC
-                WHEN v_default_margin_percent > 0 THEN FLOOR(co.price * (1 + v_default_margin_percent / 100))
-                ELSE co.price
+                WHEN v_default_margin_percent > 0 THEN FLOOR(co.price * (1 + v_default_margin_percent / 100))::NUMERIC
+                ELSE co.price::NUMERIC
             END,
-            co.price
-        )                                        AS display_price,
+            co.price::NUMERIC
+        )::NUMERIC                               AS display_price,
         FLOOR(
             COALESCE(
                 CASE
                     WHEN po.custom_price IS NOT NULL THEN po.custom_price::NUMERIC
-                    WHEN v_default_margin_percent > 0 THEN FLOOR(co.price * (1 + v_default_margin_percent / 100))
-                    ELSE co.price
+                    WHEN v_default_margin_percent > 0 THEN FLOOR(co.price * (1 + v_default_margin_percent / 100))::NUMERIC
+                    ELSE co.price::NUMERIC
                 END,
-                co.price
+                co.price::NUMERIC
             ) / 1.23
-        )                                        AS display_price_net,
+        )::NUMERIC                               AS display_price_net,
         co.fuel_type,
         co.engine_power,
         co.transmission,

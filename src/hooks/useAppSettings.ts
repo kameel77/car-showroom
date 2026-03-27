@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { AppSettings } from '@/types/settings';
 
@@ -7,9 +7,8 @@ export function useAppSettings() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchSettings() {
-      try {
+  const fetchSettings = useCallback(async () => {
+    try {
         const { data, error } = await supabase
           .from('app_settings')
           .select('*')
@@ -32,6 +31,7 @@ export function useAppSettings() {
           favicon_url: null,
           default_currency: 'PLN',
           exchange_rate_eur: 4.5,
+          pl_vat: 23,
           show_eur_prices: true,
           contact_phone: '+48 123 456 789',
           contact_email: 'kontakt@carshowroom.pl',
@@ -51,10 +51,11 @@ export function useAppSettings() {
       } finally {
         setLoading(false);
       }
-    }
-
-    fetchSettings();
   }, []);
+
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
 
   const formatPrice = (pricePln: number | null, currency?: string): string => {
     if (!pricePln || !settings) return '-';
@@ -107,5 +108,6 @@ export function useAppSettings() {
     error,
     formatPrice,
     getDualPrice,
+    mutate: fetchSettings,
   };
 }

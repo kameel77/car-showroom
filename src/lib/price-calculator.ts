@@ -28,6 +28,8 @@ export interface TransportCostTiers {
 export interface VehicleMarginCalculationInput {
   purchaseGrossPln: number;
   exchangeRatePlnPerEur: number;
+  plVatRate: number;
+  exportVatRate: number;
   financingCostPercent: number;
   additionalCostItems?: AdditionalCostItem[];
   transportCostEur: number;
@@ -113,11 +115,6 @@ export function calculateMarginPercent(
  * VAT rate (23% for Poland purchase)
  */
 export const VAT_RATE = 23;
-
-/**
- * VAT rate for sale input (gross -> net) - changed to 18% as per user requirement
- */
-export const NL_SALE_VAT_RATE = 18;
 
 /**
  * Calculate net price from gross price (removes VAT)
@@ -270,7 +267,8 @@ export function calculateAdditionalCostsTotalEur(
  * margin_pct = margin_eur / total_cost_net_eur * 100
  */
 export function calculateVehicleMarginBreakdown(input: VehicleMarginCalculationInput): VehicleMarginBreakdown {
-  const purchaseNetPln = round2(input.purchaseGrossPln / 1.23);
+  const plVatMultiplier = 1 + Math.max(0, input.plVatRate) / 100;
+  const purchaseNetPln = round2(input.purchaseGrossPln / plVatMultiplier);
   const vatPln = round2(input.purchaseGrossPln - purchaseNetPln);
   const purchaseNetEur = input.exchangeRatePlnPerEur > 0
     ? round2(purchaseNetPln / input.exchangeRatePlnPerEur)
@@ -286,7 +284,8 @@ export function calculateVehicleMarginBreakdown(input: VehicleMarginCalculationI
   );
 
   const saleGrossEur = round2(Math.max(0, input.saleGrossEur));
-  const saleNetEur = round2(saleGrossEur / (1 + NL_SALE_VAT_RATE / 100));
+  const exportVatMultiplier = 1 + Math.max(0, input.exportVatRate) / 100;
+  const saleNetEur = round2(saleGrossEur / exportVatMultiplier);
   const marginEur = round2(saleNetEur - totalCostEur);
   const marginPercent = totalCostEur > 0 ? round2((marginEur / totalCostEur) * 100) : 0;
 

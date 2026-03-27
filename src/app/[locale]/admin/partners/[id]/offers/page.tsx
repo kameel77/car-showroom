@@ -20,7 +20,8 @@ import {
   ChevronUp,
   Search,
   Image as ImageIcon,
-  Download
+  Download,
+  Trash2
 } from 'lucide-react';
 import { Partner, PartnerFilter, PartnerOfferWithDetails } from '@/types/partners';
 import {
@@ -31,6 +32,8 @@ import {
   deletePartnerFilter,
   updatePartnerOffer,
   updateCarPhotos,
+  deleteCarOffer,
+  bulkDeleteCarOffers,
 } from '@/lib/partners-server';
 import { PhotoManagerModal } from '@/components/cars/PhotoManagerModal';
 import { getAllBrandsFromOffers } from '@/lib/filters-server';
@@ -314,6 +317,26 @@ export default function PartnerOffersPage() {
     }
   };
 
+  const handleDeleteOffer = async (offerId: string) => {
+    if (!window.confirm('Czy na pewno chcesz usunąć ten pojazd? Tej operacji nie można cofnąć.')) return;
+
+    try {
+      setSaving(true);
+      await deleteCarOffer(offerId);
+
+      setOffers(offers.filter(o => o.offer_id !== offerId));
+      
+      const newSelected = new Set(selectedOffers);
+      newSelected.delete(offerId);
+      setSelectedOffers(newSelected);
+      
+    } catch (err) {
+      alert('Błąd podczas usuwania: ' + (err instanceof Error ? err.message : 'Nieznany błąd'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleBulkSetMargin = async () => {
     if (selectedOffers.size === 0 || bulkMargin === '') return;
 
@@ -359,6 +382,24 @@ export default function PartnerOffersPage() {
       setSelectedOffers(new Set());
     } catch (err) {
       alert('Failed to update visibility: ' + (err instanceof Error ? err.message : 'Unknown error'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedOffers.size === 0) return;
+    if (!window.confirm(`Czy na pewno chcesz usunąć wybrane pojazdy (${selectedOffers.size})? Tej operacji nie można cofnąć.`)) return;
+
+    try {
+      setSaving(true);
+      const offerIds = Array.from(selectedOffers);
+      await bulkDeleteCarOffers(offerIds);
+
+      setOffers(offers.filter(o => !selectedOffers.has(o.offer_id)));
+      setSelectedOffers(new Set());
+    } catch (err) {
+      alert('Błąd podczas usuwania: ' + (err instanceof Error ? err.message : 'Nieznany błąd'));
     } finally {
       setSaving(false);
     }
@@ -747,6 +788,14 @@ export default function PartnerOffersPage() {
                     <Download className="h-4 w-4" />
                     CSV
                   </button>
+                  <button
+                    onClick={handleBulkDelete}
+                    disabled={saving}
+                    className="flex items-center gap-1 px-3 py-1.5 ml-1 bg-red-50 text-red-700 border border-red-200 rounded-md hover:bg-red-100 disabled:opacity-50 text-sm font-medium"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Usuń
+                  </button>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -799,8 +848,8 @@ export default function PartnerOffersPage() {
             <p className="text-sm text-gray-600 mb-4">
               Transport: {formatPricePrecise(transportCostTotalEur, 'EUR')} łącznie ({transportBundles.join(' + ') || '-'}),
               {' '}na auto: {formatPricePrecise(transportCostPerCarEur, 'EUR')}.
-              VAT zakupu PL jest stały i liczony jako 23%.
-              Sprzedaż NL wprowadzaj brutto (VAT 21%) — netto liczy się automatycznie.
+              VAT zakupu PL liczony wg stawki {settings?.pl_vat ?? 23}%.
+              Sprzedaż wprowadzaj brutto (VAT eksportowy wynosi {partner.export_vat ?? 0}%) — netto liczy się automatycznie.
             </p>
 
             {exchangeRate <= 0 ? (
@@ -820,8 +869,8 @@ export default function PartnerOffersPage() {
                       <th className="py-2 pr-4">Koszty inne EUR</th>
                       <th className="py-2 pr-4">Koszt transportu EUR</th>
                       <th className="py-2 pr-4">Koszt total EUR</th>
-                      <th className="py-2 pr-4">Sprzedaż NL brutto EUR (input)</th>
-                      <th className="py-2 pr-4">Sprzedaż NL netto EUR</th>
+                      <th className="py-2 pr-4">Sprzedaż brutto EUR (input)</th>
+                      <th className="py-2 pr-4">Sprzedaż netto EUR</th>
                       <th className="py-2 pr-4">Marża EUR (netto)</th>
                       <th className="py-2 pr-0">Marża % (od kosztu netto)</th>
                     </tr>
@@ -832,6 +881,8 @@ export default function PartnerOffersPage() {
                       const margin = calculateVehicleMarginBreakdown({
                         purchaseGrossPln: offer.offer.price,
                         exchangeRatePlnPerEur: exchangeRate,
+                        plVatRate: settings?.pl_vat ?? 23,
+                        exportVatRate: partner.export_vat ?? 0,
                         financingCostPercent: partner.financing_cost_percent || 0,
                         additionalCostItems: partner.additional_cost_items || [],
                         transportCostEur: transportCostPerCarEur,
@@ -952,6 +1003,14 @@ export default function PartnerOffersPage() {
                       <Link href={`/${locale}/${partner.slug}/offer/${offer.offer_id}`} target="_blank" className="p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Pokaż ofertę">
                         <ExternalLink className="h-5 w-5" />
                       </Link>
+                      <button
+                        onClick={() => handleDeleteOffer(offer.offer_id)}
+                        disabled={saving}
+                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Usuń ofertę"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
                   </div>
                 ))
@@ -1021,6 +1080,8 @@ export default function PartnerOffersPage() {
                       const breakdown = calculateVehicleMarginBreakdown({
                         purchaseGrossPln: offer.offer.price,
                         exchangeRatePlnPerEur: exchangeRate,
+                        plVatRate: settings?.pl_vat ?? 23,
+                        exportVatRate: partner.export_vat ?? 0,
                         financingCostPercent: partner.financing_cost_percent || 0,
                         additionalCostItems: partner.additional_cost_items || [],
                         transportCostEur: transportCost,

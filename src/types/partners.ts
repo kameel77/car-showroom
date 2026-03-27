@@ -14,6 +14,7 @@ export interface Partner {
   show_net_prices: boolean;
   show_secondary_currency: boolean;
   financing_cost_percent: number;
+  export_vat: number;
   additional_cost_items?: AdditionalCostItem[];
   transport_cost_tiers_eur?: TransportCostTiers;
   is_active: boolean;
@@ -83,6 +84,7 @@ export interface CreatePartnerInput {
   show_net_prices?: boolean;
   show_secondary_currency?: boolean;
   financing_cost_percent?: number;
+  export_vat?: number;
   additional_cost_items?: AdditionalCostItem[];
   transport_cost_tiers_eur?: TransportCostTiers;
   is_active?: boolean;
@@ -103,6 +105,7 @@ export interface UpdatePartnerInput {
   show_net_prices?: boolean;
   show_secondary_currency?: boolean;
   financing_cost_percent?: number;
+  export_vat?: number;
   additional_cost_items?: AdditionalCostItem[];
   transport_cost_tiers_eur?: TransportCostTiers;
   is_active?: boolean;

@@ -7,6 +7,7 @@ export interface AppSettings {
   favicon_url: string | null;
   default_currency: string;
   exchange_rate_eur: number;
+  pl_vat: number;
   show_eur_prices: boolean;
   show_secondary_currency: boolean;
   contact_phone: string | null;

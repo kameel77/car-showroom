@@ -34,7 +34,6 @@ import {
   calculateTransportCostTotalEur,
   calculateVehicleMarginBreakdown,
   decomposeTransportBundles,
-  NL_SALE_VAT_RATE,
 } from '@/lib/price-calculator';
 import { useAppSettings } from '@/hooks/useAppSettings';
 
@@ -237,6 +236,8 @@ export default function PartnerSelfAdminPage() {
     const costA = calculateVehicleMarginBreakdown({
       purchaseGrossPln: a.offer.price,
       exchangeRatePlnPerEur: rateLocal,
+      plVatRate: settings?.pl_vat ?? 23,
+      exportVatRate: partner?.export_vat ?? 0,
       financingCostPercent: partner?.financing_cost_percent || 0,
       additionalCostItems: partner?.additional_cost_items || [],
       transportCostEur: calculateTransportCostPerCarEur(transportBatchSize, partner?.transport_cost_tiers_eur),
@@ -245,6 +246,8 @@ export default function PartnerSelfAdminPage() {
     const costB = calculateVehicleMarginBreakdown({
       purchaseGrossPln: b.offer.price,
       exchangeRatePlnPerEur: rateLocal,
+      plVatRate: settings?.pl_vat ?? 23,
+      exportVatRate: partner?.export_vat ?? 0,
       financingCostPercent: partner?.financing_cost_percent || 0,
       additionalCostItems: partner?.additional_cost_items || [],
       transportCostEur: calculateTransportCostPerCarEur(transportBatchSize, partner?.transport_cost_tiers_eur),
@@ -414,7 +417,7 @@ export default function PartnerSelfAdminPage() {
                         </p>
                         {partner.show_net_prices && grossEur > 0 && (
                           <p className="text-xs text-gray-500">
-                            netto: {(grossEur / (1 + NL_SALE_VAT_RATE / 100)).toLocaleString('pl-PL', { maximumFractionDigits: 0 })} €
+                            netto: {(grossEur / (1 + (partner.export_vat || 0) / 100)).toLocaleString('pl-PL', { maximumFractionDigits: 0 })} €
                           </p>
                         )}
                       </div>
@@ -516,6 +519,8 @@ export default function PartnerSelfAdminPage() {
                       const baseBreakdown = calculateVehicleMarginBreakdown({
                         purchaseGrossPln: offer.offer.price,
                         exchangeRatePlnPerEur: exchangeRate || 4.3,
+                        plVatRate: settings?.pl_vat ?? 23,
+                        exportVatRate: partner.export_vat ?? 0,
                         financingCostPercent: partner.financing_cost_percent || 0,
                         additionalCostItems: partner.additional_cost_items || [],
                         transportCostEur: transportCostPerCarEur,
@@ -524,12 +529,14 @@ export default function PartnerSelfAdminPage() {
 
                       const saleCustomPln = offer.custom_price != null
                         ? offer.custom_price
-                        : baseBreakdown.totalCostEur * 1.18 * exchangeRate; // fallback logic
+                        : baseBreakdown.totalCostEur * (1 + (partner.export_vat || 0) / 100) * exchangeRate; // fallback logic
                       const saleGrossEur = exchangeRate > 0 ? saleCustomPln / exchangeRate : 0;
 
                       const breakdown = calculateVehicleMarginBreakdown({
                         purchaseGrossPln: offer.offer.price,
                         exchangeRatePlnPerEur: exchangeRate || 4.3,
+                        plVatRate: settings?.pl_vat ?? 23,
+                        exportVatRate: partner.export_vat ?? 0,
                         financingCostPercent: partner.financing_cost_percent || 0,
                         additionalCostItems: partner.additional_cost_items || [],
                         transportCostEur: transportCostPerCarEur,

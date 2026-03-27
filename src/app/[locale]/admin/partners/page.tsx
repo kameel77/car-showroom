@@ -19,6 +19,7 @@ import {
 import { Partner } from '@/types/partners';
 import { getPartners, deletePartner } from '@/lib/partners-server';
 import { AdminHeader } from '@/components/admin/AdminHeader';
+import { GlobalPricingSettings } from '@/components/admin/GlobalPricingSettings';
 
 export default function PartnersAdminPage() {
   const t = useTranslations();
@@ -113,6 +114,8 @@ export default function PartnersAdminPage() {
             Nowy partner
           </Link>
         </div>
+
+        <GlobalPricingSettings />
 
         {/* Partners List */}
         {partners.length === 0 ? (
