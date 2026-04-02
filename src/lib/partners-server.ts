@@ -28,6 +28,7 @@ const BACKWARD_COMPAT_OPTIONAL_COLUMNS = [
   'transport_cost_tiers_eur',
   'presentation_currency',
   'presentation_value',
+  'export_vat',
 ] as const;
 
 type PartnerCostsShape = {
