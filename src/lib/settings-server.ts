@@ -22,14 +22,28 @@ export async function updateGlobalPricingSettings(exchangeRateEur: number, plVat
   const current = await getAppSettings();
   if (!current) throw new Error('Nie znaleziono ustawień aplikacji');
 
-  const { error } = await supabaseAdmin
+  const payload: any = {
+    exchange_rate_eur: exchangeRateEur,
+    pl_vat: plVat,
+    updated_at: new Date().toISOString()
+  };
+
+  let { error } = await supabaseAdmin
     .from('app_settings')
-    .update({
-      exchange_rate_eur: exchangeRateEur,
-      pl_vat: plVat,
-      updated_at: new Date().toISOString()
-    })
+    .update(payload)
     .eq('id', current.id);
+
+  if (error && (error.message.includes('does not exist') || error.message.includes('schema cache'))) {
+    console.warn('Some app_settings columns missing in DB, retrying update with backward-compatible payload...');
+    delete payload.pl_vat; // Remove the new column to allow saving the old ones (like exchange_rate_eur)
+    
+    const retry = await supabaseAdmin
+      .from('app_settings')
+      .update(payload)
+      .eq('id', current.id);
+    
+    error = retry.error;
+  }
 
   if (error) {
     throw new Error('Nie udało się zapisać ustawień: ' + error.message);
