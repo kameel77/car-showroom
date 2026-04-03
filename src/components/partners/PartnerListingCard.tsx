@@ -8,6 +8,7 @@ import { PartnerPublicOffer } from '@/types/partners';
 import { useAppSettings } from '@/hooks/useAppSettings';
 import { formatPrice, calculateNetPrice, formatPriceWithVat } from '@/lib/price-calculator';
 import Image from 'next/image';
+import { useSpecTranslations } from '@/hooks/useSpecTranslations';
 
 interface PartnerListingCardProps {
   offer: PartnerPublicOffer;
@@ -18,6 +19,7 @@ interface PartnerListingCardProps {
 
 export function PartnerListingCard({ offer, partnerSlug, locale, index = 0 }: PartnerListingCardProps) {
   const t = useTranslations('listing');
+  const { translateFuel, translateTransmission } = useSpecTranslations();
   const { settings } = useAppSettings();
 
   const formatMileage = (mileage: number | null | undefined) => {
@@ -133,11 +135,11 @@ export function PartnerListingCard({ offer, partnerSlug, locale, index = 0 }: Pa
             </div>
             <div className="flex items-center gap-1.5 text-gray-600">
               <Fuel className="h-3.5 w-3.5" />
-              <span className="capitalize">{offer.fuel_type || '-'}</span>
+              <span className="capitalize">{translateFuel(offer.fuel_type || '')}</span>
             </div>
             <div className="flex items-center gap-1.5 text-gray-600">
               <Settings2 className="h-3.5 w-3.5" />
-              <span className="capitalize">{offer.transmission || '-'}</span>
+              <span className="capitalize">{translateTransmission(offer.transmission || '')}</span>
             </div>
           </div>
 

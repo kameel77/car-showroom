@@ -43,7 +43,7 @@ export function SpecsGrid({
 
   const translateFuel = (fuel: string | null): string => {
     if (!fuel) return '-';
-    const normalizedFuel = fuel.toLowerCase();
+    const normalizedFuel = fuel.trim().toLowerCase();
 
     // Direct mapping keys
     const fuelMap: Record<string, string> = {
@@ -66,7 +66,7 @@ export function SpecsGrid({
 
   const translateTransmission = (trans: string | null): string => {
     if (!trans) return '-';
-    const normalizedTrans = trans.toLowerCase();
+    const normalizedTrans = trans.trim().toLowerCase();
 
     const transMap: Record<string, string> = {
       'automatic': tSpecs('transmission.automatic'),
@@ -82,7 +82,7 @@ export function SpecsGrid({
 
   const translateBodyType = (body: string | null): string => {
     if (!body) return '-';
-    const normalizedBody = body.toLowerCase();
+    const normalizedBody = body.trim().toLowerCase();
 
     const bodyMap: Record<string, string> = {
       'sedan': tSpecs('bodyType.sedan'),
@@ -103,7 +103,7 @@ export function SpecsGrid({
 
   const translateColourType = (colour: string | null): string => {
     if (!colour) return '-';
-    const normalizedColour = colour.toLowerCase();
+    const normalizedColour = colour.trim().toLowerCase();
 
     const colourMap: Record<string, string> = {
       'metallic': tSpecs('colourType.metallic'),

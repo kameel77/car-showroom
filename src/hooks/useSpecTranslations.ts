@@ -21,7 +21,7 @@ export function useSpecTranslations() {
       'hybryda': t('fuel.hybrid'),
     };
 
-    return fuelMap[fuelType.toLowerCase()] || fuelType;
+    return fuelMap[fuelType.trim().toLowerCase()] || fuelType;
   };
 
   const translateTransmission = (transmission: string | null): string => {
@@ -37,7 +37,7 @@ export function useSpecTranslations() {
       'manualna': t('transmission.manual'),
     };
 
-    return transmissionMap[transmission.toLowerCase()] || transmission;
+    return transmissionMap[transmission.trim().toLowerCase()] || transmission;
   };
 
   const translateBodyType = (bodyType: string | null): string => {
@@ -56,7 +56,7 @@ export function useSpecTranslations() {
       'other': t('bodyType.other'),
     };
 
-    return bodyTypeMap[bodyType.toLowerCase()] || bodyType;
+    return bodyTypeMap[bodyType.trim().toLowerCase()] || bodyType;
   };
 
   const translateColourType = (colourType: string | null): string => {
@@ -74,7 +74,7 @@ export function useSpecTranslations() {
       'perłowy': t('colourType.pearl'),
     };
 
-    return colourTypeMap[colourType.toLowerCase()] || colourType;
+    return colourTypeMap[colourType.trim().toLowerCase()] || colourType;
   };
 
   return {
