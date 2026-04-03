@@ -19,6 +19,8 @@ export function useSpecTranslations() {
       'benzyna': t('fuel.petrol'),
       'elektryczny': t('fuel.electric'),
       'hybryda': t('fuel.hybrid'),
+      'hybryda plug-in': t('fuel.plugin_hybrid'),
+      'inne': t('fuel.other'),
     };
 
     return fuelMap[fuelType.trim().toLowerCase()] || fuelType;
@@ -54,6 +56,9 @@ export function useSpecTranslations() {
       'van': t('bodyType.van'),
       'minivan': t('bodyType.minivan'),
       'other': t('bodyType.other'),
+      // Polish variants
+      'kabriolet': t('bodyType.cabrio'),
+      'inne': t('bodyType.other'),
     };
 
     return bodyTypeMap[bodyType.trim().toLowerCase()] || bodyType;
@@ -71,7 +76,11 @@ export function useSpecTranslations() {
       // Polish variants
       'metalik': t('colourType.metallic'),
       'mat': t('colourType.matte'),
+      'matowy': t('colourType.matte'),
       'perłowy': t('colourType.pearl'),
+      'niemetalizowany': t('colourType.solid'),
+      'akrylowy': t('colourType.solid'),
+      'inny': t('colourType.other'),
     };
 
     return colourTypeMap[colourType.trim().toLowerCase()] || colourType;
