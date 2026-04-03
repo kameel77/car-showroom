@@ -53,11 +53,12 @@ function sanitizePartnerCosts<T extends Record<string, unknown>>(input: T): T & 
 function stripMissingColumns<T extends Record<string, unknown>>(payload: T, errorMessage: string): T {
   const result = { ...payload };
 
-  for (const column of BACKWARD_COMPAT_OPTIONAL_COLUMNS) {
-    const pgStyleMissing = errorMessage.includes(`column "${column}" does not exist`);
-    const postgrestSchemaCacheMissing = errorMessage.includes(`Could not find the '${column}' column`);
+  // To avoid cascading errors where multiple columns are missing (PostgREST only reports the first one),
+  // we remove ALL backward-compatible columns if we suspect a schema cache or missing column issue.
+  const isSchemaError = errorMessage.includes('does not exist') || errorMessage.includes('schema cache');
 
-    if (pgStyleMissing || postgrestSchemaCacheMissing) {
+  if (isSchemaError) {
+    for (const column of BACKWARD_COMPAT_OPTIONAL_COLUMNS) {
       delete result[column];
     }
   }
