@@ -2,6 +2,8 @@ import { PartnerForm } from '@/components/partners/PartnerForm';
 import { getPartnerById } from '@/lib/partners-server';
 import { notFound } from 'next/navigation';
 
+export const dynamic = 'force-dynamic';
+
 interface EditPartnerPageProps {
   params: Promise<{
     locale: string;

@@ -152,9 +152,9 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
       additional_cost_items: getCleanAdditionalCosts(),
       transport_cost_tiers_eur: normalizeTransportTiers(formData.transport_cost_tiers_eur),
       is_active: formData.is_active,
-      notes: formData.notes || undefined,
-      presentation_currency: formData.presentation_currency || undefined,
-      presentation_value: formData.presentation_value || undefined,
+      notes: formData.notes ?? '',
+      presentation_currency: formData.presentation_currency ?? '',
+      presentation_value: formData.presentation_value ?? '',
     };
 
     try {
@@ -170,6 +170,7 @@ export function PartnerForm({ partner, mode }: PartnerFormProps) {
         await updatePartner(partner.id, input);
       }
 
+      router.refresh();
       router.push(`/${locale}/admin/partners`);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('errors.genericError'));

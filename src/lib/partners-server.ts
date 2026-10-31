@@ -28,10 +28,6 @@ import { parseCarScoutCSV } from './carscout-import';
 import { revalidatePath } from 'next/cache';
 
 const BACKWARD_COMPAT_OPTIONAL_COLUMNS = [
-  'show_secondary_currency',
-  'financing_cost_percent',
-  'additional_cost_items',
-  'transport_cost_tiers_eur',
   'presentation_currency',
   'presentation_value',
   'export_vat',
@@ -85,9 +81,16 @@ interface FallbackFilterOfferState {
   updated_at: string;
 }
 
+interface FallbackPartnerSettings {
+  presentation_currency?: string;
+  presentation_value?: string;
+  export_vat?: number;
+}
+
 interface PartnerFallbackMeta {
   filters: ClientFilter[];
   filterOffers: Record<string, Record<string, FallbackFilterOfferState>>;
+  partnerSettings?: FallbackPartnerSettings;
 }
 
 function extractMetaFromNotes(rawNotes?: string | null): {
@@ -115,6 +118,10 @@ function extractMetaFromNotes(rawNotes?: string | null): {
       meta: {
         filters: Array.isArray(parsed.filters) ? parsed.filters : [],
         filterOffers: parsed.filterOffers && typeof parsed.filterOffers === 'object' ? parsed.filterOffers : {},
+        partnerSettings:
+          parsed.partnerSettings && typeof parsed.partnerSettings === 'object'
+            ? parsed.partnerSettings
+            : undefined,
       },
     };
   } catch {
@@ -127,17 +134,27 @@ function injectMetaIntoNotes(
   meta: PartnerFallbackMeta | null
 ): string | undefined {
   const base = (cleanNotes || '').trim();
-  if (!meta || (meta.filters.length === 0 && Object.keys(meta.filterOffers).length === 0)) {
+  const hasFilters = meta && (meta.filters.length > 0 || Object.keys(meta.filterOffers).length > 0);
+  const hasPartnerSettings =
+    meta?.partnerSettings &&
+    Object.values(meta.partnerSettings).some(v => v !== undefined && v !== '');
+  if (!meta || (!hasFilters && !hasPartnerSettings)) {
     return base || undefined;
   }
   return `${base}${META_PREFIX}${JSON.stringify(meta)}${META_SUFFIX}`;
 }
 
 function cleanPartnerRow(row: Partner): Partner {
-  const { cleanNotes } = extractMetaFromNotes(row.notes);
+  const { cleanNotes, meta } = extractMetaFromNotes(row.notes);
+  const ps = meta?.partnerSettings;
+  const resolvedCurrency = row.presentation_currency ?? ps?.presentation_currency;
+  const resolvedValue = row.presentation_value ?? ps?.presentation_value;
   return {
     ...row,
     notes: cleanNotes,
+    presentation_currency: resolvedCurrency ? resolvedCurrency : undefined,
+    presentation_value: resolvedValue ? resolvedValue : undefined,
+    export_vat: row.export_vat ?? ps?.export_vat ?? 0,
   };
 }
 
@@ -219,6 +236,7 @@ function getOrSeedFallbackMeta(rawPartner: Partner): PartnerFallbackMeta {
   return {
     filters: [defaultFilter],
     filterOffers: meta?.filterOffers || {},
+    partnerSettings: meta?.partnerSettings,
   };
 }
 
@@ -226,7 +244,7 @@ function getOrSeedFallbackMeta(rawPartner: Partner): PartnerFallbackMeta {
  * Get all partners
  */
 export async function getPartners(): Promise<Partner[]> {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('partners')
     .select('*')
     .order('created_at', { ascending: false });
@@ -248,7 +266,7 @@ export async function getPartnerById(id: string): Promise<Partner | null> {
     return null;
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('partners')
     .select('*')
     .eq('id', id)
@@ -267,7 +285,7 @@ export async function getPartnerById(id: string): Promise<Partner | null> {
  * Get partner by slug (for public pages)
  */
 export async function getPartnerBySlug(slug: string): Promise<Partner | null> {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('partners')
     .select('*')
     .eq('slug', slug)
@@ -294,11 +312,26 @@ export async function createPartner(input: CreatePartnerInput): Promise<Partner>
     throw new Error('Slug can only contain lowercase letters, numbers, and hyphens');
   }
 
+  const initialMeta: PartnerFallbackMeta = {
+    filters: [],
+    filterOffers: {},
+    partnerSettings: {
+      presentation_currency: input.presentation_currency || '',
+      presentation_value: input.presentation_value || '',
+      export_vat: Math.max(0, Number(input.export_vat ?? 0)),
+    },
+  };
+
+  const mergedNotes = injectMetaIntoNotes(input.notes, initialMeta);
+
   const payload = sanitizePartnerCosts({
     ...input,
     slug: input.slug.toLowerCase(),
     default_margin_percent: input.default_margin_percent || 0,
     is_active: input.is_active ?? true,
+    notes: mergedNotes ?? null,
+    presentation_currency: input.presentation_currency || null,
+    presentation_value: input.presentation_value || null,
   });
 
   let { data, error } = await supabaseAdmin
@@ -332,7 +365,7 @@ export async function createPartner(input: CreatePartnerInput): Promise<Partner>
     throw new Error(`Failed to create partner: ${error.message}`);
   }
 
-  revalidatePath('/admin/partners');
+  revalidatePath('/', 'layout');
   return cleanPartnerRow(data);
 }
 
@@ -343,18 +376,38 @@ export async function updatePartner(
   id: string,
   input: UpdatePartnerInput
 ): Promise<Partner> {
-  // Preserve fallback filter metadata inside notes if present
+  // Preserve fallback filter metadata + partnerSettings inside notes
   const existingRaw = await getRawPartnerById(id);
-  const existingMeta = existingRaw ? extractMetaFromNotes(existingRaw.notes).meta : null;
+  const parsedExisting = existingRaw ? extractMetaFromNotes(existingRaw.notes) : { cleanNotes: undefined, meta: null };
+  const existingMeta = parsedExisting.meta;
 
-  const mergedNotes =
-    'notes' in input
-      ? injectMetaIntoNotes(input.notes, existingMeta)
-      : existingRaw?.notes;
+  const updatedPartnerSettings: FallbackPartnerSettings = {
+    ...(existingMeta?.partnerSettings || {}),
+    ...('presentation_currency' in input
+      ? { presentation_currency: input.presentation_currency || '' }
+      : {}),
+    ...('presentation_value' in input
+      ? { presentation_value: input.presentation_value || '' }
+      : {}),
+    ...('export_vat' in input
+      ? { export_vat: Math.max(0, Number(input.export_vat ?? 0)) }
+      : {}),
+  };
+
+  const updatedMeta: PartnerFallbackMeta = {
+    filters: existingMeta?.filters || [],
+    filterOffers: existingMeta?.filterOffers || {},
+    partnerSettings: updatedPartnerSettings,
+  };
+
+  const baseCleanNotes = 'notes' in input ? input.notes : parsedExisting.cleanNotes;
+  const mergedNotes = injectMetaIntoNotes(baseCleanNotes, updatedMeta);
 
   const payload = sanitizePartnerCosts({
     ...input,
-    ...(mergedNotes !== undefined ? { notes: mergedNotes } : {}),
+    notes: mergedNotes ?? null,
+    ...('presentation_currency' in input ? { presentation_currency: input.presentation_currency || null } : {}),
+    ...('presentation_value' in input ? { presentation_value: input.presentation_value || null } : {}),
     updated_at: new Date().toISOString(),
   });
 
@@ -388,8 +441,7 @@ export async function updatePartner(
     throw new Error(`Failed to update partner: ${error.message}`);
   }
 
-  revalidatePath('/admin/partners');
-  revalidatePath(`/admin/partners/${id}/edit`);
+  revalidatePath('/', 'layout');
   return cleanPartnerRow(data);
 }
 
