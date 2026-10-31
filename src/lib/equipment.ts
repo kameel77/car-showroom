@@ -117,15 +117,29 @@ export const equipmentGroups = {
 
 export type EquipmentGroup = keyof typeof equipmentGroups;
 
+const GROUP_KEY_ALIASES: Record<string, string> = {
+  "Bezpieczeństwo": "Bezpieczeństwo",
+  "bezpieczenstwo": "Bezpieczeństwo",
+  "equipment_safety": "Bezpieczeństwo",
+  "Osiągi i tuning": "Osiągi i tuning",
+  "Komfort i dodatki": "Komfort i dodatki",
+  "Komfort": "Komfort i dodatki",
+  "komfort": "Komfort i dodatki",
+  "equipment_comfort_extras": "Komfort i dodatki",
+  "Audio i multimedia": "Audio i multimedia",
+  "technologia": "Audio i multimedia",
+  "equipment_audio_multimedia": "Audio i multimedia",
+  "Systemy wspomagania kierowcy": "Systemy wspomagania kierowcy",
+  "Wygląd": "Inne",
+  "wyglad": "Inne",
+  "Inne": "Inne",
+  "equipment_other": "Inne",
+};
+
 export function mapEquipmentToGroups(equipment: string[] | Record<string, string[]> | null | undefined): Record<string, string[]> {
   if (!equipment) {
     return {};
   }
-
-  // Handle array format
-  const equipmentList: string[] = Array.isArray(equipment) 
-    ? equipment 
-    : Object.values(equipment).flat();
 
   const grouped: Record<string, string[]> = {};
 
@@ -133,6 +147,41 @@ export function mapEquipmentToGroups(equipment: string[] | Record<string, string
   Object.keys(equipmentGroups).forEach(group => {
     grouped[group] = [];
   });
+  grouped["Inne"] = [];
+
+  // If equipment is already structured as a dictionary of groups (e.g. from Car-Scout CSV or Otomoto categories)
+  if (!Array.isArray(equipment) && typeof equipment === 'object') {
+    const entries = Object.entries(equipment);
+    const hasRecognizedGroupKeys = entries.some(([k]) => k in GROUP_KEY_ALIASES);
+
+    if (hasRecognizedGroupKeys) {
+      entries.forEach(([rawGroup, rawItems]) => {
+        const targetGroup = GROUP_KEY_ALIASES[rawGroup] || "Inne";
+        if (!grouped[targetGroup]) {
+          grouped[targetGroup] = [];
+        }
+        const itemsArray: string[] = Array.isArray(rawItems)
+          ? rawItems
+          : typeof rawItems === 'string'
+            ? (rawItems as string).split('|').map((s: string) => s.trim()).filter(Boolean)
+            : [];
+        itemsArray.forEach((item: string) => {
+          if (item && !grouped[targetGroup].includes(item)) {
+            grouped[targetGroup].push(item);
+          }
+        });
+      });
+
+      return Object.fromEntries(
+        Object.entries(grouped).filter(([_, items]) => items.length > 0)
+      );
+    }
+  }
+
+  // Handle flat array format (or unrecognized object keys)
+  const equipmentList: string[] = Array.isArray(equipment)
+    ? equipment
+    : Object.values(equipment).flat();
 
   // Map each equipment item to its group
   equipmentList.forEach(item => {

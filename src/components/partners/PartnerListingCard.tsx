@@ -13,14 +13,19 @@ import { useSpecTranslations } from '@/hooks/useSpecTranslations';
 interface PartnerListingCardProps {
   offer: PartnerPublicOffer;
   partnerSlug: string;
+  filterSlug?: string;
   locale: string;
   index?: number;
 }
 
-export function PartnerListingCard({ offer, partnerSlug, locale, index = 0 }: PartnerListingCardProps) {
+export function PartnerListingCard({ offer, partnerSlug, filterSlug, locale, index = 0 }: PartnerListingCardProps) {
   const t = useTranslations('listing');
   const { translateFuel, translateTransmission } = useSpecTranslations();
   const { settings } = useAppSettings();
+
+  const offerHref = filterSlug
+    ? `/${locale}/${partnerSlug}/${filterSlug}/offer/${offer.offer_id}`
+    : `/${locale}/${partnerSlug}/offer/${offer.offer_id}`;
 
   const formatMileage = (mileage: number | null | undefined) => {
     if (!mileage) return '-';
@@ -32,7 +37,7 @@ export function PartnerListingCard({ offer, partnerSlug, locale, index = 0 }: Pa
       className="group bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300"
       style={{ animationDelay: `${index * 50}ms` }}
     >
-      <Link href={`/${locale}/${partnerSlug}/offer/${offer.offer_id}`} className="block">
+      <Link href={offerHref} className="block">
         {/* Image */}
         <div className="relative aspect-[16/10] overflow-hidden bg-gray-100">
           {offer.main_photo_url ? (
@@ -156,7 +161,7 @@ export function PartnerListingCard({ offer, partnerSlug, locale, index = 0 }: Pa
       {/* CTA */}
       <div className="px-4 pb-4">
         <Link
-          href={`/${locale}/${partnerSlug}/offer/${offer.offer_id}`}
+          href={offerHref}
           className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-white border-2 border-blue-600 text-blue-600 rounded-lg font-medium hover:bg-blue-600 hover:text-white transition-colors group/btn"
         >
           {t('viewOffer')}

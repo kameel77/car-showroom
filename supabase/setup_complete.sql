@@ -118,6 +118,7 @@ CREATE TABLE IF NOT EXISTS partners (
     show_net_prices             BOOLEAN DEFAULT false,
     show_secondary_currency     BOOLEAN DEFAULT false,
     financing_cost_percent      NUMERIC(5,2) NOT NULL DEFAULT 0,
+    export_vat                  NUMERIC(5,2) NOT NULL DEFAULT 0.00,
     additional_cost_items       JSONB NOT NULL DEFAULT '[]'::jsonb,
     transport_cost_tiers_eur    JSONB NOT NULL DEFAULT '{"1":0,"2":0,"4":0,"8":0,"9":0}'::jsonb,
     presentation_currency       VARCHAR(10),
@@ -141,24 +142,60 @@ COMMENT ON COLUMN partners.transport_cost_tiers_eur IS 'Transport cost tiers in 
 
 
 -- ========================================================================
+-- 2B. CLIENT_FILTERS (multiple named filters / showrooms per partner)
+-- ========================================================================
+CREATE TABLE IF NOT EXISTS client_filters (
+    id                          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    partner_id                  UUID NOT NULL REFERENCES partners(id) ON DELETE CASCADE,
+    name                        TEXT NOT NULL,
+    slug                        TEXT NOT NULL,
+    description                 TEXT,
+    source_query                TEXT,
+    notes                       TEXT,
+    margin_percent              DECIMAL(5,2),
+    financing_cost_percent      NUMERIC(5,2),
+    additional_cost_items       JSONB,
+    transport_cost_tiers_eur    JSONB,
+    is_active                   BOOLEAN DEFAULT true,
+    last_imported_at            TIMESTAMP WITH TIME ZONE,
+    last_import_filename        TEXT,
+    last_import_count           INTEGER DEFAULT 0,
+    created_at                  TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at                  TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(partner_id, slug)
+);
+
+CREATE INDEX IF NOT EXISTS idx_client_filters_partner ON client_filters(partner_id);
+CREATE INDEX IF NOT EXISTS idx_client_filters_slug    ON client_filters(slug);
+CREATE INDEX IF NOT EXISTS idx_client_filters_active  ON client_filters(is_active);
+
+ALTER TABLE client_filters ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow all client_filters" ON client_filters FOR ALL USING (true) WITH CHECK (true);
+
+COMMENT ON TABLE client_filters IS 'Named search filters / showrooms belonging to a partner (client)';
+
+
+-- ========================================================================
 -- 3. PARTNER_FILTERS
 -- ========================================================================
 CREATE TABLE IF NOT EXISTS partner_filters (
     id          BIGSERIAL PRIMARY KEY,
     partner_id  UUID NOT NULL REFERENCES partners(id) ON DELETE CASCADE,
+    filter_id   UUID REFERENCES client_filters(id) ON DELETE CASCADE,
     brand_name  TEXT NOT NULL,
     model_name  TEXT,
     is_active   BOOLEAN DEFAULT true,
     created_at  TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    UNIQUE(partner_id, brand_name, model_name)
+    UNIQUE(filter_id, brand_name, model_name)
 );
 
 CREATE INDEX IF NOT EXISTS idx_partner_filters_partner ON partner_filters(partner_id);
+CREATE INDEX IF NOT EXISTS idx_partner_filters_filter  ON partner_filters(filter_id);
 
 ALTER TABLE partner_filters ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow all partner_filters" ON partner_filters FOR ALL USING (true) WITH CHECK (true);
 
-COMMENT ON TABLE partner_filters IS 'Brand/model filters for each partner';
+COMMENT ON TABLE partner_filters IS 'Brand/model filters for each partner filter';
 
 
 -- ========================================================================
@@ -167,23 +204,25 @@ COMMENT ON TABLE partner_filters IS 'Brand/model filters for each partner';
 CREATE TABLE IF NOT EXISTS partner_offers (
     id          BIGSERIAL PRIMARY KEY,
     partner_id  UUID NOT NULL REFERENCES partners(id) ON DELETE CASCADE,
+    filter_id   UUID REFERENCES client_filters(id) ON DELETE CASCADE,
     offer_id    UUID NOT NULL REFERENCES car_offers(id) ON DELETE CASCADE,
     custom_price INTEGER,
     is_visible  BOOLEAN DEFAULT true,
     notes       TEXT,
     created_at  TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at  TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    UNIQUE(partner_id, offer_id)
+    UNIQUE(filter_id, offer_id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_partner_offers_partner  ON partner_offers(partner_id);
+CREATE INDEX IF NOT EXISTS idx_partner_offers_filter   ON partner_offers(filter_id);
 CREATE INDEX IF NOT EXISTS idx_partner_offers_offer    ON partner_offers(offer_id);
 CREATE INDEX IF NOT EXISTS idx_partner_offers_visible  ON partner_offers(is_visible);
 
 ALTER TABLE partner_offers ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow all partner_offers" ON partner_offers FOR ALL USING (true) WITH CHECK (true);
 
-COMMENT ON TABLE partner_offers IS 'Custom pricing and visibility for partner offers';
+COMMENT ON TABLE partner_offers IS 'Custom pricing and visibility for partner filter offers';
 
 
 -- ========================================================================
@@ -241,6 +280,7 @@ CREATE TABLE IF NOT EXISTS app_settings (
     -- Currency
     default_currency            TEXT DEFAULT 'PLN',
     exchange_rate_eur           NUMERIC DEFAULT 4.5,
+    pl_vat                      NUMERIC(5,2) NOT NULL DEFAULT 23.00,
     show_eur_prices             BOOLEAN DEFAULT true,
     show_secondary_currency     BOOLEAN DEFAULT false,
 
@@ -474,76 +514,12 @@ END;
 $$ LANGUAGE plpgsql;
 
 
--- ── auto_create_partner_offers (trigger on car_offers INSERT) ────────────
-DROP FUNCTION IF EXISTS auto_create_partner_offers() CASCADE;
-CREATE OR REPLACE FUNCTION auto_create_partner_offers()
-RETURNS TRIGGER AS $$
-DECLARE
-    partner_record RECORD;
-    matches_filter BOOLEAN;
-BEGIN
-    FOR partner_record IN
-        SELECT id, default_margin_percent
-        FROM   partners
-        WHERE  is_active = true
-    LOOP
-        matches_filter := EXISTS (
-            SELECT 1 FROM partner_filters pf
-            WHERE pf.partner_id = partner_record.id
-              AND pf.is_active = true
-              AND LOWER(pf.brand_name) = LOWER(NEW.brand)
-              AND (pf.model_name IS NULL OR LOWER(pf.model_name) = LOWER(NEW.model))
-        );
-
-        IF NOT EXISTS (
-            SELECT 1 FROM partner_filters pf
-            WHERE pf.partner_id = partner_record.id AND pf.is_active = true
-        ) OR matches_filter THEN
-            INSERT INTO partner_offers (partner_id, offer_id, is_visible)
-            VALUES (partner_record.id, NEW.id, true)
-            ON CONFLICT (partner_id, offer_id) DO NOTHING;
-        END IF;
-    END LOOP;
-
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
+-- ── Legacy auto-distribution triggers removed (offers are imported per filter_id) ──
 DROP TRIGGER IF EXISTS tr_auto_create_partner_offers ON car_offers;
-CREATE TRIGGER tr_auto_create_partner_offers
-    AFTER INSERT ON car_offers
-    FOR EACH ROW
-    EXECUTE FUNCTION auto_create_partner_offers();
-
-
--- ── sync_partner_offers_on_filter_change ─────────────────────────────────
-DROP FUNCTION IF EXISTS sync_partner_offers_on_filter_change() CASCADE;
-CREATE OR REPLACE FUNCTION sync_partner_offers_on_filter_change()
-RETURNS TRIGGER AS $$
-DECLARE
-    offer_record RECORD;
-BEGIN
-    IF (TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND NEW.is_active = true)) THEN
-        FOR offer_record IN
-            SELECT id FROM car_offers co
-            WHERE LOWER(co.brand) = LOWER(NEW.brand_name)
-              AND (NEW.model_name IS NULL OR LOWER(co.model) = LOWER(NEW.model_name))
-        LOOP
-            INSERT INTO partner_offers (partner_id, offer_id, is_visible)
-            VALUES (NEW.partner_id, offer_record.id, true)
-            ON CONFLICT (partner_id, offer_id) DO NOTHING;
-        END LOOP;
-    END IF;
-
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+DROP FUNCTION IF EXISTS auto_create_partner_offers() CASCADE;
 
 DROP TRIGGER IF EXISTS tr_sync_partner_offers_on_filter ON partner_filters;
-CREATE TRIGGER tr_sync_partner_offers_on_filter
-    AFTER INSERT OR UPDATE ON partner_filters
-    FOR EACH ROW
-    EXECUTE FUNCTION sync_partner_offers_on_filter_change();
+DROP FUNCTION IF EXISTS sync_partner_offers_on_filter_change() CASCADE;
 
 
 -- ── get_allowed_brands ───────────────────────────────────────────────────

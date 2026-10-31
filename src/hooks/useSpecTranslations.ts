@@ -15,11 +15,18 @@ export function useSpecTranslations() {
       'lpg': t('fuel.lpg'),
       'cng': t('fuel.cng'),
       'other': t('fuel.other'),
-      // Polish variants
+      // Polish & Car-Scout variants
+      'pb': t('fuel.petrol'),
       'benzyna': t('fuel.petrol'),
+      'on': t('fuel.diesel'),
       'elektryczny': t('fuel.electric'),
+      'ev': t('fuel.electric'),
+      'bev': t('fuel.electric'),
       'hybryda': t('fuel.hybrid'),
+      'hev': t('fuel.hybrid'),
+      'mhev': t('fuel.hybrid'),
       'hybryda plug-in': t('fuel.plugin_hybrid'),
+      'phev': t('fuel.plugin_hybrid'),
       'inne': t('fuel.other'),
     };
 

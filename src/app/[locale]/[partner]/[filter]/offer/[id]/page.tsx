@@ -1,0 +1,422 @@
+import React from 'react';
+import { getTranslations } from 'next-intl/server';
+import { notFound } from 'next/navigation';
+import Link from 'next/link';
+import { Metadata } from 'next';
+import { Header } from '@/components/Header';
+import { ImageGallery } from '@/components/ImageGallery';
+import { EquipmentDisplay } from '@/components/EquipmentDisplay';
+import { SpecsGrid } from '@/components/SpecsGrid';
+import { ChevronRight, ArrowLeft } from 'lucide-react';
+import { getFilterPublicOffer } from '@/lib/partners-server';
+import { getWidgetsByPartner } from '@/lib/widgets-server';
+import { formatPrice } from '@/lib/price-calculator';
+import { supabase } from '@/lib/supabase';
+import { getAppSettings } from '@/lib/settings-server';
+
+interface FilterOfferPageProps {
+  params: Promise<{
+    locale: string;
+    partner: string;
+    filter: string;
+    id: string;
+  }>;
+}
+
+async function getOffer(id: string) {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  if (!id || !uuidRegex.test(id)) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from('car_offers')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error || !data) {
+    return null;
+  }
+
+  return data;
+}
+
+export async function generateMetadata({ params }: FilterOfferPageProps): Promise<Metadata> {
+  const { partner: partnerSlug, filter: filterSlug, id } = await params;
+  const t = await getTranslations();
+  const [resolved, offerData] = await Promise.all([
+    getFilterPublicOffer(partnerSlug, filterSlug, id),
+    getOffer(id),
+  ]);
+
+  if (!resolved || !offerData) {
+    return {
+      title: t('detail.notFound'),
+      robots: {
+        index: false,
+        follow: false,
+      },
+    };
+  }
+
+  return {
+    title: `${offerData.brand} ${offerData.model} - ${resolved.partner.company_name} (${resolved.filter.name})`,
+    description: `${t('detail.specifications')} ${offerData.brand} ${offerData.model} - ${resolved.partner.company_name}`,
+    robots: {
+      index: false,
+      follow: false,
+    },
+  };
+}
+
+export default async function FilterOfferPage({ params }: FilterOfferPageProps) {
+  const { locale, partner: partnerSlug, filter: filterSlug, id } = await params;
+  const t = await getTranslations();
+
+  const [resolved, offerData, settings] = await Promise.all([
+    getFilterPublicOffer(partnerSlug, filterSlug, id),
+    getOffer(id),
+    getAppSettings(),
+  ]);
+
+  if (!resolved || !offerData) {
+    notFound();
+  }
+
+  const { partner, filter, partnerOffer } = resolved;
+
+  const widgets = await getWidgetsByPartner(partner.id, locale);
+  const sidebarWidgets = widgets.filter(w => w.type === 'sidebar');
+  const contentWidgets = widgets.filter(w => w.type === 'content');
+
+  const allPhotos = Array.from(
+    new Set(
+      [
+        offerData.main_photo_url,
+        ...(offerData.additional_photos || []),
+      ].filter(Boolean)
+    )
+  );
+
+  const filterHomeHref = `/${locale}/${partner.slug}/${filter.slug}`;
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-32 lg:pb-6">
+        {/* Back to Filter Listing */}
+        <div className="mb-6">
+          <Link
+            href={filterHomeHref}
+            className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            {t('partner.backToOffers')} {partner.company_name} ({filter.name})
+          </Link>
+        </div>
+
+        {/* Breadcrumb */}
+        <nav className="flex flex-wrap items-center gap-2 text-sm text-gray-500 mb-6">
+          <Link href={filterHomeHref} className="hover:text-gray-900 transition-colors">
+            {partner.company_name} — {filter.name}
+          </Link>
+          <ChevronRight className="h-4 w-4" />
+          <span className="text-gray-900">{offerData.brand}</span>
+          <ChevronRight className="h-4 w-4" />
+          <span className="text-gray-900">{offerData.model}</span>
+        </nav>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Image Gallery */}
+            <ImageGallery
+              images={allPhotos}
+              title={`${offerData.brand} ${offerData.model}`}
+            />
+
+            {/* Contact & Price Info - Mobile */}
+            <div className="lg:hidden space-y-6">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
+                <h1 className="text-xl font-bold text-gray-900">
+                  {offerData.brand} {offerData.model}
+                  {offerData.model_version && offerData.model_version !== 'Brak' && (
+                    <span className="ml-2 text-gray-500 font-normal">{offerData.model_version}</span>
+                  )}
+                </h1>
+
+                <div className="space-y-1">
+                  <p className="text-sm text-gray-500">
+                    {t('partner.priceFor')} {partner.company_name} {partner.show_net_prices && `(${t('listing.net')})`}
+                  </p>
+                  {(() => {
+                    const baseIsEur = partnerOffer.presentation_currency === 'EUR' || (!partnerOffer.presentation_currency && locale !== 'pl');
+                    const baseIsNetto = partnerOffer.presentation_value === 'netto';
+
+                    const plnGross = partnerOffer.display_price;
+                    const plnNet = partnerOffer.display_price_net || 0;
+                    const eurGross = settings?.exchange_rate_eur ? Math.round(plnGross / settings.exchange_rate_eur) : 0;
+                    const eurNet = settings?.exchange_rate_eur ? Math.round(plnNet / settings.exchange_rate_eur) : 0;
+
+                    const primaryPrice = baseIsEur ? (baseIsNetto ? eurNet : eurGross) : (baseIsNetto ? plnNet : plnGross);
+                    const formattedPrimary = baseIsEur ? `${primaryPrice.toLocaleString()} €` : formatPrice(primaryPrice);
+
+                    const showSecondarySubtext = partner.show_net_prices;
+                    let secondarySubtext = '';
+                    if (showSecondarySubtext) {
+                      if (baseIsNetto) {
+                        const grossVal = baseIsEur ? eurGross : plnGross;
+                        secondarySubtext = `brutto: ${baseIsEur ? `${grossVal.toLocaleString()} €` : formatPrice(grossVal)}`;
+                      } else {
+                        const netVal = baseIsEur ? eurNet : plnNet;
+                        secondarySubtext = `netto: ${baseIsEur ? `${netVal.toLocaleString()} €` : formatPrice(netVal)}`;
+                      }
+                    }
+
+                    const showForeignSubtext = partner.show_secondary_currency && settings?.show_eur_prices && settings?.exchange_rate_eur;
+                    let foreignSubtext = '';
+                    if (showForeignSubtext) {
+                      const foreignVal = baseIsEur ? (baseIsNetto ? plnNet : plnGross) : (baseIsNetto ? eurNet : eurGross);
+                      foreignSubtext = `≈ ${baseIsEur ? formatPrice(foreignVal) : `${foreignVal.toLocaleString()} €`}`;
+                    }
+
+                    return (
+                      <>
+                        <p className="text-3xl font-bold text-blue-600">
+                          {formattedPrimary}
+                        </p>
+                        {secondarySubtext && (
+                          <p className="text-sm text-gray-500 mt-1">
+                            {secondarySubtext}
+                          </p>
+                        )}
+                        {foreignSubtext && (
+                          <p className="text-lg text-gray-400 mt-1">
+                            {foreignSubtext}
+                          </p>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+
+                <div className="pt-4 border-t border-gray-100 space-y-2">
+                  <p className="font-medium text-gray-900">{t('partner.contactPerson')}</p>
+                  {partner.contact_person && (
+                    <p className="text-sm text-gray-600">{partner.contact_person}</p>
+                  )}
+                  {partner.phone && (
+                    <a
+                      href={`tel:${partner.phone.replace(/\s/g, '')}`}
+                      className="block text-sm text-blue-600 hover:text-blue-700"
+                    >
+                      {partner.phone}
+                    </a>
+                  )}
+                  {partner.email && (
+                    <a
+                      href={`mailto:${partner.email}`}
+                      className="block text-sm text-blue-600 hover:text-blue-700"
+                    >
+                      {partner.email}
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 className="font-semibold text-gray-900 mb-2">
+                  {partner.company_name}
+                </h3>
+                {partner.company_address && (
+                  <p className="text-sm text-gray-600">
+                    {partner.company_address.split('<br>').map((line: string, i: number, arr: string[]) => (
+                      <React.Fragment key={i}>
+                        {line}
+                        {i < arr.length - 1 && <br />}
+                      </React.Fragment>
+                    ))}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Key Parameters */}
+            <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                {t('detail.keyParameters')}
+              </h2>
+              <SpecsGrid
+                year={offerData.year}
+                mileage={offerData.mileage}
+                fuelType={offerData.fuel_type}
+                transmission={offerData.transmission}
+                power={offerData.engine_power}
+                location={offerData.seller_city}
+                bodyType={offerData.body_type}
+                colourType={offerData.colour_type}
+              />
+            </section>
+
+            {/* Equipment */}
+            {offerData.features && (
+              <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                  {t('detail.equipment')}
+                </h2>
+                <EquipmentDisplay equipment={offerData.features as string[] | Record<string, string[]> | null | undefined} />
+              </section>
+            )}
+
+            {/* Additional Info / Description */}
+            {offerData.description && (
+              <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-3">
+                  {offerData.technical_spec?.additional_info_header || t('detail.description')}
+                </h2>
+                <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+                  {offerData.description}
+                </p>
+              </section>
+            )}
+
+            {/* Content Widgets */}
+            {contentWidgets.length > 0 && (
+              <div className="space-y-6">
+                {contentWidgets.map(widget => (
+                  <div key={widget.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    {widget.content_type === 'image' ? (
+                      <img src={widget.content} alt={widget.name} className="w-full h-auto" />
+                    ) : (
+                      <div className="p-6 prose prose-gray max-w-none text-gray-900" dangerouslySetInnerHTML={{ __html: widget.content }} />
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-24 space-y-6">
+              <div className="hidden lg:block bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
+                <h1 className="text-xl font-bold text-gray-900">
+                  {offerData.brand} {offerData.model}
+                  {offerData.model_version && offerData.model_version !== 'Brak' && (
+                    <span className="ml-2 text-gray-500 font-normal">{offerData.model_version}</span>
+                  )}
+                </h1>
+
+                <div className="space-y-1">
+                  <p className="text-sm text-gray-500">
+                    {t('partner.priceFor')} {partner.company_name} {partner.show_net_prices && `(${t('listing.net')})`}
+                  </p>
+                  {(() => {
+                    const baseIsEur = partnerOffer.presentation_currency === 'EUR' || (!partnerOffer.presentation_currency && locale !== 'pl');
+                    const baseIsNetto = partnerOffer.presentation_value === 'netto';
+
+                    const plnGross = partnerOffer.display_price;
+                    const plnNet = partnerOffer.display_price_net || 0;
+                    const eurGross = settings?.exchange_rate_eur ? Math.round(plnGross / settings.exchange_rate_eur) : 0;
+                    const eurNet = settings?.exchange_rate_eur ? Math.round(plnNet / settings.exchange_rate_eur) : 0;
+
+                    const primaryPrice = baseIsEur ? (baseIsNetto ? eurNet : eurGross) : (baseIsNetto ? plnNet : plnGross);
+                    const formattedPrimary = baseIsEur ? `${primaryPrice.toLocaleString()} €` : formatPrice(primaryPrice);
+
+                    const showSecondarySubtext = partner.show_net_prices;
+                    let secondarySubtext = '';
+                    if (showSecondarySubtext) {
+                      if (baseIsNetto) {
+                        const grossVal = baseIsEur ? eurGross : plnGross;
+                        secondarySubtext = `brutto: ${baseIsEur ? `${grossVal.toLocaleString()} €` : formatPrice(grossVal)}`;
+                      } else {
+                        const netVal = baseIsEur ? eurNet : plnNet;
+                        secondarySubtext = `netto: ${baseIsEur ? `${netVal.toLocaleString()} €` : formatPrice(netVal)}`;
+                      }
+                    }
+
+                    const showForeignSubtext = partner.show_secondary_currency && settings?.show_eur_prices && settings?.exchange_rate_eur;
+                    let foreignSubtext = '';
+                    if (showForeignSubtext) {
+                      const foreignVal = baseIsEur ? (baseIsNetto ? plnNet : plnGross) : (baseIsNetto ? eurNet : eurGross);
+                      foreignSubtext = `≈ ${baseIsEur ? formatPrice(foreignVal) : `${foreignVal.toLocaleString()} €`}`;
+                    }
+
+                    return (
+                      <>
+                        <p className="text-3xl font-bold text-blue-600">
+                          {formattedPrimary}
+                        </p>
+                        {secondarySubtext && (
+                          <p className="text-sm text-gray-500 mt-1">
+                            {secondarySubtext}
+                          </p>
+                        )}
+                        {foreignSubtext && (
+                          <p className="text-lg text-gray-400 mt-1">
+                            {foreignSubtext}
+                          </p>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+
+                <div className="pt-4 border-t border-gray-100 space-y-2">
+                  <p className="font-medium text-gray-900">{t('partner.contactPerson')}</p>
+                  {partner.contact_person && (
+                    <p className="text-sm text-gray-600">{partner.contact_person}</p>
+                  )}
+                  {partner.phone && (
+                    <a
+                      href={`tel:${partner.phone.replace(/\s/g, '')}`}
+                      className="block text-sm text-blue-600 hover:text-blue-700"
+                    >
+                      {partner.phone}
+                    </a>
+                  )}
+                  {partner.email && (
+                    <a
+                      href={`mailto:${partner.email}`}
+                      className="block text-sm text-blue-600 hover:text-blue-700"
+                    >
+                      {partner.email}
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              <div className="hidden lg:block bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 className="font-semibold text-gray-900 mb-2">
+                  {partner.company_name}
+                </h3>
+                {partner.company_address && (
+                  <p className="text-sm text-gray-600">
+                    {partner.company_address.split('<br>').map((line: string, i: number, arr: string[]) => (
+                      <React.Fragment key={i}>
+                        {line}
+                        {i < arr.length - 1 && <br />}
+                      </React.Fragment>
+                    ))}
+                  </p>
+                )}
+              </div>
+
+              {sidebarWidgets.map(widget => (
+                <div key={widget.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                  {widget.content_type === 'image' ? (
+                    <img src={widget.content} alt={widget.name} className="w-full h-auto" />
+                  ) : (
+                    <div className="p-6 prose prose-sm prose-gray max-w-none text-gray-900" dangerouslySetInnerHTML={{ __html: widget.content }} />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}

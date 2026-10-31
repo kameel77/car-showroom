@@ -176,6 +176,57 @@
     "transmission": "Getriebe",
     "bodyType": "Karosserie"
   },
+  "adminSelf": {
+    "title": "Verwaltungspanel",
+    "subtitle": "Legen Sie Ihre eigenen Verkaufspreise (EUR brutto) für Ihre Angebote fest",
+    "searchPlaceholder": "Suche nach Marke, Modell...",
+    "previewShowroom": "Showroom-Vorschau",
+    "viewToggle": {
+      "title": "Angebotsansicht",
+      "subtitle": "Spezifikation — Preise festlegen. Arbitrage — Margenanalyse.",
+      "spec": "Spezifikation",
+      "arbitrage": "Arbitrage"
+    },
+    "table": {
+      "noOffers": "Keine Angebote",
+      "vehicle": "Fahrzeug",
+      "plnGross": "PLN brutto",
+      "plnNet": "PLN netto",
+      "eurNet": "EUR netto",
+      "eurGrossInput": "EUR brutto →",
+      "eurGrossResult": "EUR brutto",
+      "purchaseNetEur": "Einkauf Netto EUR",
+      "financing": "Finanzierung",
+      "additional": "Zusätzlich",
+      "transport": "Transport",
+      "totalCost": "Gesamtkosten",
+      "saleNetEur": "Verkauf Netto EUR",
+      "marginEur": "Marge EUR",
+      "marginPct": "Marge %",
+      "actions": "Aktionen",
+      "showOffer": "Angebot anzeigen",
+      "removeCustomPrice": "Eigenen Preis entfernen"
+    },
+    "arbitrageHeader": {
+      "title": "Kosten- und Margenkalkulation",
+      "exchangeRate": "EUR-Kurs",
+      "transportFor": "Transport für",
+      "cars": "Autos",
+      "total": "gesamt",
+      "perCar": "Auto",
+      "bundle": "Paket",
+      "sort": {
+        "label": "Sortieren",
+        "marginPctDesc": "Sortieren: Marge % absteigend",
+        "marginEurDesc": "Sortieren: Marge EUR absteigend"
+      }
+    },
+    "summary": {
+      "offers": "Angebote",
+      "withCustomPrice": "Mit eigenem EUR-Preis",
+      "saving": "Speichern..."
+    }
+  },
   "partnerForm": {
     "titleNew": "Neuer Partner",
     "titleEdit": "Partner bearbeiten",
